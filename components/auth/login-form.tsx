@@ -163,6 +163,15 @@ export function LoginForm({
           size="lg">
           {loading ? 'Memproses...' : 'Login'}
         </Button>
+
+        <div className="text-center text-sm">
+          <span className="text-muted-foreground">Belum punya akun? </span>
+          <Link
+            href="/auth/register"
+            className="text-primary hover:underline font-medium">
+            Daftar di sini
+          </Link>
+        </div>
       </form>
     </div>
   );
