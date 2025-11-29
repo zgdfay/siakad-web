@@ -27,18 +27,7 @@ export function LoginForm({
   forgotPasswordLink = '/auth/forgot-password',
   title = 'Portal Mahasiswa',
 }: LoginFormProps) {
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // Auto-dismiss error message setelah 5 detik
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        setError('');
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
 
   const {
     register,
@@ -63,7 +52,6 @@ export function LoginForm({
   }, [errors.nim, errors.password, clearErrors]);
 
   const onSubmitForm = async (data: LoginFormData) => {
-    setError('');
     setLoading(true);
 
     try {
@@ -79,10 +67,18 @@ export function LoginForm({
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'NIM atau password salah';
-      setError(errorMessage);
-      toast.error('Login gagal', {
-        description: errorMessage,
-      });
+      
+      // Check if error is about inactive account
+      if (errorMessage.includes('tidak aktif') || errorMessage.includes('NONAKTIF')) {
+        toast.warning('Akun Tidak Aktif', {
+          description: errorMessage,
+          icon: '⚠️',
+        });
+      } else {
+        toast.error('Login gagal', {
+          description: errorMessage,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -99,12 +95,6 @@ export function LoginForm({
       <form
         onSubmit={handleSubmit(onSubmitForm)}
         className="space-y-4 sm:space-y-5">
-        {error && (
-          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
-            <p className="text-sm text-destructive">{error}</p>
-          </div>
-        )}
-
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="nim">Masukkan NIM</Label>

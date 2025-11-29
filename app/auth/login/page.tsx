@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { LoginForm } from '@/components/auth/login-form';
 import { InfoCard } from '@/components/auth/info-card';
 import { AcademicCalendar } from '@/components/academic/academic-calendar';
@@ -9,14 +10,33 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleLogin = async (data: { nim: string; password: string }) => {
-    // TODO: Implementasi logika login
-    console.log('Login attempt:', data);
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nim: data.nim,
+        password: data.password,
+      }),
+    });
 
-    // Simulasi login
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const result = await response.json();
 
-    // Redirect ke admin setelah login berhasil
-    router.push('/admin');
+    if (!response.ok) {
+      throw new Error(result.error || 'NIM atau password salah');
+    }
+
+    // Session cookie sudah di-set oleh API, tidak perlu localStorage
+    // Redirect berdasarkan role
+    if (result.user.role === 'ADMIN') {
+      router.push('/admin');
+    } else if (result.user.role === 'DOSEN') {
+      router.push('/dosen'); // TODO: Buat halaman dosen jika diperlukan
+    } else {
+      router.push('/mahasiswa');
+    }
+    router.refresh();
   };
 
   const currentDate = new Date();
@@ -40,12 +60,17 @@ export default function LoginPage() {
             <LoginForm onSubmit={handleLogin} />
           </div>
 
-          {/* Right Side - Info Card (Desktop) */}
+          {/* Right Side - Hero Image (Desktop) */}
           <div className="hidden lg:flex items-center justify-center">
-            <InfoCard
-              formattedDate={formattedDate}
-              formattedTime={formattedTime}
-            />
+            <div className="relative w-full h-full min-h-[500px] rounded-lg overflow-hidden">
+              <Image
+                src="/hero/hero-image.jpg"
+                alt="ITB YADIKA Pasuruan"
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
           </div>
         </div>
 

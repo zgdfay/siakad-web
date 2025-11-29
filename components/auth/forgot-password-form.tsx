@@ -66,11 +66,21 @@ export function ForgotPasswordForm({
     setLoading(true);
 
     try {
-      // TODO: Implementasi logika reset password
-      console.log('Forgot password request:', data.email);
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+        }),
+      });
 
-      // Simulasi kirim email reset password
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Terjadi kesalahan saat mengirim email reset password');
+      }
 
       setSuccess(true);
       toast.success('Email terkirim!', {

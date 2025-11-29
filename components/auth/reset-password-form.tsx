@@ -73,14 +73,26 @@ export function ResetPasswordForm({
     setLoading(true);
 
     try {
-      // TODO: Implementasi logika reset password
-      console.log('Reset password request:', {
-        token: tokenFromUrl,
-        password: data.password,
+      if (!tokenFromUrl) {
+        throw new Error('Token reset password tidak ditemukan');
+      }
+
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: tokenFromUrl,
+          password: data.password,
+        }),
       });
 
-      // Simulasi reset password
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Terjadi kesalahan saat mereset password');
+      }
 
       setSuccess(true);
       toast.success('Password berhasil direset!', {

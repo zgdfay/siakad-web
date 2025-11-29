@@ -15,14 +15,43 @@ export default function RegisterPage() {
     password: string;
     confirmPassword: string;
   }) => {
-    // TODO: Implementasi logika register
-    console.log('Register attempt:', data);
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nim: data.nim,
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      }),
+    });
 
-    // Simulasi register
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Non-JSON response:', text);
+      throw new Error('Server mengembalikan response yang tidak valid. Silakan coba lagi.');
+    }
 
-    // Redirect ke login setelah register berhasil
-    router.push('/auth/login');
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Terjadi kesalahan saat mendaftar');
+    }
+
+    // Session cookie sudah di-set oleh API (auto-login setelah register)
+    // Redirect berdasarkan role
+    if (result.user.role === 'ADMIN') {
+      router.push('/admin');
+    } else if (result.user.role === 'DOSEN') {
+      router.push('/dosen');
+    } else {
+      router.push('/mahasiswa');
+    }
+    router.refresh();
   };
 
   const currentDate = new Date();

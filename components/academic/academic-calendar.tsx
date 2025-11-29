@@ -145,11 +145,11 @@ export function AcademicCalendar({
           Semester Ganjil 2025-2026
         </h4>
         <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
-          <div className="flex gap-3 sm:gap-4 min-w-max sm:min-w-0 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex gap-3 sm:gap-4 min-w-max">
             {semesterGanjil.map((event, index) => (
               <div
                 key={index}
-                className="bg-card border rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow min-w-[280px] sm:min-w-0 shrink-0 sm:shrink">
+                className="bg-card border rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow min-w-[280px] sm:min-w-[300px] shrink-0">
                 <div className="flex items-start gap-2 sm:gap-3">
                   <div
                     className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg ${getCategoryColor(
@@ -186,11 +186,11 @@ export function AcademicCalendar({
           Semester Genap 2026
         </h4>
         <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
-          <div className="flex gap-3 sm:gap-4 min-w-max sm:min-w-0 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex gap-3 sm:gap-4 min-w-max">
             {semesterGenap.map((event, index) => (
               <div
                 key={index}
-                className="bg-card border rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow min-w-[280px] sm:min-w-0 shrink-0 sm:shrink">
+                className="bg-card border rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow min-w-[280px] sm:min-w-[300px] shrink-0">
                 <div className="flex items-start gap-2 sm:gap-3">
                   <div
                     className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg ${getCategoryColor(

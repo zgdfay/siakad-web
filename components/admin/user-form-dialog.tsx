@@ -27,7 +27,7 @@ export interface UserFormValues {
   id?: string;
   nimOrNip: string;
   name: string;
-  email: string;
+  email?: string; // Optional - akan diisi saat self-register
   role: UserRole;
   status: UserStatus;
 }
@@ -79,7 +79,7 @@ export function UserFormDialog({
   };
 
   const handleSubmit = () => {
-    if (!formValues.nimOrNip || !formValues.name || !formValues.email) {
+    if (!formValues.nimOrNip || !formValues.name) {
       return;
     }
     onSubmit(formValues);
@@ -87,8 +87,7 @@ export function UserFormDialog({
 
   const isFormIncomplete =
     !formValues.nimOrNip.trim() ||
-    !formValues.name.trim() ||
-    !formValues.email.trim();
+    !formValues.name.trim();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -145,14 +144,19 @@ export function UserFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">
+              Email <span className="text-muted-foreground text-xs">(Opsional)</span>
+            </Label>
             <Input
               id="email"
               type="email"
-              value={formValues.email}
+              value={formValues.email || ''}
               onChange={(e) => handleChange('email', e.target.value)}
-              placeholder="nama@domain.ac.id"
+              placeholder="nama@domain.ac.id (akan diisi saat self-register)"
             />
+            <p className="text-xs text-muted-foreground">
+              Email dapat dikosongkan. Mahasiswa akan mengisi email saat melakukan self-register.
+            </p>
           </div>
 
           <div className="space-y-2">

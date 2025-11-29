@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -44,49 +44,49 @@ interface UserItem {
   status: 'aktif' | 'nonaktif';
 }
 
-// Mock data - akan diganti dengan data dari API
-const mockUsers: UserItem[] = [
-  {
-    id: '1',
-    nimOrNip: '202410001',
-    name: 'Ahmad Fauzi',
-    email: 'ahmad.fauzi@mhs.itbyadika.ac.id',
-    role: 'mahasiswa',
-    status: 'aktif',
-  },
-  {
-    id: '2',
-    nimOrNip: 'D001',
-    name: 'Dr. Siti Nurhaliza',
-    email: 'siti.nurhaliza@itbyadika.ac.id',
-    role: 'dosen',
-    status: 'aktif',
-  },
-  {
-    id: '3',
-    nimOrNip: 'ADM01',
-    name: 'Admin Akademik',
-    email: 'admin@itbyadika.ac.id',
-    role: 'admin',
-    status: 'aktif',
-  },
-];
-
 export default function ManajemenUserPage() {
-  const [users, setUsers] = useState<UserItem[]>(mockUsers);
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const filteredUsers = users.filter((user) => {
-    const matchSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.nimOrNip.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchRole = roleFilter === 'all' || user.role === roleFilter;
-    return matchSearch && matchRole;
-  });
+  // Fetch users from API
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (searchTerm) params.set('search', searchTerm);
+      if (roleFilter !== 'all') params.set('role', roleFilter);
+
+      const response = await fetch(`/api/users?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Gagal mengambil data user');
+      }
+
+      const data = await response.json();
+      setUsers(data.users || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Gagal mengambil data user', {
+        description:
+          error instanceof Error ? error.message : 'Terjadi kesalahan',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debounce search term untuk mengurangi API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchUsers();
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, roleFilter]);
 
   const [userDialogOpen, setUserDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
@@ -104,36 +104,63 @@ export default function ManajemenUserPage() {
     setUserDialogOpen(true);
   };
 
-  const handleSubmitUser = (values: UserFormValues) => {
-    if (dialogMode === 'create') {
-      const newUser: UserItem = {
-        id: crypto.randomUUID(),
-        nimOrNip: values.nimOrNip,
-        name: values.name,
-        email: values.email,
-        role: values.role,
-        status: values.status,
-      };
-      setUsers((prev) => [...prev, newUser]);
-      toast.success('User berhasil ditambahkan');
-    } else if (dialogMode === 'edit' && editingUser) {
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === editingUser.id
-            ? {
-                ...u,
-                nimOrNip: values.nimOrNip,
-                name: values.name,
-                email: values.email,
-                role: values.role,
-                status: values.status,
-              }
-            : u
-        )
-      );
-      toast.success('User berhasil diperbarui');
+  const handleSubmitUser = async (values: UserFormValues) => {
+    try {
+      if (dialogMode === 'create') {
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nimOrNip: values.nimOrNip,
+            name: values.name,
+            email: values.email?.trim() || undefined, // Only send if provided and not empty
+            role: values.role,
+            status: values.status,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Gagal menambahkan user');
+        }
+
+        toast.success('User berhasil ditambahkan');
+        fetchUsers(); // Refresh list
+      } else if (dialogMode === 'edit' && editingUser) {
+        const response = await fetch(`/api/users/${editingUser.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nimOrNip: values.nimOrNip,
+            name: values.name,
+            email: values.email?.trim() || undefined, // Only send if provided and not empty
+            role: values.role,
+            status: values.status,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Gagal memperbarui user');
+        }
+
+        toast.success('User berhasil diperbarui');
+        fetchUsers(); // Refresh list
+      }
+      setUserDialogOpen(false);
+    } catch (error) {
+      console.error('Error submitting user:', error);
+      toast.error('Gagal menyimpan user', {
+        description:
+          error instanceof Error ? error.message : 'Terjadi kesalahan',
+      });
     }
-    setUserDialogOpen(false);
   };
 
   const handleImportClick = () => {
@@ -226,16 +253,63 @@ export default function ManajemenUserPage() {
     setImporting(true);
 
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const text = reader.result as string;
       const importedUsers = parseCsv(text);
 
       if (importedUsers.length === 0) {
         toast.error('Tidak ada data user yang dapat diimpor');
-      } else {
-        setUsers((prev) => [...prev, ...importedUsers]);
-        toast.success('Import berhasil', {
-          description: `${importedUsers.length} user berhasil ditambahkan dari CSV`,
+        setImporting(false);
+        return;
+      }
+
+      // Import users via API (batch create)
+      try {
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const user of importedUsers) {
+          try {
+            const response = await fetch('/api/users', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                nimOrNip: user.nimOrNip,
+                name: user.name,
+                email: user.email || undefined,
+                role: user.role,
+                status: user.status,
+              }),
+            });
+
+            if (response.ok) {
+              successCount++;
+            } else {
+              errorCount++;
+            }
+          } catch (error) {
+            errorCount++;
+          }
+        }
+
+        if (successCount > 0) {
+          toast.success('Import berhasil', {
+            description: `${successCount} user berhasil ditambahkan${
+              errorCount > 0 ? `, ${errorCount} gagal` : ''
+            }`,
+          });
+          fetchUsers(); // Refresh list
+        } else {
+          toast.error('Import gagal', {
+            description: 'Semua user gagal ditambahkan',
+          });
+        }
+      } catch (error) {
+        toast.error('Gagal mengimpor user', {
+          description:
+            error instanceof Error ? error.message : 'Terjadi kesalahan',
         });
       }
 
@@ -251,9 +325,27 @@ export default function ManajemenUserPage() {
     reader.readAsText(file);
   };
 
-  const handleDeleteUser = (userId: string) => {
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
-    toast.success('User berhasil dihapus');
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Gagal menghapus user');
+      }
+
+      toast.success('User berhasil dihapus');
+      fetchUsers(); // Refresh list
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error('Gagal menghapus user', {
+        description:
+          error instanceof Error ? error.message : 'Terjadi kesalahan',
+      });
+    }
   };
 
   return (
@@ -291,7 +383,7 @@ export default function ManajemenUserPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Daftar User</CardTitle>
           <CardDescription>
-            {filteredUsers.length} user ditemukan dari {mockUsers.length} data
+            {loading ? 'Memuat...' : `${users.length} user ditemukan`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -344,16 +436,27 @@ export default function ManajemenUserPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filteredUsers.length === 0 ? (
+                {loading ? (
                   <tr>
                     <td
                       colSpan={6}
                       className="px-4 py-8 text-center text-muted-foreground text-sm">
-                      Tidak ada user yang sesuai dengan filter.
+                      <div className="flex items-center justify-center gap-2">
+                        <i className="fa-solid fa-spinner fa-spin"></i>
+                        Memuat data...
+                      </div>
+                    </td>
+                  </tr>
+                ) : users.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-8 text-center text-muted-foreground text-sm">
+                      Tidak ada user yang ditemukan.
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((user) => (
+                  users.map((user) => (
                     <tr key={user.id}>
                       <td className="px-4 py-3 font-medium text-foreground">
                         {user.nimOrNip}

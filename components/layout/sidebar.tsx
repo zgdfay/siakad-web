@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -70,6 +70,30 @@ export function Sidebar({
   settingHref,
 }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      // Clear localStorage (backward compatibility)
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+      }
+
+      // Call logout API
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+      });
+
+      // Redirect to login
+      router.push(logoutHref);
+      router.refresh();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still redirect even if API call fails
+      router.push(logoutHref);
+      router.refresh();
+    }
+  };
 
   // Auto-detect brand href dari navItems pertama jika tidak disediakan
   const defaultBrandHref = brandHref || navItems[0]?.href || '/';
@@ -227,11 +251,9 @@ export function Sidebar({
               <AlertDialogFooter>
                 <AlertDialogCancel>Batal</AlertDialogCancel>
                 <AlertDialogAction
-                  asChild
+                  onClick={handleLogout}
                   className="bg-red-600 hover:bg-red-700 text-white">
-                  <Link href={logoutHref} className="cursor-pointer">
-                    Keluar
-                  </Link>
+                  Keluar
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

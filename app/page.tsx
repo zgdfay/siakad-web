@@ -9,15 +9,34 @@ import { AcademicCalendar } from '@/components/academic/academic-calendar';
 export default function Home() {
   const router = useRouter();
 
-  const handleLogin = async (data: { email: string; password: string }) => {
-    // TODO: Implementasi logika login
-    console.log('Login attempt:', data);
+  const handleLogin = async (data: { nim: string; password: string }) => {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nim: data.nim,
+        password: data.password,
+      }),
+    });
 
-    // Simulasi login
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const result = await response.json();
 
-    // Redirect ke admin setelah login berhasil
-    router.push('/admin');
+    if (!response.ok) {
+      throw new Error(result.error || 'NIM atau password salah');
+    }
+
+    // Session cookie sudah di-set oleh API, tidak perlu localStorage
+    // Redirect berdasarkan role
+    if (result.user.role === 'ADMIN') {
+      router.push('/admin');
+    } else if (result.user.role === 'DOSEN') {
+      router.push('/dosen'); // TODO: Buat halaman dosen jika diperlukan
+    } else {
+      router.push('/mahasiswa');
+    }
+    router.refresh();
   };
 
   const currentDate = new Date();
