@@ -44,7 +44,7 @@ export function UserProvider({ children }: UserProviderProps) {
 }
 
 export function formatUserForSidebar(user: User | null) {
-  if (!user) return null;
+  if (!user) return undefined;
 
   return {
     name: user.name,

@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Card,
@@ -9,7 +12,60 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
+interface DashboardStats {
+  semesterCount: number;
+  mahasiswaCount: number;
+  mataKuliahCount: number;
+  pendaftaranCount: number;
+}
+
 export default function AdminDashboard() {
+  const [stats, setStats] = useState<DashboardStats>({
+    semesterCount: 0,
+    mahasiswaCount: 0,
+    mataKuliahCount: 0,
+    pendaftaranCount: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch all data in parallel
+        const [semestersRes, mataKuliahRes, usersRes, pendaftaranRes] =
+          await Promise.all([
+            fetch('/api/semesters'),
+            fetch('/api/mata-kuliah'),
+            fetch('/api/users?role=mahasiswa'),
+            fetch('/api/pendaftaran'),
+          ]);
+
+        const [semestersData, mataKuliahData, usersData, pendaftaranData] =
+          await Promise.all([
+            semestersRes.json(),
+            mataKuliahRes.json(),
+            usersRes.json(),
+            pendaftaranRes.json(),
+          ]);
+
+        setStats({
+          semesterCount: semestersData.semesters?.length || 0,
+          mahasiswaCount: usersData.users?.length || 0,
+          mataKuliahCount: mataKuliahData.mataKuliah?.length || 0,
+          pendaftaranCount: pendaftaranData.pendaftaran?.length || 0,
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="space-y-6">
@@ -33,7 +89,11 @@ export default function AdminDashboard() {
                     Semester Antara
                   </CardDescription>
                   <CardTitle className="text-3xl mt-2 text-primary">
-                    3
+                    {loading ? (
+                      <i className="fa-solid fa-spinner fa-spin"></i>
+                    ) : (
+                      stats.semesterCount
+                    )}
                   </CardTitle>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -51,7 +111,11 @@ export default function AdminDashboard() {
                     Mahasiswa Terdaftar
                   </CardDescription>
                   <CardTitle className="text-3xl mt-2 text-green-600 dark:text-green-500">
-                    120
+                    {loading ? (
+                      <i className="fa-solid fa-spinner fa-spin"></i>
+                    ) : (
+                      stats.mahasiswaCount
+                    )}
                   </CardTitle>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -69,7 +133,11 @@ export default function AdminDashboard() {
                     Mata Kuliah
                   </CardDescription>
                   <CardTitle className="text-3xl mt-2 text-purple-600 dark:text-purple-400">
-                    24
+                    {loading ? (
+                      <i className="fa-solid fa-spinner fa-spin"></i>
+                    ) : (
+                      stats.mataKuliahCount
+                    )}
                   </CardTitle>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">

@@ -97,29 +97,47 @@ export default function CheckoutPage() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      // TODO: Simpan pendaftaran ke database
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      toast.success('Pendaftaran berhasil dibuat', {
-        description: 'Lanjutkan ke halaman pembayaran',
+      // Submit pendaftaran ke API
+      const response = await fetch('/api/pendaftaran', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          semesterId,
+          mataKuliahIds: selectedMK.map((mk) => mk.id),
+        }),
       });
 
-      // Simpan data untuk halaman pembayaran (jika belum ada)
-      if (!checkoutData) {
-        sessionStorage.setItem(
-          'checkoutData',
-          JSON.stringify({
-            semesterId,
-            mataKuliah: selectedMK,
-            totalBiaya,
-          })
-        );
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Gagal membuat pendaftaran');
       }
 
+      const result = await response.json();
+      const pendaftaranId = result.pendaftaran.id;
+
+      toast.success('Pendaftaran berhasil dibuat', {
+        description: 'Silakan lanjutkan ke halaman pembayaran',
+      });
+
+      // Simpan pendaftaran ID untuk halaman pembayaran
+      sessionStorage.setItem(
+        'pendaftaranId',
+        pendaftaranId
+      );
+      sessionStorage.setItem(
+        'checkoutData',
+        JSON.stringify({
+          pendaftaranId,
+          semesterId,
+          mataKuliah: selectedMK,
+          totalBiaya,
+        })
+      );
+
       router.push(`/mahasiswa/pendaftaran/${semesterId}/pembayaran`);
-    } catch (error) {
+    } catch (error: any) {
       toast.error('Gagal membuat pendaftaran', {
-        description: 'Terjadi kesalahan saat menyimpan data',
+        description: error.message || 'Terjadi kesalahan saat menyimpan data',
       });
     } finally {
       setLoading(false);
@@ -246,7 +264,14 @@ export default function CheckoutPage() {
                   disabled={loading}
                   className="w-full"
                   size="lg">
-                  {loading ? 'Memproses...' : 'Lanjutkan ke Pembayaran'}
+                  {loading ? (
+                    <>
+                      <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                      Memproses...
+                    </>
+                  ) : (
+                    'Lanjutkan ke Pembayaran'
+                  )}
                 </Button>
 
                 <Button

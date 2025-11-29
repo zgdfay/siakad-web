@@ -1,69 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DetailPendaftaranModal } from '@/components/pendaftaran/detail-pendaftaran-modal';
+import { toast } from 'sonner';
 
-// Mock data - akan diganti dengan data dari API
-const mockRiwayat = [
-  {
-    id: '1',
-    semester: 'Semester Antara 2025',
-    tanggalDaftar: '2025-01-15',
-    status: 'menunggu_verifikasi',
-    totalMataKuliah: 3,
-    totalSKS: 9,
-    totalBiaya: 1500000,
-    paymentStatus: 'paid',
-    paymentMethod: 'midtrans',
-    tanggalBayar: '2025-01-15',
-    mataKuliah: [
-      { kode: 'MK001', nama: 'Pemrograman Web', sks: 3, biaya: 500000 },
-      { kode: 'MK002', nama: 'Basis Data', sks: 3, biaya: 500000 },
-      { kode: 'MK003', nama: 'Jaringan Komputer', sks: 3, biaya: 500000 },
-    ],
-    catatan: null,
-  },
-  {
-    id: '2',
-    semester: 'Semester Antara 2024',
-    tanggalDaftar: '2024-07-10',
-    status: 'diterima',
-    totalMataKuliah: 2,
-    totalSKS: 6,
-    totalBiaya: 1000000,
-    paymentStatus: 'paid',
-    paymentMethod: 'xendit',
-    tanggalBayar: '2024-07-10',
-    mataKuliah: [
-      { kode: 'MK004', nama: 'Algoritma dan Struktur Data', sks: 3, biaya: 500000 },
-      { kode: 'MK005', nama: 'Sistem Operasi', sks: 3, biaya: 500000 },
-    ],
-    catatan: null,
-  },
-  {
-    id: '3',
-    semester: 'Semester Antara 2024',
-    tanggalDaftar: '2024-06-20',
-    status: 'ditolak',
-    totalMataKuliah: 4,
-    totalSKS: 12,
-    totalBiaya: 2000000,
-    paymentStatus: 'paid',
-    paymentMethod: 'bank_transfer',
-    tanggalBayar: '2024-06-20',
-    mataKuliah: [
-      { kode: 'MK006', nama: 'Pemrograman Mobile', sks: 3, biaya: 500000 },
-      { kode: 'MK007', nama: 'Cloud Computing', sks: 3, biaya: 500000 },
-      { kode: 'MK008', nama: 'Machine Learning', sks: 3, biaya: 500000 },
-      { kode: 'MK009', nama: 'Blockchain', sks: 3, biaya: 500000 },
-    ],
-    catatan: 'Pendaftaran ditolak karena tidak memenuhi syarat minimum IPK',
-  },
-];
+interface RiwayatItem {
+  id: string;
+  semester: {
+    nama: string;
+  };
+  createdAt: string;
+  status: 'MENUNGGU_VERIFIKASI' | 'DITERIMA' | 'DITOLAK' | 'DIBATALKAN';
+  totalSKS: number;
+  totalBiaya: number;
+  detail: Array<{
+    semesterMataKuliah: {
+      mataKuliah: {
+        kode: string;
+        nama: string;
+        sks: number;
+      };
+      biaya: number;
+    };
+  }>;
+  payment?: {
+    status: string;
+    metodePembayaran?: string;
+    tanggalBayar?: string;
+  } | null;
+  catatanAdmin?: string | null;
+}
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -81,10 +51,31 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function RiwayatPage() {
-  const [selectedDetail, setSelectedDetail] = useState<typeof mockRiwayat[0] | null>(null);
+  const [riwayat, setRiwayat] = useState<RiwayatItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedDetail, setSelectedDetail] = useState<RiwayatItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleDetailClick = (riwayat: typeof mockRiwayat[0]) => {
+  useEffect(() => {
+    const fetchRiwayat = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/pendaftaran/user/me');
+        if (!response.ok) throw new Error('Gagal mengambil data riwayat');
+        const data = await response.json();
+        setRiwayat(data.pendaftaran || []);
+      } catch (error) {
+        console.error('Error fetching riwayat:', error);
+        toast.error('Gagal mengambil data riwayat');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRiwayat();
+  }, []);
+
+  const handleDetailClick = (riwayat: RiwayatItem) => {
     setSelectedDetail(riwayat);
     setIsModalOpen(true);
   };
@@ -105,7 +96,7 @@ export default function RiwayatPage() {
           <CardHeader>
             <CardTitle>Daftar Pendaftaran</CardTitle>
             <CardDescription>
-              {mockRiwayat.length} pendaftaran ditemukan
+              {loading ? 'Memuat...' : `${riwayat.length} pendaftaran ditemukan`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -122,36 +113,50 @@ export default function RiwayatPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockRiwayat.map((riwayat) => (
-                    <TableRow key={riwayat.id}>
-                      <TableCell className="font-medium text-center">
-                        {riwayat.semester}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {new Date(riwayat.tanggalDaftar).toLocaleDateString('id-ID')}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {riwayat.totalMataKuliah} MK - {riwayat.totalSKS} SKS
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {new Intl.NumberFormat('id-ID', {
-                          style: 'currency',
-                          currency: 'IDR',
-                        }).format(riwayat.totalBiaya)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {getStatusBadge(riwayat.status)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDetailClick(riwayat)}>
-                          Detail
-                        </Button>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        Memuat data...
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : riwayat.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Belum ada riwayat pendaftaran
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    riwayat.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="font-medium text-center">
+                          {r.semester.nama}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {new Date(r.createdAt).toLocaleDateString('id-ID')}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {r.detail.length} MK - {r.totalSKS} SKS
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {new Intl.NumberFormat('id-ID', {
+                            style: 'currency',
+                            currency: 'IDR',
+                          }).format(r.totalBiaya)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {getStatusBadge(r.status.toLowerCase())}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDetailClick(r)}>
+                            Detail
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -160,11 +165,32 @@ export default function RiwayatPage() {
       </div>
 
       {/* Modal Detail Pendaftaran */}
-      <DetailPendaftaranModal
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        data={selectedDetail}
-      />
+      {selectedDetail && (
+        <DetailPendaftaranModal
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          data={{
+            id: selectedDetail.id,
+            semester: selectedDetail.semester.nama,
+            tanggalDaftar: selectedDetail.createdAt,
+            status: selectedDetail.status.toLowerCase(),
+            totalMataKuliah: selectedDetail.detail.length,
+            totalSKS: selectedDetail.totalSKS,
+            totalBiaya: selectedDetail.totalBiaya,
+            paymentStatus: selectedDetail.payment?.status.toLowerCase() || 'belum_bayar',
+            paymentMethod: selectedDetail.payment?.metodePembayaran || '',
+            tanggalBayar: selectedDetail.payment?.tanggalBayar || '',
+            buktiPembayaran: selectedDetail.payment?.buktiPembayaran || null,
+            mataKuliah: selectedDetail.detail.map((d) => ({
+              kode: d.semesterMataKuliah.mataKuliah.kode,
+              nama: d.semesterMataKuliah.mataKuliah.nama,
+              sks: d.semesterMataKuliah.mataKuliah.sks,
+              biaya: d.semesterMataKuliah.biaya,
+            })),
+            catatan: selectedDetail.catatanAdmin,
+          }}
+        />
+      )}
     </div>
   );
 }

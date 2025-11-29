@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -35,103 +35,219 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { DetailPendaftaranModal } from '@/components/pendaftaran/detail-pendaftaran-modal';
 
-// Mock data - akan diganti dengan data dari API
-const mockPendaftaran = [
-  {
-    id: '1',
-    nim: '2021001',
-    nama: 'Ahmad Fauzi',
-    semester: 'Semester Antara 2025',
-    tanggalDaftar: '2025-01-15',
-    status: 'menunggu_verifikasi',
-    totalMataKuliah: 3,
-    totalSKS: 9,
-    totalBiaya: 1500000,
-    paymentStatus: 'paid',
-  },
-  {
-    id: '2',
-    nim: '2021002',
-    nama: 'Siti Nurhaliza',
-    semester: 'Semester Antara 2025',
-    tanggalDaftar: '2025-01-14',
-    status: 'menunggu_verifikasi',
-    totalMataKuliah: 2,
-    totalSKS: 6,
-    totalBiaya: 1000000,
-    paymentStatus: 'paid',
-  },
-  {
-    id: '3',
-    nim: '2021003',
-    nama: 'Budi Santoso',
-    semester: 'Semester Antara 2025',
-    tanggalDaftar: '2025-01-13',
-    status: 'diterima',
-    totalMataKuliah: 4,
-    totalSKS: 12,
-    totalBiaya: 2000000,
-    paymentStatus: 'paid',
-  },
-];
+interface PendaftaranItem {
+  id: string;
+  userMaster: {
+    id: string;
+    nimOrNip: string;
+    name: string;
+  };
+  semester: {
+    id: string;
+    nama: string;
+    tahun: string;
+    periode: string;
+  };
+  totalSKS: number;
+  totalBiaya: number;
+  status: 'MENUNGGU_VERIFIKASI' | 'DITERIMA' | 'DITOLAK' | 'DIBATALKAN';
+  catatanAdmin?: string | null;
+  createdAt: string;
+  detail: Array<{
+    semesterMataKuliah: {
+      mataKuliah: {
+        kode: string;
+        nama: string;
+        sks: number;
+      };
+      kelas: string;
+      biaya: number;
+    };
+  }>;
+  payment?: {
+    status: string;
+    metodePembayaran?: string | null;
+    tanggalBayar?: string | null;
+    buktiPembayaran?: string | null;
+  } | null;
+}
 
 export default function AdminPendaftaranPage() {
+  const [pendaftaran, setPendaftaran] = useState<PendaftaranItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedPendaftaran, setSelectedPendaftaran] = useState<string | null>(
     null
   );
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [verificationDialog, setVerificationDialog] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<
-    'diterima' | 'ditolak'
-  >('diterima');
-  const [catatan, setCatatan] = useState('');
+    'DITERIMA' | 'DITOLAK'
+  >('DITERIMA');
+  const [
+    selectedPendaftaranForVerification,
+    setSelectedPendaftaranForVerification,
+  ] = useState<PendaftaranItem | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pendaftaranToDelete, setPendaftaranToDelete] = useState<string | null>(
+    null
+  );
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const filteredPendaftaran = mockPendaftaran.filter((p) => {
-    const matchesSearch =
-      p.nim.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.nama.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Fetch pendaftaran from API
+  const fetchPendaftaran = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+
+      const response = await fetch(`/api/pendaftaran?${params.toString()}`);
+      if (!response.ok) throw new Error('Gagal mengambil data pendaftaran');
+      const data = await response.json();
+      setPendaftaran(data.pendaftaran || []);
+    } catch (error) {
+      console.error('Error fetching pendaftaran:', error);
+      toast.error('Gagal mengambil data pendaftaran');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendaftaran();
+  }, [statusFilter]);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchPendaftaran();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const filteredPendaftaran = pendaftaran;
 
   const handleVerifikasi = async () => {
     if (!selectedPendaftaran) return;
 
+    setIsVerifying(true);
     try {
-      // TODO: Update status di database
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch(`/api/pendaftaran/${selectedPendaftaran}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: verificationStatus,
+          catatanAdmin: null,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Gagal memverifikasi');
+      }
 
       toast.success('Verifikasi berhasil', {
         description: `Pendaftaran ${
-          verificationStatus === 'diterima' ? 'diterima' : 'ditolak'
+          verificationStatus === 'DITERIMA' ? 'diterima' : 'ditolak'
         }`,
       });
 
       setVerificationDialog(false);
       setSelectedPendaftaran(null);
-      setCatatan('');
-    } catch (error) {
+      setSelectedPendaftaranForVerification(null);
+      fetchPendaftaran(); // Refresh data
+    } catch (error: any) {
       toast.error('Gagal memverifikasi', {
-        description: 'Terjadi kesalahan saat memverifikasi',
+        description: error.message || 'Terjadi kesalahan saat memverifikasi',
       });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleViewDetail = async (id: string) => {
+    try {
+      const response = await fetch(`/api/pendaftaran/${id}`);
+      if (!response.ok) throw new Error('Gagal mengambil detail pendaftaran');
+      const data = await response.json();
+      setSelectedPendaftaran(id);
+      setDetailModalOpen(true);
+    } catch (error) {
+      toast.error('Gagal mengambil detail pendaftaran');
+    }
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setPendaftaranToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!pendaftaranToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/pendaftaran/${pendaftaranToDelete}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Gagal menghapus pendaftaran');
+      }
+
+      toast.success('Pendaftaran berhasil dihapus');
+      setDeleteDialogOpen(false);
+      setPendaftaranToDelete(null);
+      fetchPendaftaran(); // Refresh data
+    } catch (error: any) {
+      toast.error('Gagal menghapus pendaftaran', {
+        description: error.message || 'Terjadi kesalahan saat menghapus',
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'diterima':
+      case 'DITERIMA':
         return <Badge className="bg-green-600">Diterima</Badge>;
-      case 'ditolak':
+      case 'DITOLAK':
         return <Badge variant="destructive">Ditolak</Badge>;
-      case 'menunggu_verifikasi':
+      case 'MENUNGGU_VERIFIKASI':
         return <Badge variant="secondary">Menunggu Verifikasi</Badge>;
+      case 'DIBATALKAN':
+        return <Badge variant="outline">Dibatalkan</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
+
+  const selectedPendaftaranData = pendaftaran.find(
+    (p) => p.id === selectedPendaftaran
+  );
 
   return (
     <div className="space-y-6">
@@ -144,104 +260,170 @@ export default function AdminPendaftaranPage() {
         </p>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="search">Cari</Label>
-              <Input
-                id="search"
-                placeholder="Cari berdasarkan NIM atau nama..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Filter Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger id="status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="menunggu_verifikasi">
-                    Menunggu Verifikasi
-                  </SelectItem>
-                  <SelectItem value="diterima">Diterima</SelectItem>
-                  <SelectItem value="ditolak">Ditolak</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Daftar Pendaftaran</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Daftar Pendaftaran</CardTitle>
           <CardDescription>
-            {filteredPendaftaran.length} pendaftaran ditemukan
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <i className="fa-solid fa-spinner fa-spin"></i>
+                Memuat...
+              </span>
+            ) : (
+              `${filteredPendaftaran.length} pendaftaran ditemukan`
+            )}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Input
+              placeholder="Cari berdasarkan NIM atau nama..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-10 flex-1"
+            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-10 w-full sm:w-48">
+                <SelectValue placeholder="Filter status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="menunggu_verifikasi">
+                  Menunggu Verifikasi
+                </SelectItem>
+                <SelectItem value="diterima">Diterima</SelectItem>
+                <SelectItem value="ditolak">Ditolak</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>NIM</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>Semester</TableHead>
-                <TableHead>Tanggal</TableHead>
-                <TableHead>Mata Kuliah</TableHead>
-                <TableHead className="text-right">Total Biaya</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
+                <TableHead className="text-center">NIM</TableHead>
+                <TableHead className="text-center">Nama</TableHead>
+                <TableHead className="text-center">Semester</TableHead>
+                <TableHead className="text-center">Tanggal</TableHead>
+                <TableHead className="text-center">Mata Kuliah</TableHead>
+                <TableHead className="text-center">Total Biaya</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-center">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPendaftaran.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.nim}</TableCell>
-                  <TableCell>{p.nama}</TableCell>
-                  <TableCell>{p.semester}</TableCell>
-                  <TableCell>
-                    {new Date(p.tanggalDaftar).toLocaleDateString('id-ID')}
-                  </TableCell>
-                  <TableCell>
-                    {p.totalMataKuliah} MK - {p.totalSKS} SKS
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {new Intl.NumberFormat('id-ID', {
-                      style: 'currency',
-                      currency: 'IDR',
-                    }).format(p.totalBiaya)}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(p.status)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          // TODO: Lihat detail
-                        }}>
-                        Detail
-                      </Button>
-                      {p.status === 'menunggu_verifikasi' && (
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setSelectedPendaftaran(p.id);
-                            setVerificationDialog(true);
-                          }}>
-                          Verifikasi
-                        </Button>
-                      )}
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                      <i className="fa-solid fa-spinner fa-spin"></i>
+                      Memuat data...
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : filteredPendaftaran.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="text-center py-8 text-muted-foreground">
+                    Belum ada data pendaftaran
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredPendaftaran.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium text-center">
+                      {p.userMaster.nimOrNip}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {p.userMaster.name}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {p.semester.nama}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {new Date(p.createdAt).toLocaleDateString('id-ID')}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {p.detail.length} MK - {p.totalSKS} SKS
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                      }).format(p.totalBiaya)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {getStatusBadge(p.status)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDetail(p.id)}>
+                          Detail
+                        </Button>
+                        {p.status === 'MENUNGGU_VERIFIKASI' && (
+                          <Button
+                            size="sm"
+                            onClick={async () => {
+                              setSelectedPendaftaran(p.id);
+                              // Fetch full data including payment with buktiPembayaran
+                              try {
+                                const response = await fetch(
+                                  `/api/pendaftaran/${p.id}`
+                                );
+                                if (response.ok) {
+                                  const data = await response.json();
+                                  // Map to PendaftaranItem format
+                                  const pendaftaranData: PendaftaranItem = {
+                                    ...data.pendaftaran,
+                                    payment: data.pendaftaran.payment
+                                      ? {
+                                          status:
+                                            data.pendaftaran.payment.status,
+                                          metodePembayaran:
+                                            data.pendaftaran.payment
+                                              .metodePembayaran,
+                                          tanggalBayar:
+                                            data.pendaftaran.payment
+                                              .tanggalBayar,
+                                          buktiPembayaran:
+                                            data.pendaftaran.payment
+                                              .buktiPembayaran,
+                                        }
+                                      : null,
+                                  };
+                                  setSelectedPendaftaranForVerification(
+                                    pendaftaranData
+                                  );
+                                }
+                              } catch (error) {
+                                console.error(
+                                  'Error fetching pendaftaran:',
+                                  error
+                                );
+                                // Fallback to current data
+                                setSelectedPendaftaranForVerification(p);
+                              }
+                              setVerificationDialog(true);
+                            }}>
+                            Verifikasi
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteClick(p.id)}
+                          className="text-destructive hover:text-destructive">
+                          <i className="fa-solid fa-trash"></i>
+                          Hapus
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -249,7 +431,7 @@ export default function AdminPendaftaranPage() {
 
       {/* Verification Dialog */}
       <Dialog open={verificationDialog} onOpenChange={setVerificationDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Verifikasi Pendaftaran</DialogTitle>
             <DialogDescription>
@@ -257,45 +439,163 @@ export default function AdminPendaftaranPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {/* Bukti Pembayaran */}
+            {selectedPendaftaranForVerification?.payment?.buktiPembayaran && (
+              <div className="space-y-2">
+                <Label>Bukti Pembayaran</Label>
+                <div className="border rounded-lg overflow-hidden">
+                  {selectedPendaftaranForVerification.payment.buktiPembayaran.endsWith(
+                    '.pdf'
+                  ) ? (
+                    <div className="p-4 bg-muted flex items-center justify-center">
+                      <div className="text-center">
+                        <i className="fa-solid fa-file-pdf text-4xl text-destructive mb-2"></i>
+                        <p className="text-sm text-muted-foreground">
+                          File PDF
+                        </p>
+                        <a
+                          href={
+                            selectedPendaftaranForVerification.payment
+                              .buktiPembayaran
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline mt-2 inline-block">
+                          Buka PDF
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={
+                        selectedPendaftaranForVerification.payment
+                          .buktiPembayaran
+                      }
+                      alt="Bukti pembayaran"
+                      className="w-full h-auto max-h-96 object-contain"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder-image.png';
+                      }}
+                    />
+                  )}
+                </div>
+                <a
+                  href={
+                    selectedPendaftaranForVerification.payment.buktiPembayaran
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline inline-flex items-center gap-1">
+                  <i className="fa-solid fa-external-link"></i>
+                  Buka gambar di tab baru
+                </a>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>Status Verifikasi</Label>
               <Select
                 value={verificationStatus}
-                onValueChange={(value: 'diterima' | 'ditolak') =>
+                onValueChange={(value: 'DITERIMA' | 'DITOLAK') =>
                   setVerificationStatus(value)
                 }>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="diterima">Diterima</SelectItem>
-                  <SelectItem value="ditolak">Ditolak</SelectItem>
+                  <SelectItem value="DITERIMA">Diterima</SelectItem>
+                  <SelectItem value="DITOLAK">Ditolak</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="catatan">Catatan (Opsional)</Label>
-              <textarea
-                id="catatan"
-                className="w-full min-h-[100px] px-3 py-2 border rounded-md"
-                placeholder="Tambahkan catatan jika diperlukan..."
-                value={catatan}
-                onChange={(e) => setCatatan(e.target.value)}
-              />
             </div>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setVerificationDialog(false)}>
+              onClick={() => {
+                setVerificationDialog(false);
+                setSelectedPendaftaranForVerification(null);
+              }}
+              disabled={isVerifying}>
               Batal
             </Button>
-            <Button onClick={handleVerifikasi}>
-              {verificationStatus === 'diterima' ? 'Terima' : 'Tolak'}
+            <Button onClick={handleVerifikasi} disabled={isVerifying}>
+              {isVerifying ? (
+                <>
+                  <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                  Memproses...
+                </>
+              ) : verificationStatus === 'DITERIMA' ? (
+                'Terima'
+              ) : (
+                'Tolak'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Pendaftaran?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini tidak dapat dibatalkan. Pendaftaran akan dihapus
+              permanen dan kuota mata kuliah akan dikembalikan jika status
+              pendaftaran adalah Menunggu Verifikasi atau Diterima.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-white">
+              {isDeleting ? (
+                <>
+                  <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                  Menghapus...
+                </>
+              ) : (
+                'Hapus'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Detail Modal */}
+      {selectedPendaftaranData && (
+        <DetailPendaftaranModal
+          open={detailModalOpen}
+          onOpenChange={setDetailModalOpen}
+          data={{
+            id: selectedPendaftaranData.id,
+            semester: selectedPendaftaranData.semester.nama,
+            tanggalDaftar: selectedPendaftaranData.createdAt,
+            status: selectedPendaftaranData.status.toLowerCase(),
+            totalMataKuliah: selectedPendaftaranData.detail.length,
+            totalSKS: selectedPendaftaranData.totalSKS,
+            totalBiaya: selectedPendaftaranData.totalBiaya,
+            paymentStatus:
+              selectedPendaftaranData.payment?.status.toLowerCase() ||
+              'belum_bayar',
+            paymentMethod:
+              selectedPendaftaranData.payment?.metodePembayaran || '',
+            tanggalBayar: selectedPendaftaranData.payment?.tanggalBayar || '',
+            buktiPembayaran:
+              selectedPendaftaranData.payment?.buktiPembayaran || null,
+            mataKuliah: selectedPendaftaranData.detail.map((d) => ({
+              kode: d.semesterMataKuliah.mataKuliah.kode,
+              nama: d.semesterMataKuliah.mataKuliah.nama,
+              sks: d.semesterMataKuliah.mataKuliah.sks,
+              biaya: d.semesterMataKuliah.biaya,
+            })),
+            catatan: selectedPendaftaranData.catatanAdmin,
+          }}
+        />
+      )}
     </div>
   );
 }

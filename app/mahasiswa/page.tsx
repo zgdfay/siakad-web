@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -12,37 +12,72 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { DetailPendaftaranModal } from '@/components/pendaftaran/detail-pendaftaran-modal';
-import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
-// Mock data - akan diganti dengan data dari API
-const mockPendaftaranAktif = {
-  id: '1',
-  semester: 'Semester Antara 2025',
-  status: 'menunggu_verifikasi',
-  tanggalDaftar: '2025-01-15',
-  totalMataKuliah: 3,
-  totalSKS: 9,
-  totalBiaya: 1500000,
-  paymentStatus: 'paid',
-  paymentMethod: 'midtrans',
-  tanggalBayar: '2025-01-15',
-  mataKuliah: [
-    { kode: 'MK001', nama: 'Pemrograman Web', sks: 3, biaya: 500000 },
-    { kode: 'MK002', nama: 'Basis Data', sks: 3, biaya: 500000 },
-    { kode: 'MK003', nama: 'Jaringan Komputer', sks: 3, biaya: 500000 },
-  ],
-  catatan: null,
-};
-
-const mockStatistik = {
-  totalPendaftaran: 5,
-  diterima: 3,
-  ditolak: 1,
-  menunggu: 1,
-};
+interface PendaftaranItem {
+  id: string;
+  semester: {
+    nama: string;
+  };
+  createdAt: string;
+  status: 'MENUNGGU_VERIFIKASI' | 'DITERIMA' | 'DITOLAK' | 'DIBATALKAN';
+  totalSKS: number;
+  totalBiaya: number;
+  detail: Array<{
+    semesterMataKuliah: {
+      mataKuliah: {
+        kode: string;
+        nama: string;
+        sks: number;
+      };
+      biaya: number;
+    };
+  }>;
+  payment?: {
+    status: string;
+    metodePembayaran?: string;
+    tanggalBayar?: string;
+  } | null;
+  catatanAdmin?: string | null;
+}
 
 export default function MahasiswaDashboard() {
+  const [pendaftaran, setPendaftaran] = useState<PendaftaranItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedPendaftaran, setSelectedPendaftaran] = useState<PendaftaranItem | null>(null);
+
+  useEffect(() => {
+    const fetchPendaftaran = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/pendaftaran/user/me');
+        if (!response.ok) throw new Error('Gagal mengambil data pendaftaran');
+        const data = await response.json();
+        setPendaftaran(data.pendaftaran || []);
+      } catch (error) {
+        console.error('Error fetching pendaftaran:', error);
+        toast.error('Gagal mengambil data pendaftaran');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPendaftaran();
+  }, []);
+
+  // Calculate statistics
+  const statistik = {
+    totalPendaftaran: pendaftaran.length,
+    diterima: pendaftaran.filter((p) => p.status === 'DITERIMA').length,
+    ditolak: pendaftaran.filter((p) => p.status === 'DITOLAK').length,
+    menunggu: pendaftaran.filter((p) => p.status === 'MENUNGGU_VERIFIKASI').length,
+  };
+
+  // Get active pendaftaran (most recent with status MENUNGGU_VERIFIKASI or DITERIMA)
+  const pendaftaranAktif = pendaftaran
+    .filter((p) => p.status === 'MENUNGGU_VERIFIKASI' || p.status === 'DITERIMA')
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -67,7 +102,7 @@ export default function MahasiswaDashboard() {
                     Total Pendaftaran
                   </CardDescription>
                   <CardTitle className="text-3xl mt-2 text-primary">
-                    {mockStatistik.totalPendaftaran}
+                    {statistik.totalPendaftaran}
                   </CardTitle>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -84,7 +119,7 @@ export default function MahasiswaDashboard() {
                     Diterima
                   </CardDescription>
                   <CardTitle className="text-3xl mt-2 text-green-600 dark:text-green-500">
-                    {mockStatistik.diterima}
+                    {statistik.diterima}
                   </CardTitle>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -101,7 +136,7 @@ export default function MahasiswaDashboard() {
                     Menunggu Verifikasi
                   </CardDescription>
                   <CardTitle className="text-3xl mt-2 text-amber-600 dark:text-amber-500">
-                    {mockStatistik.menunggu}
+                    {statistik.menunggu}
                   </CardTitle>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
@@ -126,51 +161,52 @@ export default function MahasiswaDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            {mockPendaftaranAktif ? (
+            {loading ? (
+              <div className="text-center py-10 px-4">
+                <p className="text-muted-foreground">Memuat data...</p>
+              </div>
+            ) : pendaftaranAktif ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-white dark:bg-card border border-border rounded-lg hover:shadow-md transition-shadow">
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-foreground">
-                        {mockPendaftaranAktif.semester}
+                        {pendaftaranAktif.semester.nama}
                       </h3>
                       <Badge
                         variant={
-                          mockPendaftaranAktif.status === 'diterima'
+                          pendaftaranAktif.status === 'DITERIMA'
                             ? 'default'
-                            : mockPendaftaranAktif.status === 'ditolak'
+                            : pendaftaranAktif.status === 'DITOLAK'
                             ? 'destructive'
                             : 'secondary'
                         }>
-                        {mockPendaftaranAktif.status === 'diterima'
+                        {pendaftaranAktif.status === 'DITERIMA'
                           ? 'Diterima'
-                          : mockPendaftaranAktif.status === 'ditolak'
+                          : pendaftaranAktif.status === 'DITOLAK'
                           ? 'Ditolak'
-                          : mockPendaftaranAktif.status ===
-                            'menunggu_verifikasi'
+                          : pendaftaranAktif.status === 'MENUNGGU_VERIFIKASI'
                           ? 'Menunggu Verifikasi'
-                          : mockPendaftaranAktif.status}
+                          : pendaftaranAktif.status}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4 flex-wrap text-sm text-muted-foreground">
                       <span className="flex items-center gap-1.5">
                         <i className="fa-solid fa-book text-xs"></i>
-                        {mockPendaftaranAktif.totalMataKuliah} Mata Kuliah
+                        {pendaftaranAktif.detail.length} Mata Kuliah
                       </span>
                       <span className="flex items-center gap-1.5">
                         <i className="fa-solid fa-money-bill-wave text-xs"></i>
                         {new Intl.NumberFormat('id-ID', {
                           style: 'currency',
                           currency: 'IDR',
-                        }).format(mockPendaftaranAktif.totalBiaya)}
+                        }).format(pendaftaranAktif.totalBiaya)}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       <i className="fa-solid fa-calendar-days mr-1.5"></i>
                       Daftar:{' '}
-                      {new Date(
-                        mockPendaftaranAktif.tanggalDaftar
-                      ).toLocaleDateString('id-ID', {
+                      {new Date(pendaftaranAktif.createdAt).toLocaleDateString('id-ID', {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric',
@@ -181,7 +217,10 @@ export default function MahasiswaDashboard() {
                     variant="outline"
                     size="sm"
                     className="ml-4"
-                    onClick={() => setIsDetailModalOpen(true)}>
+                    onClick={() => {
+                      setSelectedPendaftaran(pendaftaranAktif);
+                      setIsDetailModalOpen(true);
+                    }}>
                     <i className="fa-solid fa-eye mr-2"></i>
                     Detail
                   </Button>
@@ -258,11 +297,32 @@ export default function MahasiswaDashboard() {
       </div>
 
       {/* Modal Detail Pendaftaran */}
-      <DetailPendaftaranModal
-        open={isDetailModalOpen}
-        onOpenChange={setIsDetailModalOpen}
-        data={mockPendaftaranAktif}
-      />
+      {selectedPendaftaran && (
+        <DetailPendaftaranModal
+          open={isDetailModalOpen}
+          onOpenChange={setIsDetailModalOpen}
+          data={{
+            id: selectedPendaftaran.id,
+            semester: selectedPendaftaran.semester.nama,
+            tanggalDaftar: selectedPendaftaran.createdAt,
+            status: selectedPendaftaran.status.toLowerCase(),
+            totalMataKuliah: selectedPendaftaran.detail.length,
+            totalSKS: selectedPendaftaran.totalSKS,
+            totalBiaya: selectedPendaftaran.totalBiaya,
+            paymentStatus: selectedPendaftaran.payment?.status.toLowerCase() || 'belum_bayar',
+            paymentMethod: selectedPendaftaran.payment?.metodePembayaran || '',
+            tanggalBayar: selectedPendaftaran.payment?.tanggalBayar || '',
+            buktiPembayaran: selectedPendaftaran.payment?.buktiPembayaran || null,
+            mataKuliah: selectedPendaftaran.detail.map((d) => ({
+              kode: d.semesterMataKuliah.mataKuliah.kode,
+              nama: d.semesterMataKuliah.mataKuliah.nama,
+              sks: d.semesterMataKuliah.mataKuliah.sks,
+              biaya: d.semesterMataKuliah.biaya,
+            })),
+            catatan: selectedPendaftaran.catatanAdmin,
+          }}
+        />
+      )}
     </div>
   );
 }

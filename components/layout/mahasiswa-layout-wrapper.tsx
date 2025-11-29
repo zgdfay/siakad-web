@@ -43,7 +43,7 @@ export function MahasiswaLayoutWrapper({ children }: MahasiswaLayoutWrapperProps
             brandSubtitle="ITB YADIKA PASURUAN"
             brandHref="/mahasiswa"
             navItems={navItems}
-            user={formatUserForSidebar(user)}
+            user={user ? formatUserForSidebar(user) : undefined}
             logoutHref="/auth/login"
             logoutLabel="Keluar"
             settingHref="/mahasiswa/pengaturan"

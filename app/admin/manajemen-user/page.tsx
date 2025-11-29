@@ -366,6 +366,7 @@ export default function ManajemenUserPage() {
             variant="outline"
             className="w-full sm:w-auto"
             onClick={handleOpenCreate}>
+            <i className="fa-solid fa-plus mr-2"></i>
             Tambah User
           </Button>
           <Button
@@ -373,7 +374,17 @@ export default function ManajemenUserPage() {
             className="w-full sm:w-auto"
             onClick={handleImportClick}
             disabled={importing}>
-            {importing ? 'Mengimpor...' : 'Import CSV / Excel'}
+            {importing ? (
+              <>
+                <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                Mengimpor...
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-file-upload mr-2"></i>
+                Import CSV / Excel
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -383,7 +394,14 @@ export default function ManajemenUserPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Daftar User</CardTitle>
           <CardDescription>
-            {loading ? 'Memuat...' : `${users.length} user ditemukan`}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <i className="fa-solid fa-spinner fa-spin"></i>
+                Memuat...
+              </span>
+            ) : (
+              `${users.length} user ditemukan`
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

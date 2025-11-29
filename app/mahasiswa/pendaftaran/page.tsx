@@ -1,162 +1,140 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SemesterMataKuliahGroup } from '@/components/pendaftaran/semester-mata-kuliah-group';
 import { toast } from 'sonner';
 
-// Mock data - akan diganti dengan data dari API
-// Admin bisa set semester ganjil/genap aktif, yang tidak aktif akan disabled
-const mockSemesterAntara = [
-  {
-    id: '1',
-    nama: 'Semester Antara 2025 - Ganjil',
-    tahun: '2025',
-    periode: 'Ganjil',
-    tanggalMulai: '2025-07-01',
-    tanggalSelesai: '2025-08-31',
-    deadlinePendaftaran: '2025-06-25',
-    status: 'aktif' as const, // Admin set ganjil aktif
-    mataKuliah: [
-      {
-        id: 'mk1',
-        kode: 'MK001',
-        nama: 'Pemrograman Web',
-        sks: 3,
-        kelas: 'A',
-        jadwal: 'Senin, 08:00-10:00',
-        dosen: 'Dr. Ahmad Fauzi',
-        kuota: 30,
-        terisi: 25,
-        biaya: 500000,
-        prasyarat: ['Algoritma', 'Struktur Data'],
-      },
-      {
-        id: 'mk2',
-        kode: 'MK002',
-        nama: 'Basis Data',
-        sks: 3,
-        kelas: 'B',
-        jadwal: 'Selasa, 10:00-12:00',
-        dosen: 'Dr. Siti Nurhaliza',
-        kuota: 25,
-        terisi: 20,
-        biaya: 500000,
-      },
-      {
-        id: 'mk3',
-        kode: 'MK003',
-        nama: 'Jaringan Komputer',
-        sks: 3,
-        kelas: 'A',
-        jadwal: 'Rabu, 13:00-15:00',
-        dosen: 'Dr. Budi Santoso',
-        kuota: 20,
-        terisi: 15,
-        biaya: 500000,
-      },
-      {
-        id: 'mk4',
-        kode: 'MK004',
-        nama: 'Kecerdasan Buatan',
-        sks: 4,
-        kelas: 'A',
-        jadwal: 'Kamis, 08:00-11:00',
-        dosen: 'Dr. Rina Wati',
-        kuota: 25,
-        terisi: 18,
-        biaya: 600000,
-        prasyarat: ['Machine Learning'],
-      },
-    ],
-  },
-  {
-    id: '2',
-    nama: 'Semester Antara 2025 - Genap',
-    tahun: '2025',
-    periode: 'Genap',
-    tanggalMulai: '2025-12-01',
-    tanggalSelesai: '2026-01-31',
-    deadlinePendaftaran: '2025-11-25',
-    status: 'nonaktif' as const, // Admin set genap nonaktif (disabled)
-    mataKuliah: [
-      {
-        id: 'mk5',
-        kode: 'MK005',
-        nama: 'Pemrograman Mobile',
-        sks: 3,
-        kelas: 'A',
-        jadwal: 'Senin, 10:00-12:00',
-        dosen: 'Dr. Andi Pratama',
-        kuota: 30,
-        terisi: 0,
-        biaya: 500000,
-      },
-      {
-        id: 'mk6',
-        kode: 'MK006',
-        nama: 'Cloud Computing',
-        sks: 4,
-        kelas: 'B',
-        jadwal: 'Selasa, 13:00-16:00',
-        dosen: 'Dr. Sari Indah',
-        kuota: 25,
-        terisi: 0,
-        biaya: 600000,
-      },
-    ],
-  },
-  {
-    id: '3',
-    nama: 'Semester Antara 2024 - Ganjil',
-    tahun: '2024',
-    periode: 'Ganjil',
-    tanggalMulai: '2024-07-01',
-    tanggalSelesai: '2024-08-31',
-    deadlinePendaftaran: '2024-06-25',
-    status: 'nonaktif' as const, // Semester lalu
-    mataKuliah: [
-      {
-        id: 'mk7',
-        kode: 'MK007',
-        nama: 'Sistem Operasi',
-        sks: 3,
-        kelas: 'A',
-        jadwal: 'Rabu, 08:00-10:00',
-        dosen: 'Dr. Joko Widodo',
-        kuota: 30,
-        terisi: 30,
-        biaya: 500000,
-      },
-    ],
-  },
-];
+interface SemesterMataKuliah {
+  id: string;
+  kelas: string;
+  jadwal: string;
+  dosen: string;
+  kuota: number;
+  terisi: number;
+  biaya: number;
+  prasyarat?: string | null;
+  mataKuliah: {
+    id: string;
+    kode: string;
+    nama: string;
+    sks: number;
+  };
+}
+
+interface Semester {
+  id: string;
+  nama: string;
+  tahun: string;
+  periode: 'GANJIL' | 'GENAP';
+  tanggalMulai: string;
+  tanggalSelesai: string;
+  deadlinePendaftaran: string;
+  status: 'AKTIF' | 'NONAKTIF';
+  mataKuliah: SemesterMataKuliah[];
+}
 
 export default function PilihSemesterAntaraPage() {
   const router = useRouter();
+  const [semesterList, setSemesterList] = useState<Semester[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedMataKuliah, setSelectedMataKuliah] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   const maxSKS = 24;
 
+  // Fetch semesters from API
+  useEffect(() => {
+    const fetchSemesters = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/semesters?status=AKTIF');
+        if (!response.ok) throw new Error('Gagal mengambil data semester');
+        const data = await response.json();
+
+        // Transform data to match component interface
+        const transformedSemesters: Semester[] = (data.semesters || []).map(
+          (sem: any) => ({
+            id: sem.id,
+            nama: sem.nama,
+            tahun: sem.tahun,
+            periode: sem.periode,
+            tanggalMulai: sem.tanggalMulai,
+            tanggalSelesai: sem.tanggalSelesai,
+            deadlinePendaftaran: sem.deadlinePendaftaran,
+            status: sem.status,
+            mataKuliah: sem.mataKuliah.map((smk: any) => ({
+              id: smk.id,
+              kelas: smk.kelas,
+              jadwal: smk.jadwal,
+              dosen: smk.dosen,
+              kuota: smk.kuota,
+              terisi: smk.terisi,
+              biaya: smk.biaya,
+              prasyarat: smk.prasyarat,
+              mataKuliah: {
+                id: smk.mataKuliah.id,
+                kode: smk.mataKuliah.kode,
+                nama: smk.mataKuliah.nama,
+                sks: smk.mataKuliah.sks,
+              },
+            })),
+          })
+        );
+
+        setSemesterList(transformedSemesters);
+      } catch (error) {
+        console.error('Error fetching semesters:', error);
+        toast.error('Gagal mengambil data semester');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSemesters();
+  }, []);
+
   // Flatten semua mata kuliah untuk search
-  const allMataKuliah = mockSemesterAntara.flatMap((sem) =>
-    sem.mataKuliah.map((mk) => ({ ...mk, semesterId: sem.id }))
+  const allMataKuliah = semesterList.flatMap((sem) =>
+    sem.mataKuliah.map((smk) => ({
+      id: smk.id,
+      kode: smk.mataKuliah.kode,
+      nama: smk.mataKuliah.nama,
+      sks: smk.mataKuliah.sks,
+      kelas: smk.kelas,
+      jadwal: smk.jadwal,
+      dosen: smk.dosen,
+      kuota: smk.kuota,
+      terisi: smk.terisi,
+      biaya: smk.biaya,
+      prasyarat: smk.prasyarat,
+      semesterId: sem.id,
+    }))
   );
 
   // Filter mata kuliah berdasarkan search
-  const filteredSemester = mockSemesterAntara.map((sem) => ({
-    ...sem,
-    mataKuliah: sem.mataKuliah.filter(
-      (mk) =>
-        mk.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        mk.kode.toLowerCase().includes(searchTerm.toLowerCase())
-    ),
-  })).filter((sem) => sem.mataKuliah.length > 0);
+  const filteredSemester = semesterList
+    .map((sem) => ({
+      ...sem,
+      mataKuliah: sem.mataKuliah.filter(
+        (smk) =>
+          smk.mataKuliah.nama
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          smk.mataKuliah.kode.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    }))
+    .filter((sem) => sem.mataKuliah.length > 0);
 
   // Hitung total SKS dan biaya
   const selectedMK = allMataKuliah.filter((mk) =>
@@ -169,11 +147,33 @@ export default function PilihSemesterAntaraPage() {
     if (selectedMataKuliah.includes(mkId)) {
       setSelectedMataKuliah(selectedMataKuliah.filter((id) => id !== mkId));
     } else {
+      // Check if mata kuliah is from same semester
+      const selectedFromDifferentSemester = selectedMataKuliah.some((id) => {
+        const mk = allMataKuliah.find((m) => m.id === id);
+        return mk && mk.semesterId !== semesterId;
+      });
+
+      if (selectedFromDifferentSemester) {
+        toast.error('Tidak dapat memilih mata kuliah dari semester berbeda', {
+          description: 'Pilih mata kuliah dari semester yang sama',
+        });
+        return;
+      }
+
+      // Check quota
+      const mk = allMataKuliah.find((m) => m.id === mkId);
+      if (mk && mk.terisi >= mk.kuota) {
+        toast.error('Kuota penuh', {
+          description: `Mata kuliah ${mk.nama} sudah penuh`,
+        });
+        return;
+      }
+
       setSelectedMataKuliah([...selectedMataKuliah, mkId]);
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (selectedMataKuliah.length === 0) {
       toast.error('Pilih minimal 1 mata kuliah', {
         description: 'Silakan pilih mata kuliah yang ingin Anda daftar',
@@ -188,40 +188,59 @@ export default function PilihSemesterAntaraPage() {
       return;
     }
 
-    // Validasi: hanya bisa pilih dari semester aktif (disabled untuk testing)
-    // const selectedFromInactive = selectedMK.some((mk) => {
-    //   const semester = mockSemesterAntara.find((s) => s.id === mk.semesterId);
-    //   return semester?.status === 'nonaktif';
-    // });
-
-    // if (selectedFromInactive) {
-    //   toast.error('Pendaftaran tidak valid', {
-    //     description: 'Hanya bisa memilih mata kuliah dari semester aktif',
-    //   });
-    //   return;
-    // }
-
-    // Simpan ke session storage
-    const semesterId = selectedMK[0]?.semesterId || mockSemesterAntara[0].id;
-    sessionStorage.setItem('selectedMataKuliah', JSON.stringify(selectedMataKuliah));
-    sessionStorage.setItem(
-      'checkoutData',
-      JSON.stringify({
-        semesterId,
-        mataKuliah: selectedMK.map(({ semesterId, ...mk }) => mk),
-        totalBiaya,
-      })
-    );
-
-    toast.success('Data tersimpan', {
-      description: 'Lanjutkan ke halaman checkout',
+    // Validate: semua harus dari semester aktif
+    const selectedFromInactive = selectedMK.some((mk) => {
+      const semester = semesterList.find((s) => s.id === mk.semesterId);
+      return semester?.status !== 'AKTIF';
     });
 
+    if (selectedFromInactive) {
+      toast.error('Pendaftaran tidak valid', {
+        description: 'Hanya bisa memilih mata kuliah dari semester aktif',
+      });
+      return;
+    }
+
+    // Check deadline
+    const semesterId = selectedMK[0]?.semesterId;
+    const semester = semesterList.find((s) => s.id === semesterId);
+    if (semester && new Date() > new Date(semester.deadlinePendaftaran)) {
+      toast.error('Deadline sudah lewat', {
+        description: 'Pendaftaran untuk semester ini sudah ditutup',
+      });
+      return;
+    }
+
+    // Validate: semua mata kuliah harus dari semester yang sama
+    const allSameSemester = selectedMK.every((mk) => mk.semesterId === semesterId);
+    if (!allSameSemester) {
+      toast.error('Pendaftaran tidak valid', {
+        description: 'Semua mata kuliah harus dari semester yang sama',
+      });
+      return;
+    }
+
+    // Simpan data untuk checkout page
+    const checkoutData = {
+      semesterId,
+      mataKuliah: selectedMK.map((mk) => ({
+        id: mk.id,
+        kode: mk.kode,
+        nama: mk.nama,
+        sks: mk.sks,
+        biaya: mk.biaya,
+      })),
+      totalBiaya,
+    };
+
+    sessionStorage.setItem('checkoutData', JSON.stringify(checkoutData));
+
+    // Redirect ke checkout page
     router.push(`/mahasiswa/pendaftaran/${semesterId}/checkout`);
   };
 
-  const activeSemester = mockSemesterAntara.filter((s) => s.status === 'aktif');
-  const inactiveSemester = mockSemesterAntara.filter((s) => s.status === 'nonaktif');
+  const activeSemester = semesterList.filter((s) => s.status === 'AKTIF');
+  const inactiveSemester = semesterList.filter((s) => s.status === 'NONAKTIF');
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -233,7 +252,8 @@ export default function PilihSemesterAntaraPage() {
               Pendaftaran Semester Antara
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Pilih mata kuliah yang ingin Anda daftar. Hanya semester aktif yang dapat dipilih.
+              Pilih mata kuliah yang ingin Anda daftar. Hanya semester aktif
+              yang dapat dipilih.
             </p>
           </div>
 
@@ -251,60 +271,135 @@ export default function PilihSemesterAntaraPage() {
             />
           </div>
 
-          {/* Semester Aktif */}
-          {activeSemester.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                Semester Aktif
-              </h2>
-              {activeSemester
-                .filter((sem) =>
-                  filteredSemester.some((fs) => fs.id === sem.id)
-                )
-                .map((semester) => (
-                  <SemesterMataKuliahGroup
-                    key={semester.id}
-                    semester={semester}
-                    selectedMataKuliah={selectedMataKuliah}
-                    onSelectionChange={handleSelectionChange}
-                    maxSKS={maxSKS}
-                    totalSKSSelected={totalSKS}
-                  />
-                ))}
-            </div>
-          )}
-
-          {/* Semester Nonaktif */}
-          {inactiveSemester.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground text-muted-foreground">
-                Semester Tidak Tersedia
-              </h2>
-              {inactiveSemester
-                .filter((sem) =>
-                  filteredSemester.some((fs) => fs.id === sem.id)
-                )
-                .map((semester) => (
-                  <SemesterMataKuliahGroup
-                    key={semester.id}
-                    semester={semester}
-                    selectedMataKuliah={selectedMataKuliah}
-                    onSelectionChange={handleSelectionChange}
-                    maxSKS={maxSKS}
-                    totalSKSSelected={totalSKS}
-                  />
-                ))}
-            </div>
-          )}
-
-          {filteredSemester.length === 0 && (
+          {loading ? (
             <Card>
               <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">
-                  Tidak ada mata kuliah yang ditemukan
-                </p>
+                <p className="text-muted-foreground">Memuat data semester...</p>
               </CardContent>
             </Card>
+          ) : (
+            <>
+              {/* Semester Aktif */}
+              {activeSemester.length > 0 && (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Semester Aktif
+                  </h2>
+                  {activeSemester
+                    .filter((sem) =>
+                      filteredSemester.some((fs) => fs.id === sem.id)
+                    )
+                    .map((semester) => (
+                      <SemesterMataKuliahGroup
+                        key={semester.id}
+                        semester={{
+                          id: semester.id,
+                          nama: semester.nama,
+                          tahun: semester.tahun,
+                          periode:
+                            semester.periode === 'GANJIL' ? 'Ganjil' : 'Genap',
+                          tanggalMulai: semester.tanggalMulai,
+                          tanggalSelesai: semester.tanggalSelesai,
+                          deadlinePendaftaran: semester.deadlinePendaftaran,
+                          status:
+                            semester.status === 'AKTIF' ? 'aktif' : 'nonaktif',
+                          mataKuliah: semester.mataKuliah.map((smk) => ({
+                            id: smk.id,
+                            kode: smk.mataKuliah.kode,
+                            nama: smk.mataKuliah.nama,
+                            sks: smk.mataKuliah.sks,
+                            kelas: smk.kelas,
+                            jadwal: smk.jadwal,
+                            dosen: smk.dosen,
+                            kuota: smk.kuota,
+                            terisi: smk.terisi,
+                            biaya: smk.biaya,
+                            prasyarat: smk.prasyarat
+                              ? (() => {
+                                  try {
+                                    const parsed = JSON.parse(smk.prasyarat);
+                                    return Array.isArray(parsed) ? parsed : [smk.prasyarat];
+                                  } catch {
+                                    return [smk.prasyarat];
+                                  }
+                                })()
+                              : undefined,
+                          })),
+                        }}
+                        selectedMataKuliah={selectedMataKuliah}
+                        onSelectionChange={handleSelectionChange}
+                        maxSKS={maxSKS}
+                        totalSKSSelected={totalSKS}
+                      />
+                    ))}
+                </div>
+              )}
+
+              {/* Semester Nonaktif */}
+              {inactiveSemester.length > 0 && (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold text-foreground text-muted-foreground">
+                    Semester Tidak Tersedia
+                  </h2>
+                  {inactiveSemester
+                    .filter((sem) =>
+                      filteredSemester.some((fs) => fs.id === sem.id)
+                    )
+                    .map((semester) => (
+                      <SemesterMataKuliahGroup
+                        key={semester.id}
+                        semester={{
+                          id: semester.id,
+                          nama: semester.nama,
+                          tahun: semester.tahun,
+                          periode:
+                            semester.periode === 'GANJIL' ? 'Ganjil' : 'Genap',
+                          tanggalMulai: semester.tanggalMulai,
+                          tanggalSelesai: semester.tanggalSelesai,
+                          deadlinePendaftaran: semester.deadlinePendaftaran,
+                          status: 'nonaktif',
+                          mataKuliah: semester.mataKuliah.map((smk) => ({
+                            id: smk.id,
+                            kode: smk.mataKuliah.kode,
+                            nama: smk.mataKuliah.nama,
+                            sks: smk.mataKuliah.sks,
+                            kelas: smk.kelas,
+                            jadwal: smk.jadwal,
+                            dosen: smk.dosen,
+                            kuota: smk.kuota,
+                            terisi: smk.terisi,
+                            biaya: smk.biaya,
+                            prasyarat: smk.prasyarat
+                              ? (() => {
+                                  try {
+                                    const parsed = JSON.parse(smk.prasyarat);
+                                    return Array.isArray(parsed) ? parsed : [smk.prasyarat];
+                                  } catch {
+                                    return [smk.prasyarat];
+                                  }
+                                })()
+                              : undefined,
+                          })),
+                        }}
+                        selectedMataKuliah={selectedMataKuliah}
+                        onSelectionChange={handleSelectionChange}
+                        maxSKS={maxSKS}
+                        totalSKSSelected={totalSKS}
+                      />
+                    ))}
+                </div>
+              )}
+
+              {filteredSemester.length === 0 && !loading && (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <p className="text-muted-foreground">
+                      Tidak ada mata kuliah yang ditemukan
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
         </div>
 
@@ -320,12 +415,19 @@ export default function PilihSemesterAntaraPage() {
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Mata Kuliah Dipilih</span>
-                  <span className="font-medium">{selectedMataKuliah.length}</span>
+                  <span className="text-muted-foreground">
+                    Mata Kuliah Dipilih
+                  </span>
+                  <span className="font-medium">
+                    {selectedMataKuliah.length}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Total SKS</span>
-                  <span className={`font-medium ${totalSKS > maxSKS ? 'text-destructive' : ''}`}>
+                  <span
+                    className={`font-medium ${
+                      totalSKS > maxSKS ? 'text-destructive' : ''
+                    }`}>
                     {totalSKS} / {maxSKS}
                   </span>
                 </div>

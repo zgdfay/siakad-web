@@ -53,7 +53,7 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
             brandSubtitle="ITB YADIKA PASURUAN"
             brandHref="/admin"
             navItems={navItems}
-            user={formatUserForSidebar(user)}
+            user={user ? formatUserForSidebar(user) : undefined}
             logoutHref="/auth/login"
             logoutLabel="Keluar"
             settingHref="/admin/pengaturan"
