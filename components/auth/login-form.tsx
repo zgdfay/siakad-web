@@ -169,7 +169,7 @@ export function LoginForm({
           <Link
             href="/auth/register"
             className="text-primary hover:underline font-medium">
-            Daftar di sini
+            Daftar
           </Link>
         </div>
       </form>

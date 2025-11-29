@@ -1,48 +1,186 @@
+import Link from 'next/link';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+
 export default function AdminDashboard() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Admin</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Selamat datang di panel administrasi Siakad
-        </p>
-      </div>
+    <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+            Dashboard Admin
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Ringkasan aktivitas dan pengelolaan Semester Antara
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h3 className="text-sm font-medium text-gray-500">Total Semester Antara</h3>
-          <p className="mt-2 text-3xl font-bold text-gray-900">0</p>
-          <p className="mt-1 text-xs text-gray-500">Aktif</p>
-        </div>
-        
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h3 className="text-sm font-medium text-gray-500">Mahasiswa Terdaftar</h3>
-          <p className="mt-2 text-3xl font-bold text-gray-900">0</p>
-          <p className="mt-1 text-xs text-gray-500">Semester Antara</p>
-        </div>
-        
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h3 className="text-sm font-medium text-gray-500">Mata Kuliah</h3>
-          <p className="mt-2 text-3xl font-bold text-gray-900">0</p>
-          <p className="mt-1 text-xs text-gray-500">Tersedia</p>
-        </div>
-      </div>
+        {/* Statistik Utama */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardDescription className="text-muted-foreground">
+                    Semester Antara
+                  </CardDescription>
+                  <CardTitle className="text-3xl mt-2 text-primary">
+                    3
+                  </CardTitle>
+                </div>
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <i className="fa-solid fa-calendar-days text-primary text-xl"></i>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
 
-      <div className="rounded-lg bg-white p-6 shadow">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Semester Antara Terbaru
-        </h2>
-        <div className="text-center py-8 text-gray-500">
-          <p>Belum ada data semester antara</p>
-          <a
-            href="/admin/semester-antara/tambah"
-            className="mt-4 inline-block text-blue-600 hover:text-blue-700"
-          >
-            Tambah Semester Antara
-          </a>
+          <Card className="bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800/30">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardDescription className="text-muted-foreground">
+                    Mahasiswa Terdaftar
+                  </CardDescription>
+                  <CardTitle className="text-3xl mt-2 text-green-600 dark:text-green-500">
+                    120
+                  </CardTitle>
+                </div>
+                <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                  <i className="fa-solid fa-user-graduate text-green-600 dark:text-green-500 text-xl"></i>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
+          <Card className="bg-purple-50 border-purple-200 dark:bg-purple-950/20 dark:border-purple-800/30">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardDescription className="text-muted-foreground">
+                    Mata Kuliah
+                  </CardDescription>
+                  <CardTitle className="text-3xl mt-2 text-purple-600 dark:text-purple-400">
+                    24
+                  </CardTitle>
+                </div>
+                <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <i className="fa-solid fa-book text-purple-600 dark:text-purple-400 text-xl"></i>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {/* Kelola Pendaftaran - tema amber */}
+          <Card className="bg-linear-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200 dark:border-amber-800/40 hover:shadow-md transition-all">
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                  <i className="fa-solid fa-file-pen text-amber-600 dark:text-amber-400"></i>
+                </div>
+                <CardTitle>Kelola Pendaftaran</CardTitle>
+              </div>
+              <CardDescription>
+                Lihat dan verifikasi pendaftaran mahasiswa
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/admin/pendaftaran">
+                <Button
+                  variant="outline"
+                  className="w-full border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/20">
+                  <i className="fa-solid fa-arrow-right mr-2"></i>
+                  Buka Halaman Pendaftaran
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Kelola Semester Antara - tema biru */}
+          <Card className="bg-linear-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800/30 hover:shadow-md transition-all">
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <i className="fa-solid fa-calendar-days text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <CardTitle>Kelola Semester Antara</CardTitle>
+              </div>
+              <CardDescription>
+                Tambah, ubah, dan atur status Semester Antara
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/admin/semester-antara">
+                <Button
+                  variant="outline"
+                  className="w-full border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20">
+                  <i className="fa-solid fa-arrow-right mr-2"></i>
+                  Buka Pengelolaan Semester
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-linear-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-900/10 border-emerald-200 dark:border-emerald-800/30 hover:shadow-md transition-all">
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                  <i className="fa-solid fa-users text-emerald-600 dark:text-emerald-400"></i>
+                </div>
+                <CardTitle>Manajemen User</CardTitle>
+              </div>
+              <CardDescription>
+                Kelola akun mahasiswa, dosen, dan admin
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/admin/manajemen-user">
+                <Button
+                  variant="outline"
+                  className="w-full border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20">
+                  <i className="fa-solid fa-arrow-right mr-2"></i>
+                  Buka Manajemen User
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-linear-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200 dark:border-purple-800/30 hover:shadow-md transition-all">
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <i className="fa-solid fa-book-open text-purple-600 dark:text-purple-400"></i>
+                </div>
+                <CardTitle>Manajemen Mata Kuliah</CardTitle>
+              </div>
+              <CardDescription>
+                Atur daftar mata kuliah untuk Semester Antara
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/admin/manajemen-mata-kuliah">
+                <Button
+                  variant="outline"
+                  className="w-full border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/20">
+                  <i className="fa-solid fa-arrow-right mr-2"></i>
+                  Buka Manajemen Mata Kuliah
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   );
 }
-

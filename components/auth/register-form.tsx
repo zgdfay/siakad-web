@@ -98,9 +98,7 @@ export function RegisterForm({
       }
     } catch (err) {
       const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'Terjadi kesalahan saat mendaftar';
+        err instanceof Error ? err.message : 'Terjadi kesalahan saat mendaftar';
       setError(errorMessage);
       toast.error('Pendaftaran gagal', {
         description: errorMessage,
@@ -251,11 +249,10 @@ export function RegisterForm({
           <Link
             href={loginLink}
             className="text-primary hover:underline font-medium">
-            Masuk di sini
+            Masuk
           </Link>
         </div>
       </form>
     </div>
   );
 }
-
