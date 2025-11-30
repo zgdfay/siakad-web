@@ -44,6 +44,11 @@ export interface SendEmailOptions {
   subject: string;
   html: string;
   text?: string;
+  attachments?: Array<{
+    filename: string;
+    content: string | Buffer;
+    contentType?: string;
+  }>;
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
@@ -55,6 +60,9 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     console.log('To:', options.to);
     console.log('Subject:', options.subject);
     console.log('HTML:', options.html);
+    if (options.attachments) {
+      console.log('Attachments:', options.attachments.map(a => a.filename));
+    }
     return;
   }
 
@@ -65,6 +73,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
       subject: options.subject,
       html: options.html,
       text: options.text || options.html.replace(/<[^>]*>/g, ''),
+      attachments: options.attachments,
     });
   } catch (error) {
     console.error('Error sending email:', error);

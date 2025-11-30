@@ -26,7 +26,7 @@ export type UserStatus = 'aktif' | 'nonaktif';
 export interface UserFormValues {
   id?: string;
   nimOrNip: string;
-  name: string;
+  name?: string; // Optional
   email?: string; // Optional - akan diisi saat self-register
   role: UserRole;
   status: UserStatus;
@@ -80,7 +80,7 @@ export function UserFormDialog({
   };
 
   const handleSubmit = async () => {
-    if (!formValues.nimOrNip || !formValues.name) {
+    if (!formValues.nimOrNip) {
       return;
     }
     setIsSubmitting(true);
@@ -91,9 +91,7 @@ export function UserFormDialog({
     }
   };
 
-  const isFormIncomplete =
-    !formValues.nimOrNip.trim() ||
-    !formValues.name.trim();
+  const isFormIncomplete = !formValues.nimOrNip.trim();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -140,13 +138,18 @@ export function UserFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Nama Lengkap</Label>
+            <Label htmlFor="name">
+              Nama Lengkap <span className="text-muted-foreground text-xs">(Opsional)</span>
+            </Label>
             <Input
               id="name"
-              value={formValues.name}
+              value={formValues.name || ''}
               onChange={(e) => handleChange('name', e.target.value)}
               placeholder="Masukkan nama lengkap"
             />
+            <p className="text-xs text-muted-foreground">
+              Nama dapat dikosongkan dan akan diisi saat self-register.
+            </p>
           </div>
 
           <div className="space-y-2">

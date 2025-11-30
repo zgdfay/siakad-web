@@ -68,12 +68,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Jika UserMaster sudah ada tapi belum punya account, 
-    // update name jika berbeda (optional - untuk sync data)
-    if (userMaster.name !== name) {
+    // Update name di UserMaster jika name kosong/null (sama seperti email)
+    // Name akan diisi oleh user saat self-register
+    if (!userMaster.name || userMaster.name.trim() === '') {
       await prisma.userMaster.update({
         where: { id: userMaster.id },
-        data: { name },
+        data: { name: name.trim() },
       });
     }
 
@@ -118,14 +118,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Fetch updated user data to get the latest name (jika sudah di-update)
+    const updatedUserMaster = await prisma.userMaster.findUnique({
+      where: { id: userMaster.id },
+    });
+
     // Prepare user data
     const userData = {
-      id: userMaster.id,
-      nim: userMaster.nimOrNip,
-      name: userMaster.name,
+      id: updatedUserMaster!.id,
+      nim: updatedUserMaster!.nimOrNip,
+      name: updatedUserMaster!.name || name.trim(), // Use updated name or fallback to registered name
       email,
-      role: userMaster.role,
-      status: userMaster.status,
+      role: updatedUserMaster!.role,
+      status: updatedUserMaster!.status,
     };
 
     // Set session cookie (auto-login setelah register)

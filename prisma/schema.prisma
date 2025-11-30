@@ -9,7 +9,7 @@ datasource db {
 model UserMaster {
   id          String        @id @default(uuid())
   nimOrNip    String        @unique
-  name        String
+  name        String?
   role        Role
   status      UserStatus    @default(AKTIF)
   createdAt   DateTime      @default(now())

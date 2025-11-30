@@ -5,7 +5,7 @@
 export interface User {
   id: string;
   nim: string;
-  name: string;
+  name: string | null;
   email: string;
   role: 'ADMIN' | 'DOSEN' | 'MAHASISWA';
   status: 'AKTIF' | 'NONAKTIF';
@@ -63,7 +63,10 @@ export function hasRole(role: User['role']): boolean {
 /**
  * Get user initials for avatar
  */
-export function getUserInitials(name: string): string {
+export function getUserInitials(name: string | null | undefined): string {
+  if (!name || !name.trim()) {
+    return '??';
+  }
   const parts = name.trim().split(' ');
   if (parts.length === 1) {
     return parts[0].substring(0, 2).toUpperCase();

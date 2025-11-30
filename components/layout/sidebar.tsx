@@ -205,14 +205,14 @@ export function Sidebar({
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 w-full px-2 py-2 rounded-lg hover:bg-sidebar-accent transition-colors text-left focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0">
                   <Avatar className="h-10 w-10 cursor-pointer focus:outline-none focus:ring-0">
-                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarImage src={user.avatar} alt={user.name || 'User'} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      {user.initials || user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                      {user.initials || '??'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-sidebar-foreground truncate">
-                      {user.name}
+                      {user.name || 'User'}
                     </p>
                     <p className="text-xs text-sidebar-foreground/70 truncate">
                       {user.email}
@@ -228,7 +228,7 @@ export function Sidebar({
                 className="w-56 mb-4">
                 <DropdownMenuLabel className="px-3 py-2.5">
                   <div className="flex flex-col space-y-0.5 min-w-0">
-                    <p className="text-sm font-semibold text-foreground leading-tight truncate">{user.name}</p>
+                    <p className="text-sm font-semibold text-foreground leading-tight truncate">{user.name || 'User'}</p>
                     <p className="text-xs text-foreground/70 leading-tight truncate">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>

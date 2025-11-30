@@ -120,7 +120,16 @@ export function MataKuliahFormDialog({
       const response = await fetch('/api/semesters');
       if (!response.ok) throw new Error('Gagal mengambil data semester');
       const data = await response.json();
-      setSemesters(data.semesters || []);
+      // Transform data to match interface
+      const transformedSemesters: SemesterOption[] = (data.semesters || []).map(
+        (sem: any) => ({
+          id: sem.id,
+          nama: sem.nama,
+          tahun: sem.tahun,
+          periode: sem.periode,
+        })
+      );
+      setSemesters(transformedSemesters);
     } catch (error) {
       console.error('Error fetching semesters:', error);
     } finally {
@@ -201,7 +210,9 @@ export function MataKuliahFormDialog({
     }
     // For create mode, semesterId is required
     if (mode === 'create' && !formValues.semesterId) {
-      console.warn('Form validation failed: semesterId is required for create mode');
+      console.warn(
+        'Form validation failed: semesterId is required for create mode'
+      );
       return;
     }
 
@@ -454,13 +465,26 @@ export function MataKuliahFormDialog({
                       </Label>
                       <Input
                         id="tanggalJadwal"
-                        type="datetime-local"
-                        value={formValues.tanggalJadwal || ''}
-                        onChange={(e) => handleChange('tanggalJadwal', e.target.value)}
+                        type="date"
+                        value={
+                          formValues.tanggalJadwal
+                            ? typeof formValues.tanggalJadwal === 'string' &&
+                              formValues.tanggalJadwal.includes('T')
+                              ? formValues.tanggalJadwal.split('T')[0]
+                              : typeof formValues.tanggalJadwal === 'string'
+                              ? formValues.tanggalJadwal
+                              : new Date(formValues.tanggalJadwal)
+                                  .toISOString()
+                                  .split('T')[0]
+                            : ''
+                        }
+                        onChange={(e) =>
+                          handleChange('tanggalJadwal', e.target.value)
+                        }
                         className="w-full"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Pilih tanggal dan waktu untuk jadwal kuliah
+                        Pilih tanggal untuk jadwal kuliah
                       </p>
                     </div>
                     <div className="space-y-2">

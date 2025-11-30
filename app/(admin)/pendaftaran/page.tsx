@@ -108,6 +108,7 @@ export default function AdminPendaftaranPage() {
   );
   const [isVerifying, setIsVerifying] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
 
   // Fetch pendaftaran from API
   const fetchPendaftaran = async () => {
@@ -195,6 +196,30 @@ export default function AdminPendaftaranPage() {
       setDetailModalOpen(true);
     } catch (error) {
       toast.error('Gagal mengambil detail pendaftaran');
+    }
+  };
+
+  const handleSendEmail = async (id: string) => {
+    setSendingEmailId(id);
+    try {
+      const response = await fetch(`/api/pendaftaran/${id}/send-email`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Gagal mengirim email');
+      }
+
+      toast.success('Email berhasil dikirim', {
+        description: 'Email notifikasi telah dikirim ke mahasiswa',
+      });
+    } catch (error: any) {
+      toast.error('Gagal mengirim email', {
+        description: error.message || 'Terjadi kesalahan saat mengirim email',
+      });
+    } finally {
+      setSendingEmailId(null);
     }
   };
 
@@ -371,6 +396,25 @@ export default function AdminPendaftaranPage() {
                           onClick={() => handleViewDetail(p.id)}>
                           Detail
                         </Button>
+                        {p.status === 'DITERIMA' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSendEmail(p.id)}
+                            disabled={sendingEmailId === p.id}>
+                            {sendingEmailId === p.id ? (
+                              <>
+                                <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                                Mengirim...
+                              </>
+                            ) : (
+                              <>
+                                <i className="fa-solid fa-envelope mr-2"></i>
+                                Kirim Email
+                              </>
+                            )}
+                          </Button>
+                        )}
                         {p.status === 'MENUNGGU_VERIFIKASI' && (
                           <Button
                             size="sm"

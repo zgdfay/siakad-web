@@ -102,16 +102,22 @@ export default function JadwalKuliahPage() {
     fetchJadwal();
   }, []);
 
-  const handleToggleStatus = async (pendaftaranDetailId: string, currentStatus: 'AKTIF' | 'SELESAI') => {
+  const handleToggleStatus = async (
+    pendaftaranDetailId: string,
+    currentStatus: 'AKTIF' | 'SELESAI'
+  ) => {
     const newStatus = currentStatus === 'AKTIF' ? 'SELESAI' : 'AKTIF';
     setUpdatingIds((prev) => new Set(prev).add(pendaftaranDetailId));
 
     try {
-      const response = await fetch(`/api/pendaftaran-detail/${pendaftaranDetailId}/status-jadwal`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ statusJadwal: newStatus }),
-      });
+      const response = await fetch(
+        `/api/pendaftaran-detail/${pendaftaranDetailId}/status-jadwal`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ statusJadwal: newStatus }),
+        }
+      );
 
       if (!response.ok) {
         const data = await response.json();
@@ -169,11 +175,14 @@ export default function JadwalKuliahPage() {
               Jadwal Kuliah
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Jadwal mata kuliah semester antara yang telah Anda daftarkan dan diterima
+              Jadwal mata kuliah semester antara yang telah Anda daftarkan dan
+              diterima
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Select value={filterStatus} onValueChange={(value: FilterStatus) => setFilterStatus(value)}>
+            <Select
+              value={filterStatus}
+              onValueChange={(value: FilterStatus) => setFilterStatus(value)}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="Filter Status" />
               </SelectTrigger>
@@ -214,11 +223,15 @@ export default function JadwalKuliahPage() {
                   <div>
                     <CardTitle>{semesterNama}</CardTitle>
                     <CardDescription>
-                      {items.length} mata kuliah - {items.reduce((sum, item) => sum + item.sks, 0)} SKS
+                      {items.length} mata kuliah -{' '}
+                      {items.reduce((sum, item) => sum + item.sks, 0)} SKS
                     </CardDescription>
                   </div>
                   <Badge variant="outline">
-                    {items[0].semester.tahun} - {items[0].semester.periode === 'GANJIL' ? 'Ganjil' : 'Genap'}
+                    {items[0].semester.tahun} -{' '}
+                    {items[0].semester.periode === 'GANJIL'
+                      ? 'Ganjil'
+                      : 'Genap'}
                   </Badge>
                 </div>
               </CardHeader>
@@ -229,7 +242,9 @@ export default function JadwalKuliahPage() {
                       <TableRow>
                         <TableHead className="text-center">Status</TableHead>
                         <TableHead className="text-center">Kode</TableHead>
-                        <TableHead className="text-center">Mata Kuliah</TableHead>
+                        <TableHead className="text-center">
+                          Mata Kuliah
+                        </TableHead>
                         <TableHead className="text-center">Kelas</TableHead>
                         <TableHead className="text-center">Jadwal</TableHead>
                         <TableHead className="text-center">Tanggal</TableHead>
@@ -239,34 +254,44 @@ export default function JadwalKuliahPage() {
                     </TableHeader>
                     <TableBody>
                       {items.map((item) => {
-                        const formatTanggal = (tanggal: string | Date | null | undefined) => {
+                        const formatTanggal = (
+                          tanggal: string | Date | null | undefined
+                        ) => {
                           if (!tanggal) return '-';
                           try {
                             const date = new Date(tanggal);
                             return date.toLocaleDateString('id-ID', {
+                              weekday: 'long',
                               day: 'numeric',
-                              month: 'short',
+                              month: 'long',
                               year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
                             });
                           } catch {
                             return '-';
                           }
                         };
 
-                        const isUpdating = updatingIds.has(item.pendaftaranDetailId);
+                        const isUpdating = updatingIds.has(
+                          item.pendaftaranDetailId
+                        );
                         const isSelesai = item.statusJadwal === 'SELESAI';
 
                         return (
                           <TableRow
                             key={item.id}
-                            className={isSelesai ? 'opacity-60 bg-muted/30' : ''}>
+                            className={
+                              isSelesai ? 'opacity-60 bg-muted/30' : ''
+                            }>
                             <TableCell className="text-center">
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleToggleStatus(item.pendaftaranDetailId, item.statusJadwal)}
+                                onClick={() =>
+                                  handleToggleStatus(
+                                    item.pendaftaranDetailId,
+                                    item.statusJadwal
+                                  )
+                                }
                                 disabled={isUpdating}
                                 className="h-8 w-8 p-0">
                                 {isUpdating ? (
@@ -281,20 +306,28 @@ export default function JadwalKuliahPage() {
                             <TableCell className="font-medium text-center">
                               {item.kode}
                             </TableCell>
-                            <TableCell className="text-center">{item.nama}</TableCell>
+                            <TableCell className="text-center">
+                              {item.nama}
+                            </TableCell>
                             <TableCell className="text-center">
                               <Badge variant="outline">{item.kelas}</Badge>
                             </TableCell>
                             <TableCell className="text-center">
-                              <span className="font-medium">{item.jadwal || '-'}</span>
+                              <span className="font-medium">
+                                {item.jadwal || '-'}
+                              </span>
                             </TableCell>
                             <TableCell className="text-center">
                               <span className="text-sm text-muted-foreground">
                                 {formatTanggal(item.tanggalJadwal)}
                               </span>
                             </TableCell>
-                            <TableCell className="text-center">{item.dosen || '-'}</TableCell>
-                            <TableCell className="text-center">{item.sks}</TableCell>
+                            <TableCell className="text-center">
+                              {item.dosen || '-'}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {item.sks}
+                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -309,4 +342,3 @@ export default function JadwalKuliahPage() {
     </div>
   );
 }
-

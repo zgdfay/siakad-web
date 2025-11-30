@@ -103,9 +103,9 @@ export async function POST(request: NextRequest) {
     const { nimOrNip, name, email, role, status } = body;
 
     // Validation
-    if (!nimOrNip || !name || !role) {
+    if (!nimOrNip || !role) {
       return NextResponse.json(
-        { error: 'NIM/NIP, nama, dan role wajib diisi' },
+        { error: 'NIM/NIP dan role wajib diisi' },
         { status: 400 }
       );
     }
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
     const newUser = await prisma.userMaster.create({
       data: {
         nimOrNip,
-        name,
+        name: name?.trim() || null,
         role: role.toUpperCase() as 'MAHASISWA' | 'DOSEN' | 'ADMIN',
         status: (status?.toUpperCase() || 'AKTIF') as 'AKTIF' | 'NONAKTIF',
         ...(email && email.trim() && {

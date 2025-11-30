@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { sendEmail } from '@/lib/email';
+import { getPendaftaranDiterimaEmailTemplate } from '@/lib/email-templates';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -213,6 +215,11 @@ export async function PUT(
             id: true,
             nimOrNip: true,
             name: true,
+            account: {
+              select: {
+                email: true,
+              },
+            },
           },
         },
         semester: true,
@@ -228,6 +235,43 @@ export async function PUT(
         payment: true,
       },
     });
+
+    // Send email notification if status is DITERIMA
+    if (newStatus === 'DITERIMA' && updatedPendaftaran) {
+      try {
+        const userEmail = updatedPendaftaran.userMaster.account?.email;
+        const userName = updatedPendaftaran.userMaster.name || updatedPendaftaran.userMaster.nimOrNip;
+        const semesterNama = updatedPendaftaran.semester.nama;
+
+        if (userEmail) {
+          // Generate URLs for SPK and Invoice
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+          const spkUrl = `${baseUrl}/api/pendaftaran/${pendaftaranId}/spk`;
+          const invoiceUrl = `${baseUrl}/api/pendaftaran/${pendaftaranId}/invoice`;
+
+          // Generate email template
+          const emailHtml = getPendaftaranDiterimaEmailTemplate(
+            userName,
+            semesterNama,
+            spkUrl,
+            invoiceUrl
+          );
+
+          // Send email (non-blocking, don't fail the request if email fails)
+          sendEmail({
+            to: userEmail,
+            subject: `Pendaftaran Diterima - ${semesterNama} | Siakad ITB YADIKA`,
+            html: emailHtml,
+          }).catch((error) => {
+            // Log error but don't throw
+            console.error('Error sending acceptance email:', error);
+          });
+        }
+      } catch (error) {
+        // Log error but don't fail the request
+        console.error('Error preparing email notification:', error);
+      }
+    }
 
     return NextResponse.json({
       message: 'Pendaftaran berhasil diperbarui',

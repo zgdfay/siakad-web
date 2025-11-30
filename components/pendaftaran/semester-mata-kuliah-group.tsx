@@ -24,6 +24,7 @@ interface MataKuliah {
   sks: number;
   kelas: string;
   jadwal: string;
+  tanggalJadwal?: string | Date | null;
   dosen: string;
   kuota: number;
   terisi: number;
@@ -61,9 +62,12 @@ export function SemesterMataKuliahGroup({
   const [isOpen, setIsOpen] = useState(semester.status === 'aktif');
   const isDeadlinePassed =
     new Date(semester.deadlinePendaftaran) < new Date();
-  const isDisabled = false; // Disabled sementara untuk testing
+  const isDisabled = semester.status === 'nonaktif' || isDeadlinePassed;
 
   const handleToggleMataKuliah = (mkId: string) => {
+    // Jika disabled (nonaktif atau deadline lewat), tidak bisa memilih
+    if (isDisabled) return;
+
     const mk = semester.mataKuliah.find((m) => m.id === mkId);
     if (!mk) return;
 
@@ -115,12 +119,33 @@ export function SemesterMataKuliahGroup({
                 {semester.mataKuliah.length} Mata Kuliah
               </CardDescription>
             </div>
-            <div className="text-right text-sm text-muted-foreground">
+            <div className="text-right text-sm text-muted-foreground space-y-1">
               <div>
-                Deadline:{' '}
-                {new Date(semester.deadlinePendaftaran).toLocaleDateString(
-                  'id-ID'
-                )}
+                <span className="font-medium">Tanggal Mulai:</span>{' '}
+                {new Date(semester.tanggalMulai).toLocaleDateString('id-ID', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </div>
+              <div>
+                <span className="font-medium">Tanggal Selesai:</span>{' '}
+                {new Date(semester.tanggalSelesai).toLocaleDateString('id-ID', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </div>
+              <div className={isDeadlinePassed ? 'text-destructive font-medium' : ''}>
+                <span className="font-medium">Deadline Pendaftaran:</span>{' '}
+                {new Date(semester.deadlinePendaftaran).toLocaleDateString('id-ID', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
               </div>
             </div>
           </div>
@@ -130,18 +155,30 @@ export function SemesterMataKuliahGroup({
           <CardContent className="space-y-4">
 
             <div className="space-y-3">
+              {isDisabled && (
+                <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground text-center">
+                  {semester.status === 'nonaktif'
+                    ? 'Semester ini tidak aktif. Pendaftaran ditutup.'
+                    : 'Deadline pendaftaran sudah lewat. Pendaftaran ditutup.'}
+                </div>
+              )}
               {semester.mataKuliah.map((mk) => {
                 const isSelected = selectedMataKuliah.includes(mk.id);
                 const isFull = isKuotaPenuh(mk);
                 const available = mk.kuota - mk.terisi;
+                const mkDisabled = isDisabled || isFull;
 
                 return (
                   <Card
                     key={mk.id}
-                    className={`cursor-pointer transition-all ${
+                    className={`transition-all ${
                       isSelected ? 'ring-2 ring-primary' : ''
-                    } ${isFull ? 'opacity-60' : ''}`}
-                    onClick={() => !isFull && handleToggleMataKuliah(mk.id)}>
+                    } ${
+                      mkDisabled
+                        ? 'opacity-60 cursor-not-allowed'
+                        : 'cursor-pointer hover:shadow-md'
+                    }`}
+                    onClick={() => !mkDisabled && handleToggleMataKuliah(mk.id)}>
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="space-y-1 flex-1">
@@ -153,6 +190,9 @@ export function SemesterMataKuliahGroup({
                             {isFull && (
                               <Badge variant="destructive">Kuota Penuh</Badge>
                             )}
+                            {isDisabled && !isFull && (
+                              <Badge variant="secondary">Tidak Tersedia</Badge>
+                            )}
                           </div>
                           <CardDescription>
                             {mk.kode} - {mk.sks} SKS - Kelas {mk.kelas}
@@ -160,7 +200,7 @@ export function SemesterMataKuliahGroup({
                         </div>
                         <Checkbox
                           checked={isSelected}
-                          disabled={isFull}
+                          disabled={mkDisabled}
                           onCheckedChange={() =>
                             handleToggleMataKuliah(mk.id)
                           }
@@ -174,6 +214,19 @@ export function SemesterMataKuliahGroup({
                           <span className="text-muted-foreground">Jadwal:</span>
                           <p className="font-medium">{mk.jadwal}</p>
                         </div>
+                        {mk.tanggalJadwal && (
+                          <div>
+                            <span className="text-muted-foreground">Tanggal Jadwal:</span>
+                            <p className="font-medium">
+                              {new Date(mk.tanggalJadwal).toLocaleDateString('id-ID', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                              })}
+                            </p>
+                          </div>
+                        )}
                         <div>
                           <span className="text-muted-foreground">Dosen:</span>
                           <p className="font-medium">{mk.dosen}</p>

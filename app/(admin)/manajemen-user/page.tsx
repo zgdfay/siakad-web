@@ -114,7 +114,7 @@ export default function ManajemenUserPage() {
           },
           body: JSON.stringify({
             nimOrNip: values.nimOrNip,
-            name: values.name,
+            name: values.name?.trim() || undefined,
             email: values.email?.trim() || undefined, // Only send if provided and not empty
             role: values.role,
             status: values.status,
@@ -137,7 +137,7 @@ export default function ManajemenUserPage() {
           },
           body: JSON.stringify({
             nimOrNip: values.nimOrNip,
-            name: values.name,
+            name: values.name?.trim() || undefined,
             email: values.email?.trim() || undefined, // Only send if provided and not empty
             role: values.role,
             status: values.status,

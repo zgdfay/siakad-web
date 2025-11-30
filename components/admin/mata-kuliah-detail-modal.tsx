@@ -20,6 +20,7 @@ interface SemesterMataKuliahDetail {
   id: string;
   kelas: string;
   jadwal: string;
+  tanggalJadwal?: string | Date | null;
   dosen: string;
   kuota: number;
   terisi: number;
@@ -84,6 +85,7 @@ export function MataKuliahDetailModal({
             id: sm.id,
             kelas: sm.kelas,
             jadwal: sm.jadwal,
+            tanggalJadwal: sm.tanggalJadwal || null,
             dosen: sm.dosen,
             kuota: sm.kuota,
             terisi: sm.terisi,
@@ -268,6 +270,21 @@ export function MataKuliahDetailModal({
                                     </p>
                                   </div>
                                 </div>
+                                {smk.tanggalJadwal && (
+                                  <div className="space-y-1.5">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                      Tanggal Jadwal
+                                    </p>
+                                    <p className="text-sm font-semibold text-foreground">
+                                      {new Date(smk.tanggalJadwal).toLocaleDateString('id-ID', {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                      })}
+                                    </p>
+                                  </div>
+                                )}
                                 <div className="space-y-1.5">
                                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                                     Dosen

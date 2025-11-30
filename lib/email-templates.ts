@@ -113,3 +113,136 @@ export function getResetPasswordEmailTemplate(
 </html>
   `.trim();
 }
+
+export function getPendaftaranDiterimaEmailTemplate(
+  userName: string,
+  semesterNama: string,
+  spkUrl: string,
+  invoiceUrl: string
+): string {
+  const appName = 'Siakad ITB YADIKA';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+  // Gunakan CDN Supabase untuk logo (accessible dari internet)
+  const logoUrl =
+    'https://lolnjgstuwbktisdrday.supabase.co/storage/v1/object/public/logo/itb-yadika.png';
+
+  return `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pendaftaran Diterima - ${appName}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f5f5;">
+    <tr>
+      <td style="padding: 20px 0;">
+        <table role="presentation" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 30px 40px 20px;">
+              <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <!-- Logo -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-right: 12px;">
+                  <tr>
+                    <td style="padding: 0;">
+                      <img 
+                        src="${logoUrl}" 
+                        alt="ITB YADIKA" 
+                        style="height: 40px; width: auto; max-width: 120px; display: block; border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic;" 
+                        width="40"
+                        height="40"
+                      />
+                    </td>
+                  </tr>
+                </table>
+                <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #1a1a1a;">${appName}</h1>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 0 40px 30px;">
+              <!-- Icon & Title -->
+              <div style="display: flex; align-items: center; margin-bottom: 24px;">
+                <img 
+                  src="https://lolnjgstuwbktisdrday.supabase.co/storage/v1/object/public/logo/check.png" 
+                  alt="Pendaftaran Diterima" 
+                  style="width: 48px; height: 48px; margin-right: 16px; display: block; border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic;" 
+                  width="48"
+                  height="48"
+                />
+                <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: #1a1a1a;">Pendaftaran Diterima!</h2>
+              </div>
+
+              <!-- Body Text -->
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #4a4a4a;">
+                Halo <strong>${userName}</strong>,
+              </p>
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #4a4a4a;">
+                Kami dengan senang hati menginformasikan bahwa pendaftaran Anda untuk <strong>${semesterNama}</strong> telah <strong style="color: #10b981;">DITERIMA</strong>.
+              </p>
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #4a4a4a;">
+                Silakan unduh dokumen berikut:
+              </p>
+
+              <!-- CTA Buttons -->
+              <div style="margin: 32px 0;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+                  <tr>
+                    <td style="padding-bottom: 12px;">
+                      <a href="${spkUrl}" style="display: inline-block; padding: 14px 32px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; text-align: center; width: 100%; box-sizing: border-box;">
+                        Unduh SPK (Surat Perintah Kuliah)
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a href="${invoiceUrl}" style="display: inline-block; padding: 14px 32px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; text-align: center; width: 100%; box-sizing: border-box;">
+                        Unduh Invoice
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Info Box -->
+              <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0; border-radius: 4px;">
+                <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #1e40af;">
+                  <strong>Catatan Penting:</strong><br>
+                  • Simpan dokumen SPK dan Invoice dengan baik<br>
+                  • Dokumen ini diperlukan untuk keperluan akademik<br>
+                  • Jika ada pertanyaan, silakan hubungi admin
+                </p>
+              </div>
+
+              <!-- Closing -->
+              <p style="margin: 24px 0 0; font-size: 16px; line-height: 1.6; color: #4a4a4a;">
+                Terima kasih telah menggunakan ${appName}. Selamat mengikuti perkuliahan!
+              </p>
+              <p style="margin: 16px 0 0; font-size: 16px; line-height: 1.6; color: #4a4a4a;">
+                Salam,<br>
+                <strong>Tim ${appName}</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
+              <p style="margin: 0; font-size: 12px; line-height: 1.6; color: #9ca3af; text-align: center;">
+                Email ini dikirim secara otomatis. Mohon tidak membalas email ini.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}

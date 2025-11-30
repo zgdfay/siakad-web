@@ -19,6 +19,7 @@ interface SemesterMataKuliah {
   id: string;
   kelas: string;
   jadwal: string;
+  tanggalJadwal?: string | Date | null;
   dosen: string;
   kuota: number;
   terisi: number;
@@ -77,6 +78,7 @@ export default function PilihSemesterAntaraPage() {
               id: smk.id,
               kelas: smk.kelas,
               jadwal: smk.jadwal,
+              tanggalJadwal: smk.tanggalJadwal || null,
               dosen: smk.dosen,
               kuota: smk.kuota,
               terisi: smk.terisi,
@@ -144,6 +146,29 @@ export default function PilihSemesterAntaraPage() {
   const totalBiaya = selectedMK.reduce((sum, mk) => sum + mk.biaya, 0);
 
   const handleSelectionChange = (mkId: string, semesterId: string) => {
+    // Cari semester yang sesuai
+    const semester = semesterList.find((s) => s.id === semesterId);
+    if (!semester) return;
+
+    // Cek apakah semester aktif
+    if (semester.status !== 'AKTIF') {
+      toast.error('Semester tidak aktif', {
+        description:
+          'Tidak dapat memilih mata kuliah dari semester yang tidak aktif',
+      });
+      return;
+    }
+
+    // Cek deadline
+    const isDeadlinePassed =
+      new Date() > new Date(semester.deadlinePendaftaran);
+    if (isDeadlinePassed) {
+      toast.error('Deadline sudah lewat', {
+        description: 'Pendaftaran untuk semester ini sudah ditutup',
+      });
+      return;
+    }
+
     if (selectedMataKuliah.includes(mkId)) {
       setSelectedMataKuliah(selectedMataKuliah.filter((id) => id !== mkId));
     } else {
@@ -212,7 +237,9 @@ export default function PilihSemesterAntaraPage() {
     }
 
     // Validate: semua mata kuliah harus dari semester yang sama
-    const allSameSemester = selectedMK.every((mk) => mk.semesterId === semesterId);
+    const allSameSemester = selectedMK.every(
+      (mk) => mk.semesterId === semesterId
+    );
     if (!allSameSemester) {
       toast.error('Pendaftaran tidak valid', {
         description: 'Semua mata kuliah harus dari semester yang sama',
@@ -310,6 +337,7 @@ export default function PilihSemesterAntaraPage() {
                             sks: smk.mataKuliah.sks,
                             kelas: smk.kelas,
                             jadwal: smk.jadwal,
+                            tanggalJadwal: smk.tanggalJadwal || null,
                             dosen: smk.dosen,
                             kuota: smk.kuota,
                             terisi: smk.terisi,
@@ -318,7 +346,9 @@ export default function PilihSemesterAntaraPage() {
                               ? (() => {
                                   try {
                                     const parsed = JSON.parse(smk.prasyarat);
-                                    return Array.isArray(parsed) ? parsed : [smk.prasyarat];
+                                    return Array.isArray(parsed)
+                                      ? parsed
+                                      : [smk.prasyarat];
                                   } catch {
                                     return [smk.prasyarat];
                                   }
@@ -338,7 +368,7 @@ export default function PilihSemesterAntaraPage() {
               {/* Semester Nonaktif */}
               {inactiveSemester.length > 0 && (
                 <div className="space-y-4">
-                  <h2 className="text-lg font-semibold text-foreground text-muted-foreground">
+                  <h2 className="text-lg font-semibold text-muted-foreground">
                     Semester Tidak Tersedia
                   </h2>
                   {inactiveSemester
@@ -365,6 +395,7 @@ export default function PilihSemesterAntaraPage() {
                             sks: smk.mataKuliah.sks,
                             kelas: smk.kelas,
                             jadwal: smk.jadwal,
+                            tanggalJadwal: smk.tanggalJadwal || null,
                             dosen: smk.dosen,
                             kuota: smk.kuota,
                             terisi: smk.terisi,
@@ -373,7 +404,9 @@ export default function PilihSemesterAntaraPage() {
                               ? (() => {
                                   try {
                                     const parsed = JSON.parse(smk.prasyarat);
-                                    return Array.isArray(parsed) ? parsed : [smk.prasyarat];
+                                    return Array.isArray(parsed)
+                                      ? parsed
+                                      : [smk.prasyarat];
                                   } catch {
                                     return [smk.prasyarat];
                                   }

@@ -174,7 +174,7 @@ export async function PUT(
     // Update user
     const updateData: any = {};
     if (nimOrNip) updateData.nimOrNip = nimOrNip;
-    if (name) updateData.name = name;
+    if (name !== undefined) updateData.name = name?.trim() || null;
     if (role) updateData.role = role.toUpperCase();
     if (status) updateData.status = status.toUpperCase();
 
