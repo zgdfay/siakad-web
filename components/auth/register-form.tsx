@@ -26,7 +26,7 @@ interface RegisterFormProps {
 export function RegisterForm({
   onSubmit,
   onSuccess,
-  loginLink = '/auth/login',
+  loginLink = '/login',
 }: RegisterFormProps) {
   const [loading, setLoading] = useState(false);
   const [nimStatus, setNimStatus] = useState<{

@@ -109,6 +109,13 @@ export default function CheckoutPage() {
 
       if (!response.ok) {
         const data = await response.json();
+        // Handle error dengan detail yang lebih jelas
+        if (response.status === 409 && data.overlappingMataKuliah) {
+          throw new Error(
+            data.detail ||
+              `Anda sudah memiliki pendaftaran yang diterima untuk: ${data.overlappingMataKuliah}`
+          );
+        }
         throw new Error(data.error || 'Gagal membuat pendaftaran');
       }
 
@@ -136,9 +143,20 @@ export default function CheckoutPage() {
 
       router.push(`/mahasiswa/pendaftaran/${semesterId}/pembayaran`);
     } catch (error: any) {
-      toast.error('Gagal membuat pendaftaran', {
-        description: error.message || 'Terjadi kesalahan saat menyimpan data',
-      });
+      // Tampilkan toast dengan pesan yang lebih jelas
+      const errorMessage = error.message || 'Terjadi kesalahan saat menyimpan data';
+      
+      // Jika error tentang mata kuliah yang sudah terdaftar
+      if (errorMessage.includes('sudah memiliki pendaftaran yang diterima')) {
+        toast.error('Mata Kuliah Sudah Terdaftar', {
+          description: errorMessage,
+          duration: 6000, // Tampilkan lebih lama agar user sempat membaca
+        });
+      } else {
+        toast.error('Gagal Membuat Pendaftaran', {
+          description: errorMessage,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -277,7 +295,9 @@ export default function CheckoutPage() {
                 <Button
                   onClick={() => router.back()}
                   variant="outline"
+                  disabled={loading}
                   className="w-full">
+                  <i className="fa-solid fa-arrow-left mr-2"></i>
                   Kembali
                 </Button>
               </CardContent>

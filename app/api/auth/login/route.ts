@@ -87,8 +87,31 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
+    
+    // Handle database connection errors
+    if (error?.code === 'P1001') {
+      return NextResponse.json(
+        { 
+          error: 'Tidak dapat terhubung ke database. Silakan coba lagi beberapa saat atau hubungi administrator.',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        },
+        { status: 503 }
+      );
+    }
+    
+    // Handle other Prisma errors
+    if (error?.code?.startsWith('P')) {
+      return NextResponse.json(
+        { 
+          error: 'Terjadi kesalahan pada database. Silakan coba lagi.',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Terjadi kesalahan saat login. Silakan coba lagi.' },
       { status: 500 }

@@ -2,10 +2,22 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -57,7 +69,12 @@ export default function PembayaranPage() {
     if (!file) return;
 
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'application/pdf',
+    ];
     if (!allowedTypes.includes(file.type)) {
       toast.error('Format file tidak didukung', {
         description: 'Gunakan JPG, PNG, atau PDF (maksimal 5MB)',
@@ -142,15 +159,25 @@ export default function PembayaranPage() {
         return;
       }
 
+      // Get pendaftaranId from session or response
+      const pendaftaranId = sessionStorage.getItem('pendaftaranId');
+
       // Clear session storage
       sessionStorage.removeItem('checkoutData');
       sessionStorage.removeItem('pendaftaranId');
 
-      // Redirect ke riwayat
-      router.push('/mahasiswa/riwayat');
+      // Redirect ke success page
+      if (pendaftaranId) {
+        router.push(
+          `/mahasiswa/pendaftaran/${semesterId}/pembayaran/success?pendaftaranId=${pendaftaranId}`
+        );
+      } else {
+        router.push('/mahasiswa/riwayat');
+      }
     } catch (error: any) {
       toast.error('Pembayaran gagal', {
-        description: error.message || 'Terjadi kesalahan saat memproses pembayaran',
+        description:
+          error.message || 'Terjadi kesalahan saat memproses pembayaran',
       });
     } finally {
       setLoading(false);
@@ -219,20 +246,31 @@ export default function PembayaranPage() {
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Bank:</span>
-                          <span className="font-medium text-foreground">Bank BCA</span>
+                          <span className="font-medium text-foreground">
+                            Bank BCA
+                          </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">No. Rekening:</span>
-                          <span className="font-medium text-foreground font-mono">1234567890</span>
+                          <span className="text-muted-foreground">
+                            No. Rekening:
+                          </span>
+                          <span className="font-medium text-foreground font-mono">
+                            1234567890
+                          </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Atas Nama:</span>
-                          <span className="font-medium text-foreground">ITB YADIKA PASURUAN</span>
+                          <span className="text-muted-foreground">
+                            Atas Nama:
+                          </span>
+                          <span className="font-medium text-foreground">
+                            ITB YADIKA PASURUAN
+                          </span>
                         </div>
                         <div className="pt-2 mt-2 border-t">
                           <p className="text-xs text-muted-foreground">
                             <i className="fa-solid fa-info-circle mr-1"></i>
-                            Pastikan nominal transfer sesuai dengan total pembayaran
+                            Pastikan nominal transfer sesuai dengan total
+                            pembayaran
                           </p>
                         </div>
                       </div>
@@ -240,7 +278,8 @@ export default function PembayaranPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="paymentFile">
-                        Upload Bukti Pembayaran <span className="text-destructive">*</span>
+                        Upload Bukti Pembayaran{' '}
+                        <span className="text-destructive">*</span>
                       </Label>
                       <Input
                         id="paymentFile"
@@ -269,7 +308,9 @@ export default function PembayaranPage() {
                         <div className="mt-3 p-3 bg-muted rounded-lg">
                           <div className="flex items-center gap-2">
                             <i className="fa-solid fa-file-pdf text-destructive"></i>
-                            <span className="text-sm font-medium">{paymentFile.name}</span>
+                            <span className="text-sm font-medium">
+                              {paymentFile.name}
+                            </span>
                           </div>
                         </div>
                       )}
@@ -281,10 +322,16 @@ export default function PembayaranPage() {
                   <div className="p-4 bg-muted rounded-lg">
                     <p className="text-sm text-muted-foreground">
                       {paymentMethod === 'midtrans' && (
-                        <>Pembayaran akan dilakukan melalui Midtrans. Anda akan diarahkan ke halaman pembayaran yang aman.</>
+                        <>
+                          Pembayaran akan dilakukan melalui Midtrans. Anda akan
+                          diarahkan ke halaman pembayaran yang aman.
+                        </>
                       )}
                       {paymentMethod === 'xendit' && (
-                        <>Pembayaran akan dilakukan melalui Xendit. Pilih e-wallet yang Anda inginkan.</>
+                        <>
+                          Pembayaran akan dilakukan melalui Xendit. Pilih
+                          e-wallet yang Anda inginkan.
+                        </>
                       )}
                     </p>
                   </div>
@@ -298,13 +345,21 @@ export default function PembayaranPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Mata Kuliah</span>
-                  <span className="font-medium">{checkoutData.mataKuliah.length}</span>
+                  <span className="text-muted-foreground">
+                    Total Mata Kuliah
+                  </span>
+                  <span className="font-medium">
+                    {checkoutData.mataKuliah.length}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Total SKS</span>
                   <span className="font-medium">
-                    {checkoutData.mataKuliah.reduce((sum, mk) => sum + mk.sks, 0)} SKS
+                    {checkoutData.mataKuliah.reduce(
+                      (sum, mk) => sum + mk.sks,
+                      0
+                    )}{' '}
+                    SKS
                   </span>
                 </div>
                 <div className="border-t pt-3">
@@ -326,9 +381,12 @@ export default function PembayaranPage() {
           <div>
             <Card className="sticky top-24">
               <CardHeader>
-                <CardTitle>Lanjutkan</CardTitle>
+                <CardTitle>Lanjutkan Pembayaran</CardTitle>
+                <CardDescription className="text-xs">
+                  Pastikan semua data sudah benar sebelum melanjutkan
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 <Button
                   onClick={handlePayment}
                   disabled={
@@ -336,24 +394,29 @@ export default function PembayaranPage() {
                     !paymentMethod ||
                     (paymentMethod === 'bank_transfer' && !paymentFile)
                   }
-                  className="w-full"
+                  className="w-full min-h-[44px]"
                   size="lg">
                   {loading ? (
-                    <>
-                      <i className="fa-solid fa-spinner fa-spin mr-2"></i>
-                      Memproses...
-                    </>
+                    <span className="flex items-center justify-center gap-2 min-w-0">
+                      <span className="truncate">Memproses Pembayaran...</span>
+                    </span>
+                  ) : paymentMethod === 'bank_transfer' ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span>Upload Bukti Pembayaran</span>
+                    </span>
                   ) : (
-                    <>
-                      <i className="fa-solid fa-upload mr-2"></i>
-                      Upload Bukti Pembayaran
-                    </>
+                    <span className="flex items-center justify-center gap-2">
+                      <span>Lanjutkan Pembayaran</span>
+                    </span>
                   )}
                 </Button>
                 <Button
                   onClick={() => router.back()}
                   variant="outline"
-                  className="w-full">
+                  disabled={loading}
+                  className="w-full"
+                  size="lg">
+                  <i className="fa-solid fa-arrow-left mr-2"></i>
                   Kembali
                 </Button>
               </CardContent>
@@ -364,4 +427,3 @@ export default function PembayaranPage() {
     </div>
   );
 }
-

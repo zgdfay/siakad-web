@@ -24,7 +24,7 @@ interface LoginFormProps {
 export function LoginForm({
   onSubmit,
   onSuccess,
-  forgotPasswordLink = '/auth/forgot-password',
+  forgotPasswordLink = '/forgot-password',
   title = 'Portal Mahasiswa',
 }: LoginFormProps) {
   const [loading, setLoading] = useState(false);
@@ -157,7 +157,7 @@ export function LoginForm({
         <div className="text-center text-sm">
           <span className="text-muted-foreground">Belum punya akun? </span>
           <Link
-            href="/auth/register"
+            href="/register"
             className="text-primary hover:underline font-medium">
             Daftar
           </Link>

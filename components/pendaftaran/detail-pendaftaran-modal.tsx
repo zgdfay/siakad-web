@@ -47,6 +47,7 @@ interface DetailPendaftaran {
   buktiPembayaran?: string | null;
   payment?: {
     status: string;
+    tanggalBayar?: string | null;
   };
   mataKuliah: MataKuliah[];
   catatan?: string | null;
@@ -65,7 +66,17 @@ const getStatusBadge = (status: string) => {
     case 'ditolak':
       return <Badge variant="destructive">Ditolak</Badge>;
     case 'menunggu_verifikasi':
-      return <Badge variant="secondary">Menunggu Verifikasi</Badge>;
+      return (
+        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800">
+          Menunggu Verifikasi
+        </Badge>
+      );
+    case 'dibatalkan':
+      return (
+        <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800">
+          Dibatalkan
+        </Badge>
+      );
     case 'pending_payment':
       return <Badge variant="outline">Menunggu Pembayaran</Badge>;
     default:
@@ -80,21 +91,40 @@ export function DetailPendaftaranModal({
 }: DetailPendaftaranModalProps) {
   if (!data) return null;
 
+  // Get tanggal pembayaran - prioritaskan dari payment.tanggalBayar, lalu data.tanggalBayar, atau jika diterima gunakan tanggal saat ini
+  const getTanggalBayar = () => {
+    if (data.payment?.tanggalBayar) {
+      return data.payment.tanggalBayar;
+    }
+    if (data.tanggalBayar && data.tanggalBayar.trim() !== '') {
+      return data.tanggalBayar;
+    }
+    // Jika status diterima tapi belum ada tanggalBayar, gunakan tanggal saat ini
+    if (data.status === 'diterima') {
+      return new Date().toISOString();
+    }
+    return null;
+  };
+
+  const tanggalBayar = getTanggalBayar();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Detail Pendaftaran</DialogTitle>
-          <DialogDescription>ID Pendaftaran: {data.id}</DialogDescription>
+          <DialogTitle className="text-2xl">Detail Pendaftaran</DialogTitle>
+          <DialogDescription className="text-sm">
+            ID: {data.id.slice(0, 8)}...
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="space-y-4 mt-4">
           {/* Status Card */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>{data.semester}</CardTitle>
+            <CardHeader className="pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl">{data.semester}</CardTitle>
                   <CardDescription>
                     Daftar:{' '}
                     {new Date(data.tanggalDaftar).toLocaleDateString('id-ID', {
@@ -104,7 +134,9 @@ export function DetailPendaftaranModal({
                     })}
                   </CardDescription>
                 </div>
-                {getStatusBadge(data.status)}
+                <div className="flex-shrink-0">
+                  {getStatusBadge(data.status)}
+                </div>
               </div>
             </CardHeader>
           </Card>
@@ -155,48 +187,63 @@ export function DetailPendaftaranModal({
             <CardHeader>
               <CardTitle>Informasi Pembayaran</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Status Pembayaran</span>
-                <Badge
-                  variant={
-                    data.paymentStatus === 'paid' ? 'default' : 'outline'
-                  }>
-                  {data.paymentStatus === 'paid' ? 'Lunas' : 'Belum Lunas'}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Metode Pembayaran</span>
-                <span className="font-medium capitalize">
-                  {data.paymentMethod}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tanggal Pembayaran</span>
-                <span className="font-medium">
-                  {data.tanggalBayar && data.tanggalBayar.trim() !== ''
-                    ? (() => {
-                        const date = new Date(data.tanggalBayar);
-                        return isNaN(date.getTime())
-                          ? data.tanggalBayar
-                          : date.toLocaleDateString('id-ID', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric',
-                            });
-                      })()
-                    : '-'}
-                </span>
-              </div>
-              <div className="border-t pt-3">
-                <div className="flex justify-between">
-                  <span className="font-semibold">Total Pembayaran</span>
-                  <span className="text-xl font-bold text-primary">
-                    {new Intl.NumberFormat('id-ID', {
-                      style: 'currency',
-                      currency: 'IDR',
-                    }).format(data.totalBiaya)}
-                  </span>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <span className="text-sm text-muted-foreground">Status Pembayaran</span>
+                  <div>
+                    {/* Jika pendaftaran sudah diterima, otomatis lunas */}
+                    {data.status === 'diterima' ||
+                    data.paymentStatus === 'lunas' ||
+                    data.paymentStatus === 'paid' ||
+                    data.payment?.status?.toLowerCase() === 'lunas' ? (
+                      <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800">
+                        Lunas
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800">
+                        Belum Lunas
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-sm text-muted-foreground">Metode Pembayaran</span>
+                  <div>
+                    <span className="font-medium capitalize">
+                      {data.paymentMethod || '-'}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-sm text-muted-foreground">Tanggal Pembayaran</span>
+                  <div>
+                    <span className="font-medium">
+                      {tanggalBayar
+                        ? (() => {
+                            const date = new Date(tanggalBayar);
+                            return isNaN(date.getTime())
+                              ? tanggalBayar
+                              : date.toLocaleDateString('id-ID', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric',
+                                });
+                          })()
+                        : '-'}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-sm text-muted-foreground">Total Pembayaran</span>
+                  <div>
+                    <span className="text-lg font-bold text-primary">
+                      {new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                      }).format(data.totalBiaya)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -274,17 +321,19 @@ export function DetailPendaftaranModal({
                 <CardContent className="py-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold">SPK Tersedia</p>
+                      <p className="font-semibold">Invoice Tersedia</p>
                       <p className="text-sm text-muted-foreground">
-                        Download SPK Anda di sini
+                        Download invoice pembayaran Anda di sini
                       </p>
                     </div>
                     <Button
                       onClick={() => {
-                        window.open(`/api/pendaftaran/${data.id}/spk`, '_blank');
+                        // TODO: Implement invoice download endpoint
+                        // For now, we can use SPK endpoint or create new invoice endpoint
+                        window.open(`/api/pendaftaran/${data.id}/invoice`, '_blank');
                       }}>
-                      <i className="fa-solid fa-download mr-2"></i>
-                      Download SPK
+                      <i className="fa-solid fa-file-invoice mr-2"></i>
+                      Download Invoice
                     </Button>
                   </div>
                 </CardContent>

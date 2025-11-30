@@ -65,7 +65,7 @@ export function Sidebar({
   navItems,
   utilityItems = [],
   user,
-  logoutHref = '/auth/login',
+  logoutHref = '/login',
   logoutLabel = 'Keluar',
   settingHref,
 }: SidebarProps) {
@@ -99,12 +99,23 @@ export function Sidebar({
   const defaultBrandHref = brandHref || navItems[0]?.href || '/';
 
   const isActive = (href: string) => {
-    // Exact match untuk root path
-    if (href === '/mahasiswa' || href === '/admin') {
-      return pathname === href;
+    // Normalize pathname (remove trailing slash)
+    const normalizedPathname = pathname.replace(/\/$/, '');
+    const normalizedHref = href.replace(/\/$/, '');
+    
+    // Exact match untuk dashboard atau root paths
+    if (normalizedHref === '/mahasiswa' || normalizedHref === '/admin' || normalizedHref === '/admin/dashboard') {
+      return normalizedPathname === normalizedHref;
     }
-    // Prefix match untuk sub-paths
-    return pathname.startsWith(href);
+    
+    // Prefix match untuk sub-paths (pastikan tidak match parent path)
+    if (normalizedPathname.startsWith(normalizedHref)) {
+      // Pastikan tidak match parent path (misalnya /admin tidak match /admin/dashboard)
+      const nextChar = normalizedPathname[normalizedHref.length];
+      return nextChar === undefined || nextChar === '/';
+    }
+    
+    return false;
   };
 
   const NavLink = ({ item }: { item: NavItem }) => {

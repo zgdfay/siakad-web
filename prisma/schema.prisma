@@ -1,15 +1,142 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model UserMaster {
+  id          String        @id @default(uuid())
+  nimOrNip    String        @unique
+  name        String
+  role        Role
+  status      UserStatus    @default(AKTIF)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  account     Account?
+  pendaftaran Pendaftaran[]
+}
+
+model Account {
+  id                String     @id @default(uuid())
+  userMasterId      String     @unique
+  email             String     @unique
+  passwordHash      String
+  resetToken        String?    @unique
+  resetTokenExpires DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  userMaster        UserMaster @relation(fields: [userMasterId], references: [id])
+}
+
+model Semester {
+  id                  String               @id @default(uuid())
+  nama                String
+  tahun               String
+  periode             SemesterPeriode
+  tanggalMulai        DateTime
+  tanggalSelesai      DateTime
+  deadlinePendaftaran DateTime
+  status              SemesterStatus       @default(NONAKTIF)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  pendaftaran         Pendaftaran[]
+  mataKuliah          SemesterMataKuliah[]
+
+  @@unique([tahun, periode])
+  @@index([status])
+}
+
+model MataKuliah {
+  id        String               @id @default(uuid())
+  kode      String               @unique
+  nama      String
+  sks       Int
+  prodi     String
+  kategori  MataKuliahKategori
+  status    MataKuliahStatus     @default(AKTIF)
+  deskripsi String?
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  semester  SemesterMataKuliah[]
+
+  @@index([status])
+  @@index([kode])
+}
+
+model SemesterMataKuliah {
+  id                String              @id @default(uuid())
+  semesterId        String
+  mataKuliahId      String
+  kelas             String
+  jadwal            String
+  dosen             String
+  kuota             Int                 @default(0)
+  terisi            Int                 @default(0)
+  biaya             Int                 @default(0)
+  prasyarat         String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  pendaftaranDetail PendaftaranDetail[]
+  mataKuliah        MataKuliah          @relation(fields: [mataKuliahId], references: [id], onDelete: Cascade)
+  semester          Semester            @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+
+  @@unique([semesterId, mataKuliahId, kelas])
+  @@index([semesterId])
+  @@index([mataKuliahId])
+}
+
+model Pendaftaran {
+  id           String              @id @default(uuid())
+  userMasterId String
+  semesterId   String
+  totalSKS     Int                 @default(0)
+  totalBiaya   Int                 @default(0)
+  status       PendaftaranStatus   @default(MENUNGGU_VERIFIKASI)
+  catatan      String?
+  catatanAdmin String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  payment      Payment?
+  semester     Semester            @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  userMaster   UserMaster          @relation(fields: [userMasterId], references: [id], onDelete: Cascade)
+  detail       PendaftaranDetail[]
+
+  @@index([userMasterId])
+  @@index([semesterId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PendaftaranDetail {
+  id                   String             @id @default(uuid())
+  pendaftaranId        String
+  semesterMataKuliahId String
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  pendaftaran          Pendaftaran        @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
+  semesterMataKuliah   SemesterMataKuliah @relation(fields: [semesterMataKuliahId], references: [id], onDelete: Cascade)
+
+  @@unique([pendaftaranId, semesterMataKuliahId])
+  @@index([pendaftaranId])
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  pendaftaranId    String        @unique
+  jumlah           Int
+  status           PaymentStatus @default(BELUM_BAYAR)
+  metodePembayaran String?
+  buktiPembayaran  String?
+  tanggalBayar     DateTime?
+  catatan          String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  pendaftaran      Pendaftaran   @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([createdAt])
 }
 
 enum Role {
@@ -23,35 +150,6 @@ enum UserStatus {
   NONAKTIF
 }
 
-model UserMaster {
-  id       String     @id @default(uuid())
-  nimOrNip String     @unique
-  name     String
-  role     Role
-  status   UserStatus @default(AKTIF)
-
-  account     Account?
-  pendaftaran Pendaftaran[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Account {
-  id           String     @id @default(uuid())
-  userMasterId String     @unique
-  userMaster   UserMaster @relation(fields: [userMasterId], references: [id])
-
-  email        String @unique
-  passwordHash String
-
-  resetToken        String?   @unique
-  resetTokenExpires DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 enum SemesterPeriode {
   GANJIL
   GENAP
@@ -62,26 +160,6 @@ enum SemesterStatus {
   NONAKTIF
 }
 
-model Semester {
-  id                  String          @id @default(uuid())
-  nama                String
-  tahun               String
-  periode             SemesterPeriode
-  tanggalMulai        DateTime
-  tanggalSelesai      DateTime
-  deadlinePendaftaran DateTime
-  status              SemesterStatus  @default(NONAKTIF)
-
-  mataKuliah  SemesterMataKuliah[]
-  pendaftaran Pendaftaran[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([tahun, periode])
-  @@index([status])
-}
-
 enum MataKuliahKategori {
   WAJIB
   PILIHAN
@@ -90,52 +168,6 @@ enum MataKuliahKategori {
 enum MataKuliahStatus {
   AKTIF
   NONAKTIF
-}
-
-model MataKuliah {
-  id        String             @id @default(uuid())
-  kode      String             @unique
-  nama      String
-  sks       Int
-  prodi     String
-  kategori  MataKuliahKategori
-  status    MataKuliahStatus   @default(AKTIF)
-  deskripsi String?
-
-  semester SemesterMataKuliah[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([status])
-  @@index([kode])
-}
-
-// Relasi many-to-many antara Semester dan MataKuliah
-// Satu mata kuliah bisa di beberapa semester dengan kelas/jadwal/dosen berbeda
-model SemesterMataKuliah {
-  id           String  @id @default(uuid())
-  semesterId   String
-  mataKuliahId String
-  kelas        String
-  jadwal       String // Format: "Senin, 08:00-10:00"
-  dosen        String // NIP atau nama dosen
-  kuota        Int     @default(0)
-  terisi       Int     @default(0)
-  biaya        Int     @default(0)
-  prasyarat    String? // JSON array atau comma-separated
-
-  semester   Semester   @relation(fields: [semesterId], references: [id], onDelete: Cascade)
-  mataKuliah MataKuliah @relation(fields: [mataKuliahId], references: [id], onDelete: Cascade)
-
-  pendaftaranDetail PendaftaranDetail[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([semesterId, mataKuliahId, kelas])
-  @@index([semesterId])
-  @@index([mataKuliahId])
 }
 
 enum PendaftaranStatus {
@@ -150,63 +182,4 @@ enum PaymentStatus {
   MENUNGGU_VERIFIKASI
   LUNAS
   DITOLAK
-}
-
-model Pendaftaran {
-  id           String            @id @default(uuid())
-  userMasterId String
-  semesterId   String
-  totalSKS     Int               @default(0)
-  totalBiaya   Int               @default(0)
-  status       PendaftaranStatus @default(MENUNGGU_VERIFIKASI)
-  catatan      String?
-  catatanAdmin String? // Catatan dari admin saat verifikasi
-
-  userMaster UserMaster @relation(fields: [userMasterId], references: [id], onDelete: Cascade)
-  semester   Semester   @relation(fields: [semesterId], references: [id], onDelete: Cascade)
-
-  detail  PendaftaranDetail[]
-  payment Payment?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userMasterId])
-  @@index([semesterId])
-  @@index([status])
-  @@index([createdAt])
-}
-
-model PendaftaranDetail {
-  id                   String @id @default(uuid())
-  pendaftaranId        String
-  semesterMataKuliahId String
-
-  pendaftaran        Pendaftaran        @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
-  semesterMataKuliah SemesterMataKuliah @relation(fields: [semesterMataKuliahId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([pendaftaranId, semesterMataKuliahId])
-  @@index([pendaftaranId])
-}
-
-model Payment {
-  id               String        @id @default(uuid())
-  pendaftaranId    String        @unique
-  jumlah           Int
-  status           PaymentStatus @default(BELUM_BAYAR)
-  metodePembayaran String? // "transfer", "tunai", dll
-  buktiPembayaran  String? // URL atau path ke file bukti
-  tanggalBayar     DateTime?
-  catatan          String?
-
-  pendaftaran Pendaftaran @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([status])
-  @@index([createdAt])
 }

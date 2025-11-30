@@ -9,30 +9,32 @@ interface AdminLayoutWrapperProps {
   children: ReactNode;
 }
 
+import { ROUTES } from '@/lib/routes';
+
 export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
   const navItems = [
     {
-      href: '/admin',
-      label: 'Manajemen Dashboard',
+      href: ROUTES.ADMIN.DASHBOARD,
+      label: 'Dashboard',
       icon: 'fa-solid fa-house',
     },
     {
-      href: '/admin/manajemen-user',
+      href: ROUTES.ADMIN.MANAJEMEN_USER,
       label: 'Manajemen User',
       icon: 'fa-solid fa-users',
     },
     {
-      href: '/admin/pendaftaran',
+      href: ROUTES.ADMIN.PENDAFTARAN,
       label: 'Manajemen Pendaftaran',
-      icon: 'fa-file-pen',
+      icon: 'fa-solid fa-file-pen',
     },
     {
-      href: '/admin/semester-antara',
+      href: ROUTES.ADMIN.SEMESTER_ANTARA,
       label: 'Manajemen Semester Antara',
-      icon: 'fa-calendar-days',
+      icon: 'fa-solid fa-calendar-days',
     },
     {
-      href: '/admin/manajemen-mata-kuliah',
+      href: ROUTES.ADMIN.MANAJEMEN_MATA_KULIAH,
       label: 'Manajemen Mata Kuliah',
       icon: 'fa-solid fa-book-open',
     },
@@ -51,12 +53,12 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
             }}
             brandName="Siakad Admin"
             brandSubtitle="ITB YADIKA PASURUAN"
-            brandHref="/admin"
+            brandHref={ROUTES.ADMIN.DASHBOARD}
             navItems={navItems}
             user={user ? formatUserForSidebar(user) : undefined}
-            logoutHref="/auth/login"
+            logoutHref="/login"
             logoutLabel="Keluar"
-            settingHref="/admin/pengaturan"
+            settingHref={ROUTES.ADMIN.PENGATURAN}
           />
 
           {/* Main Content */}

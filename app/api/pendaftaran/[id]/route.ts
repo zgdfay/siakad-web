@@ -166,6 +166,33 @@ export async function PUT(
           });
         }
       });
+    } else if (newStatus === 'DITERIMA') {
+      // If accepting, update payment status to LUNAS automatically
+      await prisma.$transaction(async (tx) => {
+        // Update pendaftaran status
+        await tx.pendaftaran.update({
+          where: { id: pendaftaranId },
+          data: {
+            status: newStatus,
+            catatanAdmin: catatanAdmin || null,
+          },
+        });
+
+        // Update payment status to LUNAS if payment exists
+        const payment = await tx.payment.findUnique({
+          where: { pendaftaranId },
+        });
+
+        if (payment && payment.status !== 'LUNAS') {
+          await tx.payment.update({
+            where: { pendaftaranId },
+            data: {
+              status: 'LUNAS',
+              tanggalBayar: payment.tanggalBayar || new Date(),
+            },
+          });
+        }
+      });
     } else {
       // Just update status
       await prisma.pendaftaran.update({

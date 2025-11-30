@@ -1,10 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { DetailPendaftaranModal } from '@/components/pendaftaran/detail-pendaftaran-modal';
 import { toast } from 'sonner';
 
@@ -42,7 +55,17 @@ const getStatusBadge = (status: string) => {
     case 'ditolak':
       return <Badge variant="destructive">Ditolak</Badge>;
     case 'menunggu_verifikasi':
-      return <Badge variant="secondary">Menunggu Verifikasi</Badge>;
+      return (
+        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800">
+          Menunggu Verifikasi
+        </Badge>
+      );
+    case 'dibatalkan':
+      return (
+        <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800">
+          Dibatalkan
+        </Badge>
+      );
     case 'pending_payment':
       return <Badge variant="outline">Menunggu Pembayaran</Badge>;
     default:
@@ -53,7 +76,9 @@ const getStatusBadge = (status: string) => {
 export default function RiwayatPage() {
   const [riwayat, setRiwayat] = useState<RiwayatItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDetail, setSelectedDetail] = useState<RiwayatItem | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<RiwayatItem | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -96,7 +121,9 @@ export default function RiwayatPage() {
           <CardHeader>
             <CardTitle>Daftar Pendaftaran</CardTitle>
             <CardDescription>
-              {loading ? 'Memuat...' : `${riwayat.length} pendaftaran ditemukan`}
+              {loading
+                ? 'Memuat...'
+                : `${riwayat.length} pendaftaran ditemukan`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -105,7 +132,9 @@ export default function RiwayatPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-center">Semester</TableHead>
-                    <TableHead className="text-center">Tanggal Daftar</TableHead>
+                    <TableHead className="text-center">
+                      Tanggal Daftar
+                    </TableHead>
                     <TableHead className="text-center">Mata Kuliah</TableHead>
                     <TableHead className="text-center">Total Biaya</TableHead>
                     <TableHead className="text-center">Status</TableHead>
@@ -121,7 +150,9 @@ export default function RiwayatPage() {
                     </TableRow>
                   ) : riwayat.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell
+                        colSpan={6}
+                        className="text-center py-8 text-muted-foreground">
                         Belum ada riwayat pendaftaran
                       </TableCell>
                     </TableRow>
@@ -147,12 +178,27 @@ export default function RiwayatPage() {
                           {getStatusBadge(r.status.toLowerCase())}
                         </TableCell>
                         <TableCell className="text-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDetailClick(r)}>
-                            Detail
-                          </Button>
+                          <div className="flex items-center justify-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDetailClick(r)}>
+                              Detail
+                            </Button>
+                            {r.status === 'DITERIMA' && (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  window.open(
+                                    `/api/pendaftaran/${r.id}/invoice`,
+                                    '_blank'
+                                  );
+                                }}
+                                className="bg-green-600 hover:bg-green-700">
+                                Download Invoice
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -177,10 +223,21 @@ export default function RiwayatPage() {
             totalMataKuliah: selectedDetail.detail.length,
             totalSKS: selectedDetail.totalSKS,
             totalBiaya: selectedDetail.totalBiaya,
-            paymentStatus: selectedDetail.payment?.status.toLowerCase() || 'belum_bayar',
+            paymentStatus:
+              selectedDetail.payment?.status.toLowerCase() || 'belum_bayar',
             paymentMethod: selectedDetail.payment?.metodePembayaran || '',
             tanggalBayar: selectedDetail.payment?.tanggalBayar || '',
-            buktiPembayaran: selectedDetail.payment?.buktiPembayaran || null,
+            payment: selectedDetail.payment
+              ? {
+                  status: selectedDetail.payment.status,
+                  tanggalBayar: selectedDetail.payment.tanggalBayar || null,
+                }
+              : undefined,
+            buktiPembayaran:
+              selectedDetail.payment &&
+              'buktiPembayaran' in selectedDetail.payment
+                ? (selectedDetail.payment as any).buktiPembayaran || null
+                : null,
             mataKuliah: selectedDetail.detail.map((d) => ({
               kode: d.semesterMataKuliah.mataKuliah.kode,
               nama: d.semesterMataKuliah.mataKuliah.nama,
@@ -194,4 +251,3 @@ export default function RiwayatPage() {
     </div>
   );
 }
-

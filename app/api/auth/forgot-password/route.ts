@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     // Generate reset link
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const resetLink = `${appUrl}/auth/reset-password?token=${resetToken}`;
+    const resetLink = `${appUrl}/reset-password?token=${resetToken}`;
 
     // Kirim email dengan template
     try {

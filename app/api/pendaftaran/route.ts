@@ -176,21 +176,62 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has pending/accepted pendaftaran for this semester
-    // Only block if there's an active pendaftaran with DITERIMA status
-    // Auto-cancel pending pendaftaran if user wants to change mata kuliah
+    // Only block if there's an active pendaftaran with DITERIMA status AND same mata kuliah
+    // Allow new pendaftaran if mata kuliah berbeda (untuk menambah mata kuliah baru)
     const existingAcceptedPendaftaran = await prisma.pendaftaran.findFirst({
       where: {
         userMasterId: user.id,
         semesterId,
         status: 'DITERIMA',
       },
+      include: {
+        detail: {
+          include: {
+            semesterMataKuliah: {
+              include: {
+                mataKuliah: {
+                  select: {
+                    nama: true,
+                    kode: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (existingAcceptedPendaftaran) {
-      return NextResponse.json(
-        { error: 'Anda sudah memiliki pendaftaran yang diterima untuk semester ini. Silakan hubungi admin jika ingin mengubah.' },
-        { status: 409 }
+      // Cek apakah ada overlap mata kuliah yang sama
+      const existingMataKuliahIds = existingAcceptedPendaftaran.detail.map(
+        (d) => d.semesterMataKuliahId
       );
+      const overlappingIds = mataKuliahIds.filter((id) =>
+        existingMataKuliahIds.includes(id)
+      );
+
+      if (overlappingIds.length > 0) {
+        // Ambil nama mata kuliah yang overlap dari existing pendaftaran
+        const overlappingMataKuliah = existingAcceptedPendaftaran.detail
+          .filter((d) => overlappingIds.includes(d.semesterMataKuliahId))
+          .map(
+            (d) =>
+              `${d.semesterMataKuliah.mataKuliah.nama} (${d.semesterMataKuliah.mataKuliah.kode}) - Kelas ${d.semesterMataKuliah.kelas}`
+          )
+          .join(', ');
+
+        return NextResponse.json(
+          {
+            error:
+              'Anda sudah memiliki pendaftaran yang diterima untuk mata kuliah berikut',
+            overlappingMataKuliah,
+            detail: `Mata kuliah yang sudah terdaftar: ${overlappingMataKuliah}. Silakan pilih mata kuliah lain atau hubungi admin jika ingin mengubah pendaftaran yang sudah diterima.`,
+          },
+          { status: 409 }
+        );
+      }
+      // Jika tidak ada overlap, izinkan pendaftaran baru (untuk menambah mata kuliah)
     }
 
     // If there's a pending pendaftaran, cancel it and allow new pendaftaran

@@ -53,6 +53,7 @@ export function SemesterFormDialog({
     deadlinePendaftaran: '',
     status: 'NONAKTIF',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (mode === 'edit' && initialData) {
@@ -92,7 +93,7 @@ export function SemesterFormDialog({
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (
       !formValues.nama.trim() ||
       !formValues.tahun.trim() ||
@@ -109,7 +110,12 @@ export function SemesterFormDialog({
       return;
     }
 
-    onSubmit(formValues);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formValues);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFormIncomplete =
@@ -280,11 +286,25 @@ export function SemesterFormDialog({
         </div>
 
             <div className="pt-4 border-t flex justify-end gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}>
                 Batal
               </Button>
-              <Button onClick={handleSubmit} disabled={isFormIncomplete}>
-                {mode === 'create' ? 'Simpan Semester' : 'Simpan Perubahan'}
+              <Button
+                onClick={handleSubmit}
+                disabled={isFormIncomplete || isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                    Menyimpan...
+                  </>
+                ) : mode === 'create' ? (
+                  'Simpan Semester'
+                ) : (
+                  'Simpan Perubahan'
+                )}
               </Button>
             </div>
           </div>

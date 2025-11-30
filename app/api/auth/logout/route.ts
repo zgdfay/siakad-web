@@ -6,14 +6,20 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    // Clear session cookie
+    // Clear session cookie dengan set expiration di masa lalu
     const response = NextResponse.json(
       { message: 'Logout berhasil' },
       { status: 200 }
     );
 
-    // Clear cookie
-    response.cookies.delete('siakad_session');
+    // Clear cookie dengan set expiration di masa lalu untuk memastikan cookie benar-benar dihapus
+    response.cookies.set('siakad_session', '', {
+      expires: new Date(0),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
 
     return response;
   } catch (error) {

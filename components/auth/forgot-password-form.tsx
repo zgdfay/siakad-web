@@ -21,7 +21,7 @@ interface ForgotPasswordFormProps {
 export function ForgotPasswordForm({
   onBack,
   onSuccess,
-  backLink = '/auth/login',
+  backLink = '/login',
 }: ForgotPasswordFormProps) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);

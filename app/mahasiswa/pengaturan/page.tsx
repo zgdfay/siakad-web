@@ -3,7 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -33,27 +39,26 @@ interface PasswordFormData {
   confirmPassword: string;
 }
 
-// Mock data - akan diganti dengan data dari API/session
-const mockUserData = {
-  nim: '202410001',
-  name: 'Ahmad Fauzi',
-  email: 'ahmad.fauzi@mhs.itbyadika.ac.id',
-};
-
 export default function PengaturanPage() {
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [originalData, setOriginalData] = useState<AccountFormData | null>(
+    null
+  );
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 
   const {
     register: registerAccount,
     handleSubmit: handleSubmitAccount,
     formState: { errors: accountErrors },
     reset: resetAccount,
+    watch: watchAccount,
   } = useForm<AccountFormData>({
     defaultValues: {
-      nim: mockUserData.nim,
-      name: mockUserData.name,
-      email: mockUserData.email,
+      nim: '',
+      name: '',
+      email: '',
     },
   });
 
@@ -72,30 +77,87 @@ export default function PengaturanPage() {
   });
 
   const newPassword = watchPassword('newPassword');
+  const currentPassword = watchPassword('currentPassword');
+  const confirmPassword = watchPassword('confirmPassword');
+  const accountData = watchAccount();
 
   // Load data saat component mount
   useEffect(() => {
-    // TODO: Fetch data dari API
-    resetAccount({
-      nim: mockUserData.nim,
-      name: mockUserData.name,
-      email: mockUserData.email,
-    });
+    const fetchProfile = async () => {
+      try {
+        setFetching(true);
+        const response = await fetch('/api/auth/profile');
+        if (!response.ok) {
+          throw new Error('Gagal mengambil data profil');
+        }
+        const data = await response.json();
+        const initialData = {
+          nim: data.user.nim || '',
+          name: data.user.name || '',
+          email: data.user.email || '',
+        };
+        resetAccount(initialData);
+        setOriginalData(initialData);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        toast.error('Gagal mengambil data profil', {
+          description: 'Terjadi kesalahan saat memuat data',
+        });
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchProfile();
   }, [resetAccount]);
+
+  // Check if account form has changes
+  const hasAccountChanges =
+    originalData &&
+    accountData &&
+    ((accountData.name?.trim() || '') !== (originalData.name?.trim() || '') ||
+      (accountData.email?.trim() || '') !== (originalData.email?.trim() || ''));
+
+  // Check if password form is filled
+  const isPasswordFormFilled =
+    currentPassword?.trim() && newPassword?.trim() && confirmPassword?.trim();
 
   const onSubmitAccount = async (data: AccountFormData) => {
     setLoading(true);
     try {
-      // TODO: Update data ke API
-      console.log('Update account:', data);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Gagal memperbarui profil');
+      }
+
+      const result = await response.json();
+
+      // Update form dengan data terbaru
+      const updatedData = {
+        nim: data.nim,
+        name: result.user.name,
+        email: result.user.email,
+      };
+      resetAccount(updatedData);
+      setOriginalData(updatedData);
 
       toast.success('Profil berhasil diperbarui', {
         description: 'Data profil Anda telah berhasil diupdate',
       });
-    } catch (error) {
+    } catch (error: any) {
       toast.error('Gagal memperbarui profil', {
-        description: 'Terjadi kesalahan saat memperbarui data',
+        description: error.message || 'Terjadi kesalahan saat memperbarui data',
       });
     } finally {
       setLoading(false);
@@ -105,18 +167,32 @@ export default function PengaturanPage() {
   const onSubmitPassword = async (data: PasswordFormData) => {
     setPasswordLoading(true);
     try {
-      // TODO: Update password ke API
-      console.log('Update password');
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch('/api/auth/password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Gagal mengubah password');
+      }
 
       toast.success('Password berhasil diubah', {
         description: 'Password Anda telah berhasil diupdate',
       });
 
       resetPassword();
-    } catch (error) {
+      setIsPasswordDialogOpen(false);
+    } catch (error: any) {
       toast.error('Gagal mengubah password', {
-        description: 'Password lama tidak sesuai atau terjadi kesalahan',
+        description:
+          error.message || 'Password lama tidak sesuai atau terjadi kesalahan',
       });
     } finally {
       setPasswordLoading(false);
@@ -145,97 +221,97 @@ export default function PengaturanPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nim">NIM</Label>
-                  <Input
-                    id="nim"
-                    type="text"
-                    {...registerAccount('nim')}
-                    disabled
-                    className="bg-muted cursor-not-allowed"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    NIM tidak dapat diubah. Hubungi admin jika perlu perubahan.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nama Lengkap</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    {...registerAccount('name', {
-                      required: 'Nama lengkap wajib diisi',
-                      minLength: {
-                        value: 3,
-                        message: 'Nama minimal 3 karakter',
-                      },
-                    })}
-                    placeholder="Masukkan nama lengkap"
-                    className="h-11"
-                  />
-                  {accountErrors.name && (
-                    <p className="text-sm text-destructive">
-                      {accountErrors.name.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    {...registerAccount('email', {
-                      required: 'Email wajib diisi',
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Format email tidak valid',
-                      },
-                    })}
-                    placeholder="nama@email.com"
-                    className="h-11"
-                  />
-                  {accountErrors.email && (
-                    <p className="text-sm text-destructive">
-                      {accountErrors.email.message}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Email digunakan untuk notifikasi dan reset password
-                  </p>
+            {fetching ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-muted-foreground">
+                  <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                  Memuat data...
                 </div>
               </div>
+            ) : (
+              <form className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nim">NIM</Label>
+                    <Input
+                      id="nim"
+                      type="text"
+                      {...registerAccount('nim')}
+                      disabled
+                      className="bg-muted cursor-not-allowed"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      NIM tidak dapat diubah. Hubungi admin jika perlu
+                      perubahan.
+                    </p>
+                  </div>
 
-              <div className="flex justify-end">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button type="button" disabled={loading} size="lg">
-                      {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Simpan perubahan profil?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Perubahan nama dan email akan digunakan untuk data akun Anda ke depan.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Batal</AlertDialogCancel>
-                      <AlertDialogAction
-                        type="button"
-                        onClick={handleSubmitAccount(onSubmitAccount)}
-                        className="bg-red-600 hover:bg-red-700 text-white">
-                        Ya, Simpan
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </form>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nama Lengkap</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      {...registerAccount('name', {
+                        required: 'Nama lengkap wajib diisi',
+                        minLength: {
+                          value: 3,
+                          message: 'Nama minimal 3 karakter',
+                        },
+                      })}
+                      placeholder="Masukkan nama lengkap"
+                      className="h-11"
+                    />
+                    {accountErrors.name && (
+                      <p className="text-sm text-destructive">
+                        {accountErrors.name.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      {...registerAccount('email', {
+                        required: 'Email wajib diisi',
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: 'Format email tidak valid',
+                        },
+                      })}
+                      placeholder="nama@email.com"
+                      className="h-11"
+                    />
+                    {accountErrors.email && (
+                      <p className="text-sm text-destructive">
+                        {accountErrors.email.message}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Email digunakan untuk notifikasi dan reset password
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    onClick={handleSubmitAccount(onSubmitAccount)}
+                    disabled={loading || fetching || !hasAccountChanges}
+                    size="lg">
+                    {loading ? (
+                      <>
+                        <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                        Menyimpan...
+                      </>
+                    ) : (
+                      'Simpan Perubahan'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            )}
           </CardContent>
         </Card>
 
@@ -291,7 +367,9 @@ export default function PengaturanPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Konfirmasi Password Baru</Label>
+                  <Label htmlFor="confirmPassword">
+                    Konfirmasi Password Baru
+                  </Label>
                   <PasswordInput
                     id="confirmPassword"
                     {...registerPassword('confirmPassword', {
@@ -311,30 +389,43 @@ export default function PengaturanPage() {
               </div>
 
               <div className="flex justify-end">
-                <AlertDialog>
+                <AlertDialog
+                  open={isPasswordDialogOpen}
+                  onOpenChange={setIsPasswordDialogOpen}>
                   <AlertDialogTrigger asChild>
                     <Button
                       type="button"
-                      disabled={passwordLoading}
-                      variant="outline"
-                      size="lg">
+                      disabled={passwordLoading || !isPasswordFormFilled}
+                      size="lg"
+                      className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed">
                       {passwordLoading ? 'Mengubah...' : 'Ubah Password'}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Ubah password akun?</AlertDialogTitle>
+                      <AlertDialogTitle>Pengaturan Akun</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Pastikan Anda mengingat password baru. Anda akan menggunakan password ini untuk login berikutnya.
+                        Pastikan Anda mengingat password baru. Anda akan
+                        menggunakan password ini untuk login berikutnya.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Batal</AlertDialogCancel>
+                      <AlertDialogCancel disabled={passwordLoading}>
+                        Batal
+                      </AlertDialogCancel>
                       <AlertDialogAction
                         type="button"
                         onClick={handleSubmitPassword(onSubmitPassword)}
-                        className="bg-red-600 hover:bg-red-700 text-white">
-                        Ya, Ubah Password
+                        disabled={passwordLoading}
+                        className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50">
+                        {passwordLoading ? (
+                          <>
+                            <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                            Mengubah...
+                          </>
+                        ) : (
+                          'Ya, Ubah Password'
+                        )}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -388,4 +479,3 @@ export default function PengaturanPage() {
     </div>
   );
 }
-

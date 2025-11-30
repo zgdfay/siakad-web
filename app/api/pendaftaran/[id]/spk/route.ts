@@ -63,7 +63,8 @@ export async function GET(
       );
     }
 
-    // Only allow download if pendaftaran is DITERIMA and payment is LUNAS
+    // Only allow download if pendaftaran is DITERIMA
+    // Jika status DITERIMA, payment otomatis menjadi LUNAS saat admin menerima
     if (pendaftaran.status !== 'DITERIMA') {
       return NextResponse.json(
         { error: 'SPK hanya dapat diunduh untuk pendaftaran yang telah diterima' },
@@ -71,17 +72,41 @@ export async function GET(
       );
     }
 
-    if (!pendaftaran.payment || pendaftaran.payment.status !== 'LUNAS') {
-      return NextResponse.json(
-        { error: 'SPK hanya dapat diunduh setelah pembayaran lunas' },
-        { status: 400 }
-      );
+    // Cek payment status (case-insensitive)
+    // Jika status pendaftaran DITERIMA tapi payment belum LUNAS, update payment status
+    if (pendaftaran.payment) {
+      const paymentStatus = pendaftaran.payment.status?.toUpperCase();
+      if (paymentStatus !== 'LUNAS') {
+        // Update payment status to LUNAS if pendaftaran is DITERIMA
+        await prisma.payment.update({
+          where: { pendaftaranId: pendaftaran.id },
+          data: {
+            status: 'LUNAS',
+            tanggalBayar: pendaftaran.payment.tanggalBayar || new Date(),
+          },
+        });
+        // Re-fetch payment after update
+        pendaftaran.payment = await prisma.payment.findUnique({
+          where: { pendaftaranId: pendaftaran.id },
+        });
+      }
+    } else {
+      // If no payment record exists but pendaftaran is DITERIMA, create payment record
+      const createdPayment = await prisma.payment.create({
+        data: {
+          pendaftaranId: pendaftaran.id,
+          jumlah: pendaftaran.totalBiaya,
+          status: 'LUNAS',
+          tanggalBayar: new Date(),
+        },
+      });
+      pendaftaran.payment = createdPayment;
     }
 
     // Generate SPK HTML content
     const spkHtml = generateSPKHTML(pendaftaran);
 
-    // Return HTML as response (can be converted to PDF on client side or server side)
+    // Return HTML with auto-print script for PDF download
     return new NextResponse(spkHtml, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
@@ -129,51 +154,64 @@ function generateSPKHTML(pendaftaran: any) {
     }
     body {
       font-family: 'Times New Roman', serif;
-      padding: 40px;
-      line-height: 1.6;
+      padding: 50px 60px;
+      line-height: 1.8;
       color: #000;
+      background: #fff;
+      max-width: 210mm;
+      margin: 0 auto;
     }
     .header {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 35px;
       border-bottom: 3px solid #000;
-      padding-bottom: 20px;
+      padding-bottom: 25px;
     }
     .header h1 {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: bold;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
       text-transform: uppercase;
+      letter-spacing: 1px;
     }
     .header h2 {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: bold;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
     }
     .header p {
-      font-size: 12px;
+      font-size: 13px;
+      margin: 4px 0;
     }
     .spk-title {
       text-align: center;
-      margin: 30px 0;
-      font-size: 16px;
+      margin: 35px 0;
+      font-size: 18px;
       font-weight: bold;
       text-transform: uppercase;
       text-decoration: underline;
+      letter-spacing: 1px;
     }
     .content {
-      margin: 30px 0;
+      margin: 35px 0;
     }
     .info-section {
-      margin-bottom: 20px;
+      margin-bottom: 25px;
+    }
+    .info-section p {
+      margin-bottom: 12px;
+      font-size: 13px;
     }
     .info-row {
       display: flex;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      line-height: 1.8;
+      font-size: 13px;
     }
     .info-label {
-      width: 200px;
+      width: 220px;
       font-weight: normal;
+      flex-shrink: 0;
     }
     .info-value {
       flex: 1;
@@ -181,53 +219,70 @@ function generateSPKHTML(pendaftaran: any) {
     .table {
       width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
+      margin: 25px 0;
+      font-size: 12px;
     }
     .table th,
     .table td {
       border: 1px solid #000;
-      padding: 8px;
+      padding: 10px 8px;
       text-align: left;
     }
     .table th {
-      background-color: #f0f0f0;
+      background-color: #f5f5f5;
       font-weight: bold;
       text-align: center;
     }
     .table td {
       text-align: left;
+      vertical-align: top;
     }
     .table td:first-child,
-    .table td:nth-child(3),
     .table td:nth-child(4) {
       text-align: center;
     }
+    .table td:nth-child(3) {
+      text-align: center;
+    }
     .signature-section {
-      margin-top: 50px;
+      margin-top: 60px;
       display: flex;
       justify-content: space-between;
+      page-break-inside: avoid;
     }
     .signature-box {
-      width: 300px;
+      width: 320px;
       text-align: center;
+    }
+    .signature-box p {
+      margin-bottom: 5px;
+      font-size: 13px;
     }
     .signature-line {
       border-top: 1px solid #000;
-      margin-top: 60px;
-      padding-top: 5px;
+      margin-top: 70px;
+      padding-top: 8px;
+      width: 100%;
     }
     .footer {
-      margin-top: 30px;
+      margin-top: 40px;
       font-size: 11px;
       text-align: center;
       color: #666;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
     }
     @media print {
       body {
-        padding: 20px;
+        padding: 15mm 20mm;
+        margin: 0;
       }
       .no-print {
         display: none;
+      }
+      @page {
+        margin: 0;
+        size: A4;
       }
     }
   </style>
@@ -236,7 +291,7 @@ function generateSPKHTML(pendaftaran: any) {
   <div class="header">
     <h1>INSTITUT TEKNOLOGI DAN BISNIS</h1>
     <h2>YADIKA PASURUAN</h2>
-    <p>Jl. Raya Warung Dowo No. 1, Pasuruan, Jawa Timur</p>
+    <p>Jl. Salem No.3, Kersikan, Kec. Bangil, Pasuruan, Jawa Timur 67153</p>
     <p>Telp: (0343) 421-123 | Email: info@itb-yadika.ac.id</p>
   </div>
 
@@ -356,11 +411,14 @@ function generateSPKHTML(pendaftaran: any) {
     <p>Dokumen ini sah dan dapat digunakan untuk keperluan akademik</p>
   </div>
 
-  <div class="no-print" style="text-align: center; margin-top: 30px;">
-    <button onclick="window.print()" style="padding: 10px 20px; font-size: 14px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px;">
-      Cetak / Simpan sebagai PDF
-    </button>
-  </div>
+  <script>
+    // Auto-trigger print dialog when page loads for PDF download
+    window.onload = function() {
+      setTimeout(function() {
+        window.print();
+      }, 500);
+    };
+  </script>
 </body>
 </html>
   `;

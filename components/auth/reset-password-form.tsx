@@ -23,7 +23,7 @@ interface ResetPasswordFormProps {
 export function ResetPasswordForm({
   token,
   onSuccess,
-  loginLink = '/auth/login',
+  loginLink = '/login',
 }: ResetPasswordFormProps) {
   const router = useRouter();
   const [error, setError] = useState('');

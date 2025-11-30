@@ -22,9 +22,19 @@ export function MahasiswaLayoutWrapper({ children }: MahasiswaLayoutWrapperProps
       icon: 'fa-file-pen',
     },
     {
+      href: '/mahasiswa/jadwal',
+      label: 'Jadwal Kuliah',
+      icon: 'fa-calendar-days',
+    },
+    {
       href: '/mahasiswa/riwayat',
       label: 'Riwayat',
       icon: 'fa-clock-rotate-left',
+    },
+    {
+      href: '/mahasiswa/unduhan',
+      label: 'Unduhan',
+      icon: 'fa-download',
     },
   ];
 
@@ -44,7 +54,7 @@ export function MahasiswaLayoutWrapper({ children }: MahasiswaLayoutWrapperProps
             brandHref="/mahasiswa"
             navItems={navItems}
             user={user ? formatUserForSidebar(user) : undefined}
-            logoutHref="/auth/login"
+            logoutHref="/login"
             logoutLabel="Keluar"
             settingHref="/mahasiswa/pengaturan"
           />
