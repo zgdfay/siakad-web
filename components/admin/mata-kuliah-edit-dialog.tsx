@@ -33,6 +33,7 @@ export interface MataKuliahEditValues {
     semesterId: string;
     kelas: string;
     jadwal: string;
+    tanggalJadwal?: string | Date | null;
     dosen: string;
     kuota: number;
     terisi: number;
@@ -86,6 +87,7 @@ export function MataKuliahEditDialog({
   const [newAssignment, setNewAssignment] = useState({
     kelas: 'A',
     jadwal: '',
+    tanggalJadwal: '',
     dosen: '',
     kuota: 30,
     biaya: 0,
@@ -120,6 +122,7 @@ export function MataKuliahEditDialog({
       setNewAssignment({
         kelas: 'A',
         jadwal: '',
+        tanggalJadwal: '',
         dosen: '',
         kuota: 30,
         biaya: 0,
@@ -235,6 +238,7 @@ export function MataKuliahEditDialog({
       semesterId: selectedSemesterId,
       kelas: newAssignment.kelas,
       jadwal: newAssignment.jadwal,
+      tanggalJadwal: newAssignment.tanggalJadwal || null,
       dosen: newAssignment.dosen,
       kuota: newAssignment.kuota,
       terisi: 0,
@@ -258,6 +262,7 @@ export function MataKuliahEditDialog({
     setNewAssignment({
       kelas: 'A',
       jadwal: '',
+      tanggalJadwal: '',
       dosen: '',
       kuota: 30,
       biaya: 0,
@@ -657,6 +662,19 @@ export function MataKuliahEditDialog({
                               handleNewAssignmentChange('jadwal', e.target.value)
                             }
                             placeholder="Senin, 08:00-10:00"
+                            className="h-8"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">
+                            Tanggal Jadwal (Opsional)
+                          </Label>
+                          <Input
+                            type="datetime-local"
+                            value={newAssignment.tanggalJadwal}
+                            onChange={(e) =>
+                              handleNewAssignmentChange('tanggalJadwal', e.target.value)
+                            }
                             className="h-8"
                           />
                         </div>

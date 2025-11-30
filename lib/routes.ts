@@ -28,6 +28,7 @@ export const ROUTES = {
     MANAJEMEN_MATA_KULIAH: '/manajemen-mata-kuliah',
     SEMESTER_ANTARA: '/semester-antara',
     PENDAFTARAN: '/pendaftaran',
+    MANAJEMEN_JADWAL: '/manajemen-jadwal',
     PENGATURAN: '/pengaturan',
   },
   // Mahasiswa routes

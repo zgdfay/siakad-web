@@ -38,6 +38,11 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
       label: 'Manajemen Mata Kuliah',
       icon: 'fa-solid fa-book-open',
     },
+    {
+      href: ROUTES.ADMIN.MANAJEMEN_JADWAL,
+      label: 'Manajemen Jadwal',
+      icon: 'fa-solid fa-calendar-check',
+    },
   ];
 
   return (

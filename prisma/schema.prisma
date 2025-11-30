@@ -71,6 +71,7 @@ model SemesterMataKuliah {
   mataKuliahId      String
   kelas             String
   jadwal            String
+  tanggalJadwal     DateTime?
   dosen             String
   kuota             Int                 @default(0)
   terisi            Int                 @default(0)
@@ -113,6 +114,7 @@ model PendaftaranDetail {
   id                   String             @id @default(uuid())
   pendaftaranId        String
   semesterMataKuliahId String
+  statusJadwal         JadwalStatus       @default(AKTIF)
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   pendaftaran          Pendaftaran        @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
@@ -120,6 +122,7 @@ model PendaftaranDetail {
 
   @@unique([pendaftaranId, semesterMataKuliahId])
   @@index([pendaftaranId])
+  @@index([statusJadwal])
 }
 
 model Payment {
@@ -182,4 +185,9 @@ enum PaymentStatus {
   MENUNGGU_VERIFIKASI
   LUNAS
   DITOLAK
+}
+
+enum JadwalStatus {
+  AKTIF
+  SELESAI
 }

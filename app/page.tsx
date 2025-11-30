@@ -1,10 +1,10 @@
 import {
   NavbarSection,
   HeroSection,
+  PartnerSection,
   FeaturesSection,
   AboutSection,
-  CalendarSection,
-  CTASection,
+  FAQSection,
   FooterSection,
 } from '@/components/landing';
 
@@ -13,17 +13,19 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <NavbarSection />
       <main>
-        <HeroSection />
-        <div id="features">
-          <FeaturesSection />
+        <div id="hero">
+          <HeroSection />
         </div>
+        <PartnerSection />
         <div id="about">
           <AboutSection />
         </div>
-        <div id="calendar">
-          <CalendarSection />
+        <div id="features">
+          <FeaturesSection />
         </div>
-        <CTASection />
+        <div id="faq">
+          <FAQSection />
+        </div>
       </main>
       <FooterSection />
     </div>

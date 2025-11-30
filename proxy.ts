@@ -29,7 +29,7 @@ const adminRoutes = [
   ROUTES.ADMIN.PENGATURAN,
 ];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
   // Handle reset password page dengan token
@@ -160,3 +160,4 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
+

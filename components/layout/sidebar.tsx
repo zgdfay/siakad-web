@@ -244,9 +244,9 @@ export function Sidebar({
                 {settingHref && <DropdownMenuSeparator />}
                 <DropdownMenuItem asChild>
                   <AlertDialogTrigger asChild>
-                    <button className="w-full flex items-center text-destructive hover:text-destructive">
-                      <i className="fa-solid fa-right-from-bracket mr-2 w-4 text-center"></i>
-                      <span>{logoutLabel}</span>
+                    <button className="w-full flex items-center text-destructive group">
+                      <i className="fa-solid fa-right-from-bracket mr-2 w-4 text-center group-hover:text-red-600 transition-colors"></i>
+                      <span className="group-hover:text-red-600 transition-colors">{logoutLabel}</span>
                     </button>
                   </AlertDialogTrigger>
                 </DropdownMenuItem>

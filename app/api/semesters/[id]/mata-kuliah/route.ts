@@ -14,6 +14,15 @@ export async function GET(
     const resolvedParams = params instanceof Promise ? await params : params;
     const semesterId = resolvedParams.id;
 
+    if (!semesterId) {
+      return NextResponse.json(
+        { error: 'Semester ID tidak valid' },
+        { status: 400 }
+      );
+    }
+
+    console.log('Fetching mata kuliah for semester:', semesterId);
+
     const semesterMataKuliah = await prisma.semesterMataKuliah.findMany({
       where: { semesterId },
       include: {
@@ -30,6 +39,8 @@ export async function GET(
         },
       },
     });
+
+    console.log('Found mata kuliah:', semesterMataKuliah.length);
 
     return NextResponse.json({ mataKuliah: semesterMataKuliah });
   } catch (error: any) {
@@ -67,11 +78,22 @@ export async function POST(
     const resolvedParams = params instanceof Promise ? await params : params;
     const semesterId = resolvedParams.id;
 
+    console.log('POST /api/semesters/[id]/mata-kuliah - semesterId:', semesterId);
+
     const body = await request.json();
-    const { mataKuliahId, kelas, jadwal, dosen, kuota, biaya, prasyarat } = body;
+    console.log('Request body:', body);
+    const { mataKuliahId, kelas, jadwal, tanggalJadwal, dosen, kuota, biaya, prasyarat } = body;
 
     // Validation
     if (!mataKuliahId || !kelas || !jadwal || !dosen || kuota === undefined || biaya === undefined) {
+      console.error('Validation failed:', {
+        mataKuliahId: !!mataKuliahId,
+        kelas: !!kelas,
+        jadwal: !!jadwal,
+        dosen: !!dosen,
+        kuota: kuota !== undefined,
+        biaya: biaya !== undefined,
+      });
       return NextResponse.json(
         { error: 'Mata kuliah, kelas, jadwal, dosen, kuota, dan biaya wajib diisi' },
         { status: 400 }
@@ -121,12 +143,25 @@ export async function POST(
     }
 
     // Create assignment
+    console.log('Creating assignment with data:', {
+      semesterId,
+      mataKuliahId,
+      kelas,
+      jadwal,
+      tanggalJadwal: tanggalJadwal ? new Date(tanggalJadwal) : null,
+      dosen,
+      kuota: parseInt(kuota),
+      biaya: parseInt(biaya),
+      prasyarat: prasyarat || null,
+    });
+
     const newAssignment = await prisma.semesterMataKuliah.create({
       data: {
         semesterId,
         mataKuliahId,
         kelas,
         jadwal,
+        tanggalJadwal: tanggalJadwal ? new Date(tanggalJadwal) : null,
         dosen,
         kuota: parseInt(kuota),
         terisi: 0,
@@ -137,6 +172,8 @@ export async function POST(
         mataKuliah: true,
       },
     });
+
+    console.log('Assignment created successfully:', newAssignment.id);
 
     return NextResponse.json(
       {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
 
 interface SemesterMataKuliah {
   id: string;
@@ -43,30 +44,52 @@ export function SemesterMataKuliahModal({
   const [data, setData] = useState<SemesterMataKuliah[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (open && semesterId) {
-      fetchMataKuliah();
-    } else {
-      setData([]);
-    }
-  }, [open, semesterId]);
-
   const fetchMataKuliah = async () => {
-    if (!semesterId) return;
+    if (!semesterId) {
+      console.warn('Semester ID is missing');
+      setData([]);
+      return;
+    }
 
     try {
       setLoading(true);
+      console.log('Fetching mata kuliah for semester:', semesterId);
       const response = await fetch(`/api/semesters/${semesterId}/mata-kuliah`);
-      if (!response.ok) throw new Error('Gagal mengambil data mata kuliah');
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Gagal mengambil data mata kuliah');
+      }
+      
       const result = await response.json();
-      setData(result.mataKuliah || []);
+      console.log('API Response:', result); // Debug log
+      const mataKuliahData = result.mataKuliah || result || [];
+      console.log('Mata Kuliah Data:', mataKuliahData, 'Length:', mataKuliahData.length); // Debug log
+      
+      if (Array.isArray(mataKuliahData)) {
+        setData(mataKuliahData);
+      } else {
+        console.warn('Mata kuliah data is not an array:', mataKuliahData);
+        setData([]);
+      }
     } catch (error) {
       console.error('Error fetching mata kuliah:', error);
+      toast.error(error instanceof Error ? error.message : 'Gagal mengambil data mata kuliah');
       setData([]);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (open && semesterId) {
+      fetchMataKuliah();
+    } else {
+      setData([]);
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, semesterId]);
 
   if (!open) return null;
 

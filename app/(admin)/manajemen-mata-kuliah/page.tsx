@@ -139,6 +139,16 @@ export default function ManajemenMataKuliahPage() {
       // If semesterId is provided, assign mata kuliah to semester
       if (semesterId && newMataKuliahId) {
         try {
+          console.log('Assigning mata kuliah to semester:', {
+            semesterId,
+            mataKuliahId: newMataKuliahId,
+            kelas: values.kelas,
+            jadwal: values.jadwal,
+            dosen: values.dosen,
+            kuota: values.kuota,
+            biaya: values.biaya,
+          });
+
           const assignResponse = await fetch(
             `/api/semesters/${semesterId}/mata-kuliah`,
             {
@@ -148,6 +158,7 @@ export default function ManajemenMataKuliahPage() {
                 mataKuliahId: newMataKuliahId,
                 kelas: values.kelas || 'A',
                 jadwal: values.jadwal || 'TBA',
+                tanggalJadwal: values.tanggalJadwal || null,
                 dosen: values.dosen || 'TBA',
                 kuota: values.kuota || 30,
                 biaya: values.biaya || 0,
@@ -157,15 +168,22 @@ export default function ManajemenMataKuliahPage() {
           );
 
           if (!assignResponse.ok) {
-            const errorData = await assignResponse.json();
+            const errorData = await assignResponse.json().catch(() => ({}));
+            console.error('Assign error:', errorData);
             throw new Error(
               errorData.error || 'Gagal mengassign mata kuliah ke semester'
             );
           }
+
+          const assignResult = await assignResponse.json();
+          console.log('Assign success:', assignResult);
+          toast.success('Mata kuliah berhasil diassign ke semester');
         } catch (assignError: any) {
+          console.error('Assign error:', assignError);
           toast.error(
             assignError.message || 'Gagal mengassign mata kuliah ke semester'
           );
+          // Don't throw, continue to show success for mata kuliah creation
         }
       }
 
@@ -209,6 +227,7 @@ export default function ManajemenMataKuliahPage() {
                     mataKuliahId: values.id,
                     kelas: assignment.kelas,
                     jadwal: assignment.jadwal,
+                    tanggalJadwal: assignment.tanggalJadwal || null,
                     dosen: assignment.dosen,
                     kuota: assignment.kuota,
                     biaya: assignment.biaya,
@@ -233,6 +252,7 @@ export default function ManajemenMataKuliahPage() {
                   body: JSON.stringify({
                     kelas: assignment.kelas,
                     jadwal: assignment.jadwal,
+                    tanggalJadwal: assignment.tanggalJadwal || null,
                     dosen: assignment.dosen,
                     kuota: assignment.kuota,
                     biaya: assignment.biaya,

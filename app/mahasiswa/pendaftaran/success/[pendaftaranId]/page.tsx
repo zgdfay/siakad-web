@@ -127,35 +127,59 @@ export default function PendaftaranDiterimaPage() {
                     <TableHead className="text-center">Mata Kuliah</TableHead>
                     <TableHead className="text-center">Kelas</TableHead>
                     <TableHead className="text-center">Jadwal</TableHead>
+                    <TableHead className="text-center">Tanggal</TableHead>
                     <TableHead className="text-center">Dosen</TableHead>
                     <TableHead className="text-center">SKS</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pendaftaran.detail.map((detail: any, index: number) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium text-center">
-                        {detail.semesterMataKuliah.mataKuliah.kode}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {detail.semesterMataKuliah.mataKuliah.nama}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline">{detail.semesterMataKuliah.kelas}</Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="font-medium">
-                          {detail.semesterMataKuliah.jadwal || '-'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {detail.semesterMataKuliah.dosen || '-'}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {detail.semesterMataKuliah.mataKuliah.sks}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {pendaftaran.detail.map((detail: any, index: number) => {
+                    const formatTanggal = (tanggal: string | Date | null | undefined) => {
+                      if (!tanggal) return '-';
+                      try {
+                        const date = new Date(tanggal);
+                        return date.toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        });
+                      } catch {
+                        return '-';
+                      }
+                    };
+
+                    return (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium text-center">
+                          {detail.semesterMataKuliah.mataKuliah.kode}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {detail.semesterMataKuliah.mataKuliah.nama}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline">{detail.semesterMataKuliah.kelas}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="font-medium">
+                            {detail.semesterMataKuliah.jadwal || '-'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="text-sm text-muted-foreground">
+                            {formatTanggal(detail.semesterMataKuliah.tanggalJadwal)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {detail.semesterMataKuliah.dosen || '-'}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {detail.semesterMataKuliah.mataKuliah.sks}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

@@ -11,14 +11,24 @@ export function RegisterInfoCard({
 }: RegisterInfoCardProps) {
   return (
     <div className="relative w-full max-w-lg mx-auto lg:mx-0">
-      <div className="relative rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl bg-linear-to-br from-primary via-primary/90 to-primary/80 p-6 lg:p-8 min-h-[400px] lg:min-h-[500px] flex items-center">
-        {/* Decorative elements */}
-        <div className="absolute top-10 right-10 w-32 h-32 rounded-full bg-white/10 blur-2xl"></div>
-        <div className="absolute bottom-10 left-10 w-40 h-40 rounded-full bg-white/10 blur-3xl"></div>
+      <div className="relative rounded-2xl lg:rounded-3xl overflow-hidden bg-background p-6 lg:p-8 min-h-[400px] lg:min-h-[500px] flex items-center">
+        {/* Mesh Gradient Background - Blue Only */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Blob 1 - Top Right */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/30 rounded-full blur-3xl"></div>
+          {/* Blob 2 - Bottom Left */}
+          <div className="absolute bottom-0 left-0 w-72 h-72 bg-blue-600/30 rounded-full blur-3xl"></div>
+          {/* Blob 3 - Center */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-400/20 rounded-full blur-3xl"></div>
+          {/* Blob 4 - Top Left */}
+          <div className="absolute top-10 left-10 w-48 h-48 bg-blue-500/25 rounded-full blur-2xl"></div>
+          {/* Blob 5 - Bottom Right */}
+          <div className="absolute bottom-10 right-10 w-56 h-56 bg-blue-600/25 rounded-full blur-2xl"></div>
+        </div>
 
         {/* Info Card */}
         <div className="relative z-10 w-full">
-          <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-lg">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 sm:p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                 <i className="fa-solid fa-user-plus text-primary"></i>

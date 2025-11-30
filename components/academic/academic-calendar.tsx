@@ -12,7 +12,7 @@ interface AcademicCalendarProps {
   title?: string;
 }
 
-const defaultEvents: AcademicEvent[] = [
+export const defaultEvents: AcademicEvent[] = [
   // Semester Ganjil 2025-2026
   {
     title: 'PKKMB',
@@ -72,7 +72,7 @@ const defaultEvents: AcademicEvent[] = [
   },
 ];
 
-const getCategoryColor = (category?: string) => {
+export const getCategoryColor = (category?: string) => {
   switch (category) {
     case 'pkmb':
       return 'bg-purple-500';
@@ -93,7 +93,7 @@ const getCategoryColor = (category?: string) => {
   }
 };
 
-const getCategoryIcon = (category?: string) => {
+export const getCategoryIcon = (category?: string) => {
   switch (category) {
     case 'pkmb':
       return 'fa-solid fa-users';

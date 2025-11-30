@@ -31,6 +31,7 @@ export interface MataKuliahFormValues {
   // Detail untuk assignment ke semester
   kelas?: string;
   jadwal?: string;
+  tanggalJadwal?: string;
   dosen?: string;
   kuota?: number;
   biaya?: number;
@@ -71,6 +72,7 @@ export function MataKuliahFormDialog({
     semesterId: '',
     kelas: 'A',
     jadwal: '',
+    tanggalJadwal: '',
     dosen: '',
     kuota: 30,
     biaya: 0,
@@ -102,6 +104,7 @@ export function MataKuliahFormDialog({
         semesterId: '',
         kelas: 'A',
         jadwal: '',
+        tanggalJadwal: '',
         dosen: '',
         kuota: 30,
         biaya: 0,
@@ -132,6 +135,7 @@ export function MataKuliahFormDialog({
         semesterId: initialData.semesterId || '',
         kelas: initialData.kelas || 'A',
         jadwal: initialData.jadwal || '',
+        tanggalJadwal: initialData.tanggalJadwal || '',
         dosen: initialData.dosen || '',
         kuota: initialData.kuota || 30,
         biaya: initialData.biaya || 0,
@@ -150,6 +154,7 @@ export function MataKuliahFormDialog({
         semesterId: '',
         kelas: 'A',
         jadwal: '',
+        tanggalJadwal: '',
         dosen: '',
         kuota: 30,
         biaya: 0,
@@ -170,6 +175,7 @@ export function MataKuliahFormDialog({
 
   const handleSubmit = async () => {
     if (!formValues.kode || !formValues.nama || !formValues.prodi) {
+      console.warn('Form validation failed: missing required fields');
       return;
     }
     // Validate detail semester if semesterId is selected
@@ -183,17 +189,29 @@ export function MataKuliahFormDialog({
         formValues.biaya === undefined ||
         formValues.biaya < 0
       ) {
+        console.warn('Form validation failed: missing semester details', {
+          kelas: formValues.kelas,
+          jadwal: formValues.jadwal,
+          dosen: formValues.dosen,
+          kuota: formValues.kuota,
+          biaya: formValues.biaya,
+        });
         return;
       }
     }
     // For create mode, semesterId is required
     if (mode === 'create' && !formValues.semesterId) {
+      console.warn('Form validation failed: semesterId is required for create mode');
       return;
     }
 
+    console.log('Submitting form with values:', formValues);
     setIsSubmitting(true);
     try {
       await onSubmit(formValues);
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
@@ -430,6 +448,21 @@ export function MataKuliahFormDialog({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="tanggalJadwal">
+                        Tanggal Jadwal (Opsional)
+                      </Label>
+                      <Input
+                        id="tanggalJadwal"
+                        type="datetime-local"
+                        value={formValues.tanggalJadwal || ''}
+                        onChange={(e) => handleChange('tanggalJadwal', e.target.value)}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Pilih tanggal dan waktu untuk jadwal kuliah
+                      </p>
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="kuota">
                         Kuota <span className="text-destructive">*</span>

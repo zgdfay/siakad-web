@@ -32,7 +32,7 @@ export async function PUT(
     const { id: semesterId, mkId: semesterMataKuliahId } = resolvedParams;
 
     const body = await request.json();
-    const { kelas, jadwal, dosen, kuota, biaya, prasyarat } = body;
+    const { kelas, jadwal, tanggalJadwal, dosen, kuota, biaya, prasyarat } = body;
 
     // Check if assignment exists
     const existing = await prisma.semesterMataKuliah.findUnique({
@@ -65,6 +65,9 @@ export async function PUT(
     const updateData: any = {};
     if (kelas) updateData.kelas = kelas;
     if (jadwal) updateData.jadwal = jadwal;
+    if (tanggalJadwal !== undefined) {
+      updateData.tanggalJadwal = tanggalJadwal ? new Date(tanggalJadwal) : null;
+    }
     if (dosen) updateData.dosen = dosen;
     if (kuota !== undefined) updateData.kuota = parseInt(kuota);
     if (biaya !== undefined) updateData.biaya = parseInt(biaya);
