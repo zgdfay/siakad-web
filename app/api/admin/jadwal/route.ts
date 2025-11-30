@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform data
-    const jadwal = pendaftaranDetails.map((detail) => ({
+    const jadwal = pendaftaranDetails.map((detail: typeof pendaftaranDetails[0]) => ({
       id: detail.semesterMataKuliah.id,
       pendaftaranDetailId: detail.id,
       kode: detail.semesterMataKuliah.mataKuliah.kode,
