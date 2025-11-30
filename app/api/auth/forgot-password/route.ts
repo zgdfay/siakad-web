@@ -73,8 +73,9 @@ export async function POST(request: NextRequest) {
 
     // Kirim email dengan template
     try {
+      const userName = account.userMaster.name || account.userMaster.nimOrNip || 'Pengguna';
       const emailHtml = getResetPasswordEmailTemplate(
-        account.userMaster.name,
+        userName,
         resetLink
       );
 

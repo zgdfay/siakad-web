@@ -63,9 +63,7 @@ export function SemesterMataKuliahModal({
       }
       
       const result = await response.json();
-      console.log('API Response:', result); // Debug log
       const mataKuliahData = result.mataKuliah || result || [];
-      console.log('Mata Kuliah Data:', mataKuliahData, 'Length:', mataKuliahData.length); // Debug log
       
       if (Array.isArray(mataKuliahData)) {
         setData(mataKuliahData);

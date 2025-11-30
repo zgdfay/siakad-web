@@ -47,9 +47,9 @@ export function formatUserForSidebar(user: User | null) {
   if (!user) return undefined;
 
   return {
-    name: user.name,
+    name: user.name || 'User',
     email: user.email,
-    initials: getUserInitials(user.name),
+    initials: getUserInitials(user.name || 'User'),
   };
 }
 
