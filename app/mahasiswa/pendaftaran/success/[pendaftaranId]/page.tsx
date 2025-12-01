@@ -119,8 +119,9 @@ export default function PendaftaranDiterimaPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-center">Kode</TableHead>
@@ -182,6 +183,7 @@ export default function PendaftaranDiterimaPage() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -48,7 +49,16 @@ export default function SemesterAntaraPage() {
   const [semesterList, setSemesterList] = useState<SemesterAntara[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [periodeAktif, setPeriodeAktif] = useState<PeriodeFilter>('Ganjil');
+  const [periodeAktif, setPeriodeAktif] = useState<PeriodeFilter>(() => {
+    // Get from localStorage or default to 'Ganjil'
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('semester-periode-aktif');
+      if (saved && ['Ganjil', 'Genap', 'Semua'].includes(saved)) {
+        return saved as PeriodeFilter;
+      }
+    }
+    return 'Ganjil';
+  });
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     id: string | null;
@@ -95,7 +105,49 @@ export default function SemesterAntaraPage() {
     fetchSemesters();
   }, []);
 
+  // Sync periodeAktif with actual semester status on initial load only
+  const [hasSynced, setHasSynced] = useState(false);
+  useEffect(() => {
+    if (semesterList.length > 0 && !loading && !hasSynced) {
+      setHasSynced(true);
+      
+      // Check which periode is currently active based on semester status
+      const aktifSemesters = semesterList.filter(s => s.status === 'AKTIF');
+      if (aktifSemesters.length === 0) {
+        // No active semester, keep current selection
+        return;
+      }
+      
+      // Check if all active semesters are from same periode
+      const ganjilCount = aktifSemesters.filter(s => s.periode === 'GANJIL').length;
+      const genapCount = aktifSemesters.filter(s => s.periode === 'GENAP').length;
+      
+      let expectedPeriode: PeriodeFilter = periodeAktif;
+      
+      if (ganjilCount > 0 && genapCount > 0) {
+        // Both periode have active semesters
+        expectedPeriode = 'Semua';
+      } else if (ganjilCount > 0 && genapCount === 0) {
+        // Only GANJIL is active
+        expectedPeriode = 'Ganjil';
+      } else if (genapCount > 0 && ganjilCount === 0) {
+        // Only GENAP is active
+        expectedPeriode = 'Genap';
+      }
+      
+      // Only update if different from current and no saved preference
+      const saved = localStorage.getItem('semester-periode-aktif');
+      if (!saved && expectedPeriode !== periodeAktif) {
+        setPeriodeAktif(expectedPeriode);
+        localStorage.setItem('semester-periode-aktif', expectedPeriode);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [semesterList.length, loading, hasSynced]);
+
   const handleSetPeriodeAktif = async (periode: PeriodeFilter) => {
+    // Save to localStorage first
+    localStorage.setItem('semester-periode-aktif', periode);
     setPeriodeAktif(periode);
 
     try {
@@ -104,11 +156,20 @@ export default function SemesterAntaraPage() {
         let newStatus: 'AKTIF' | 'NONAKTIF' = 'NONAKTIF';
 
         if (periode === 'Semua') {
+          // All semesters become active
           newStatus = 'AKTIF';
-        } else if (sem.periode === periode.toUpperCase()) {
-          newStatus = 'AKTIF';
+        } else {
+          // Only semesters matching the selected periode become active
+          const periodeUpper = periode.toUpperCase();
+          if (sem.periode === periodeUpper) {
+            newStatus = 'AKTIF';
+          } else {
+            // Other periode become inactive
+            newStatus = 'NONAKTIF';
+          }
         }
 
+        // Only update if status actually changed
         if (sem.status !== newStatus) {
           const response = await fetch(`/api/semesters/${sem.id}`, {
             method: 'PUT',
@@ -116,17 +177,22 @@ export default function SemesterAntaraPage() {
             body: JSON.stringify({ status: newStatus }),
           });
 
-          if (!response.ok)
-            throw new Error(`Gagal update semester ${sem.nama}`);
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || `Gagal update semester ${sem.nama}`);
+          }
         }
       });
 
       await Promise.all(updates);
       toast.success('Status semester berhasil diperbarui');
       fetchSemesters(); // Refresh data
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating semester status:', error);
-      toast.error('Gagal memperbarui status semester');
+      toast.error(error.message || 'Gagal memperbarui status semester');
+      // Revert state on error
+      const previous = localStorage.getItem('semester-periode-aktif') || 'Ganjil';
+      setPeriodeAktif(previous as PeriodeFilter);
     }
   };
 
@@ -249,7 +315,12 @@ export default function SemesterAntaraPage() {
                 type="button"
                 variant={periodeAktif === 'Ganjil' ? 'default' : 'ghost'}
                 size="sm"
-                className="px-4 transition-all hover:bg-primary/10 hover:text-primary"
+                className={cn(
+                  "px-4 transition-all",
+                  periodeAktif === 'Ganjil' 
+                    ? '' 
+                    : 'hover:bg-primary/10 hover:text-primary'
+                )}
                 onClick={() => handleSetPeriodeAktif('Ganjil')}>
                 Ganjil
               </Button>
@@ -257,7 +328,12 @@ export default function SemesterAntaraPage() {
                 type="button"
                 variant={periodeAktif === 'Genap' ? 'default' : 'ghost'}
                 size="sm"
-                className="px-4 transition-all hover:bg-primary/10 hover:text-primary"
+                className={cn(
+                  "px-4 transition-all",
+                  periodeAktif === 'Genap' 
+                    ? '' 
+                    : 'hover:bg-primary/10 hover:text-primary'
+                )}
                 onClick={() => handleSetPeriodeAktif('Genap')}>
                 Genap
               </Button>
@@ -265,9 +341,16 @@ export default function SemesterAntaraPage() {
                 type="button"
                 variant={periodeAktif === 'Semua' ? 'default' : 'ghost'}
                 size="sm"
-                className="px-4 transition-all hover:bg-primary/10 hover:text-primary hidden sm:inline-flex"
-                onClick={() => handleSetPeriodeAktif('Semua')}>
-                Semua
+                className={cn(
+                  "px-3 sm:px-4 transition-all",
+                  periodeAktif === 'Semua' 
+                    ? '' 
+                    : 'hover:bg-primary/10 hover:text-primary'
+                )}
+                onClick={() => handleSetPeriodeAktif('Semua')}
+                title="Semua">
+                <span className="hidden sm:inline">Semua</span>
+                <i className="fa-solid fa-list sm:hidden"></i>
               </Button>
             </div>
           </div>
@@ -298,36 +381,38 @@ export default function SemesterAntaraPage() {
             className="h-10 max-w-md"
           />
 
-          <div className="rounded-md border border-border overflow-hidden">
-            <table className="min-w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                    Nama Semester
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                    Tahun
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                    Periode
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                    Tanggal Mulai
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                    Tanggal Selesai
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                    Deadline Pendaftaran
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                    Status
-                  </th>
-                  <th className="px-4 py-2 text-center font-medium text-muted-foreground">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+              <div className="rounded-md border border-border overflow-hidden">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                        Nama Semester
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                        Tahun
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                        Periode
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                        Tanggal Mulai
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                        Tanggal Selesai
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                        Deadline Pendaftaran
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                        Status
+                      </th>
+                      <th className="px-4 py-2 text-center font-medium text-muted-foreground whitespace-nowrap">
+                        Aksi
+                      </th>
+                    </tr>
+                  </thead>
               <tbody className="divide-y">
                 {loading ? (
                   <tr>
@@ -357,16 +442,16 @@ export default function SemesterAntaraPage() {
 
                     return (
                       <tr key={semester.id}>
-                        <td className="px-4 py-3 font-medium text-foreground">
+                        <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
                           {semester.nama}
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                           {semester.tahun}
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                           {formatPeriode(semester.periode)}
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                           {new Date(semester.tanggalMulai).toLocaleDateString(
                             'id-ID',
                             {
@@ -376,7 +461,7 @@ export default function SemesterAntaraPage() {
                             }
                           )}
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                           {new Date(semester.tanggalSelesai).toLocaleDateString(
                             'id-ID',
                             {
@@ -386,7 +471,7 @@ export default function SemesterAntaraPage() {
                             }
                           )}
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                           {new Date(
                             semester.deadlinePendaftaran
                           ).toLocaleDateString('id-ID', {
@@ -395,7 +480,7 @@ export default function SemesterAntaraPage() {
                             year: 'numeric',
                           })}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <Badge
                             className={
                               isAktif && isPeriodeAktif
@@ -405,7 +490,7 @@ export default function SemesterAntaraPage() {
                             {isAktif && isPeriodeAktif ? 'Aktif' : 'Nonaktif'}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex flex-wrap gap-2 text-xs justify-center">
                             <Button
                               variant="outline"
@@ -444,7 +529,9 @@ export default function SemesterAntaraPage() {
                   })
                 )}
               </tbody>
-            </table>
+                </table>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

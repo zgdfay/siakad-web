@@ -189,31 +189,35 @@ export default function CheckoutPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Kode</TableHead>
-                      <TableHead>Nama Mata Kuliah</TableHead>
-                      <TableHead className="text-right">SKS</TableHead>
-                      <TableHead className="text-right">Biaya</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedMK.map((mk) => (
-                      <TableRow key={mk.id}>
-                        <TableCell className="font-medium">{mk.kode}</TableCell>
-                        <TableCell>{mk.nama}</TableCell>
-                        <TableCell className="text-right">{mk.sks}</TableCell>
-                        <TableCell className="text-right">
-                          {new Intl.NumberFormat('id-ID', {
-                            style: 'currency',
-                            currency: 'IDR',
-                          }).format(mk.biaya)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="whitespace-nowrap">Kode</TableHead>
+                          <TableHead className="whitespace-nowrap">Nama Mata Kuliah</TableHead>
+                          <TableHead className="text-right whitespace-nowrap">SKS</TableHead>
+                          <TableHead className="text-right whitespace-nowrap">Biaya</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedMK.map((mk) => (
+                          <TableRow key={mk.id}>
+                            <TableCell className="font-medium whitespace-nowrap">{mk.kode}</TableCell>
+                            <TableCell className="whitespace-nowrap">{mk.nama}</TableCell>
+                            <TableCell className="text-right whitespace-nowrap">{mk.sks}</TableCell>
+                            <TableCell className="text-right whitespace-nowrap">
+                              {new Intl.NumberFormat('id-ID', {
+                                style: 'currency',
+                                currency: 'IDR',
+                              }).format(mk.biaya)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 

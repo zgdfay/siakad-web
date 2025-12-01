@@ -283,9 +283,9 @@ export default function AdminPendaftaranPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
           Manajemen Pendaftaran
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -330,20 +330,22 @@ export default function AdminPendaftaranPage() {
               </SelectContent>
             </Select>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-center">NIM</TableHead>
-                <TableHead className="text-center">Nama</TableHead>
-                <TableHead className="text-center">Semester</TableHead>
-                <TableHead className="text-center">Tanggal</TableHead>
-                <TableHead className="text-center">Mata Kuliah</TableHead>
-                <TableHead className="text-center">Total Biaya</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-center">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-center whitespace-nowrap">NIM</TableHead>
+                    <TableHead className="text-center whitespace-nowrap">Nama</TableHead>
+                    <TableHead className="text-center whitespace-nowrap">Semester</TableHead>
+                    <TableHead className="text-center whitespace-nowrap">Tanggal</TableHead>
+                    <TableHead className="text-center whitespace-nowrap">Mata Kuliah</TableHead>
+                    <TableHead className="text-center whitespace-nowrap">Total Biaya</TableHead>
+                    <TableHead className="text-center whitespace-nowrap">Status</TableHead>
+                    <TableHead className="text-center whitespace-nowrap">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8">
@@ -476,8 +478,10 @@ export default function AdminPendaftaranPage() {
                   </TableRow>
                 ))
               )}
-            </TableBody>
-          </Table>
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

@@ -110,7 +110,7 @@ export function DetailPendaftaranModal({
       />
 
       {/* Modal */}
-      <div className="fixed top-[50%] left-[50%] z-50 w-full max-w-7xl max-h-[90vh] translate-x-[-50%] translate-y-[-50%] rounded-lg border bg-background shadow-lg animate-in fade-in-0 zoom-in-95 flex flex-col overflow-hidden">
+      <div className="fixed top-[50%] left-[50%] z-50 w-full max-w-[calc(100%-1rem)] sm:max-w-[calc(100%-2rem)] lg:max-w-7xl max-h-[90vh] translate-x-[-50%] translate-y-[-50%] rounded-lg border bg-background shadow-lg animate-in fade-in-0 zoom-in-95 flex flex-col overflow-hidden">
         {/* Close Button */}
         <button
           onClick={() => onOpenChange(false)}
@@ -121,15 +121,15 @@ export function DetailPendaftaranModal({
         </button>
 
         {/* Header - Fixed */}
-        <div className="p-6 pb-4 pr-12 border-b shrink-0">
-          <h2 className="text-2xl font-semibold">Detail Pendaftaran</h2>
+        <div className="p-4 sm:p-6 pb-4 pr-12 border-b shrink-0">
+          <h2 className="text-xl sm:text-2xl font-semibold">Detail Pendaftaran</h2>
           <p className="text-sm text-muted-foreground mt-1">
             ID: {data.id.slice(0, 8)}...
           </p>
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-6 pr-12 min-h-0">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pr-12 min-h-0">
           <div className="space-y-4">
             {/* Status Card */}
             <Card>
@@ -163,8 +163,9 @@ export function DetailPendaftaranModal({
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="text-center">Kode</TableHead>
@@ -197,6 +198,7 @@ export function DetailPendaftaranModal({
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 </div>
               </CardContent>
             </Card>

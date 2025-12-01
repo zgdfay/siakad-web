@@ -74,7 +74,6 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-
         {/* Academic Calendar Section */}
         <AcademicCalendar />
       </div>

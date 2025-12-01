@@ -122,8 +122,9 @@ export default function UnduhanPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-center">No</TableHead>
@@ -194,6 +195,7 @@ export default function UnduhanPage() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </div>
             )}
           </CardContent>

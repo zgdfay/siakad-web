@@ -91,61 +91,67 @@ export function SemesterMataKuliahGroup({
     <Card className="transition-all hover:shadow-md">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
                 <CollapsibleTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0">
+                    className="h-6 w-6 p-0 shrink-0">
                     <i
                       className={`fa-solid fa-chevron-${
                         isOpen ? 'down' : 'right'
                       } text-xs`}></i>
                   </Button>
                 </CollapsibleTrigger>
-                <CardTitle className="text-lg">{semester.nama}</CardTitle>
+                <CardTitle className="text-base sm:text-lg truncate">{semester.nama}</CardTitle>
                 {semester.status === 'nonaktif' ? (
-                  <Badge variant="secondary">Nonaktif</Badge>
+                  <Badge variant="secondary" className="shrink-0">Nonaktif</Badge>
                 ) : isDeadlinePassed ? (
-                  <Badge variant="destructive">Tutup</Badge>
+                  <Badge variant="destructive" className="shrink-0">Tutup</Badge>
                 ) : (
-                  <Badge variant="default">Aktif</Badge>
+                  <Badge variant="default" className="shrink-0">Aktif</Badge>
                 )}
               </div>
-              <CardDescription className="ml-9">
+              <CardDescription className="ml-8 sm:ml-9 text-xs sm:text-sm">
                 {semester.tahun} - {semester.periode} •{' '}
                 {semester.mataKuliah.length} Mata Kuliah
               </CardDescription>
             </div>
-            <div className="text-right text-sm text-muted-foreground space-y-1">
-              <div>
+            <div className="text-left lg:text-right text-xs sm:text-sm text-muted-foreground space-y-1 lg:min-w-0 lg:max-w-xs">
+              <div className="break-words">
                 <span className="font-medium">Tanggal Mulai:</span>{' '}
-                {new Date(semester.tanggalMulai).toLocaleDateString('id-ID', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+                <span className="block sm:inline lg:block">
+                  {new Date(semester.tanggalMulai).toLocaleDateString('id-ID', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </span>
               </div>
-              <div>
+              <div className="break-words">
                 <span className="font-medium">Tanggal Selesai:</span>{' '}
-                {new Date(semester.tanggalSelesai).toLocaleDateString('id-ID', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+                <span className="block sm:inline lg:block">
+                  {new Date(semester.tanggalSelesai).toLocaleDateString('id-ID', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </span>
               </div>
-              <div className={isDeadlinePassed ? 'text-destructive font-medium' : ''}>
-                <span className="font-medium">Deadline Pendaftaran:</span>{' '}
-                {new Date(semester.deadlinePendaftaran).toLocaleDateString('id-ID', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+              <div className={`break-words ${isDeadlinePassed ? 'text-destructive font-medium' : ''}`}>
+                <span className="font-medium">Deadline:</span>{' '}
+                <span className="block sm:inline lg:block">
+                  {new Date(semester.deadlinePendaftaran).toLocaleDateString('id-ID', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </span>
               </div>
             </div>
           </div>
@@ -180,21 +186,23 @@ export function SemesterMataKuliahGroup({
                     }`}
                     onClick={() => !mkDisabled && handleToggleMataKuliah(mk.id)}>
                     <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <CardTitle className="text-base">{mk.nama}</CardTitle>
-                            {isSelected && (
-                              <Badge variant="default">Dipilih</Badge>
-                            )}
-                            {isFull && (
-                              <Badge variant="destructive">Kuota Penuh</Badge>
-                            )}
-                            {isDisabled && !isFull && (
-                              <Badge variant="secondary">Tidak Tersedia</Badge>
-                            )}
+                            <CardTitle className="text-sm sm:text-base break-words">{mk.nama}</CardTitle>
+                            <div className="flex items-center gap-1 flex-wrap shrink-0">
+                              {isSelected && (
+                                <Badge variant="default" className="text-xs">Dipilih</Badge>
+                              )}
+                              {isFull && (
+                                <Badge variant="destructive" className="text-xs">Kuota Penuh</Badge>
+                              )}
+                              {isDisabled && !isFull && (
+                                <Badge variant="secondary" className="text-xs">Tidak Tersedia</Badge>
+                              )}
+                            </div>
                           </div>
-                          <CardDescription>
+                          <CardDescription className="text-xs sm:text-sm">
                             {mk.kode} - {mk.sks} SKS - Kelas {mk.kelas}
                           </CardDescription>
                         </div>
@@ -205,23 +213,24 @@ export function SemesterMataKuliahGroup({
                             handleToggleMataKuliah(mk.id)
                           }
                           onClick={(e) => e.stopPropagation()}
+                          className="shrink-0"
                         />
                       </div>
                     </CardHeader>
                     <CardContent className="pt-0 space-y-2">
-                      <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
                         <div>
                           <span className="text-muted-foreground">Jadwal:</span>
-                          <p className="font-medium">{mk.jadwal}</p>
+                          <p className="font-medium break-words">{mk.jadwal}</p>
                         </div>
                         {mk.tanggalJadwal && (
                           <div>
                             <span className="text-muted-foreground">Tanggal Jadwal:</span>
-                            <p className="font-medium">
+                            <p className="font-medium break-words">
                               {new Date(mk.tanggalJadwal).toLocaleDateString('id-ID', {
-                                weekday: 'long',
+                                weekday: 'short',
                                 year: 'numeric',
-                                month: 'long',
+                                month: 'short',
                                 day: 'numeric',
                               })}
                             </p>
@@ -229,7 +238,7 @@ export function SemesterMataKuliahGroup({
                         )}
                         <div>
                           <span className="text-muted-foreground">Dosen:</span>
-                          <p className="font-medium">{mk.dosen}</p>
+                          <p className="font-medium break-words">{mk.dosen}</p>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Kuota:</span>
@@ -247,7 +256,7 @@ export function SemesterMataKuliahGroup({
                         </div>
                         <div>
                           <span className="text-muted-foreground">Biaya:</span>
-                          <p className="font-medium">
+                          <p className="font-medium break-words">
                             {new Intl.NumberFormat('id-ID', {
                               style: 'currency',
                               currency: 'IDR',

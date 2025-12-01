@@ -438,7 +438,7 @@ export default function PilihSemesterAntaraPage() {
 
         {/* Summary Sidebar */}
         <div className="lg:col-span-1">
-          <Card className="sticky top-24">
+          <Card className="lg:sticky lg:top-24">
             <CardHeader>
               <CardTitle>Ringkasan Pendaftaran</CardTitle>
               <CardDescription>

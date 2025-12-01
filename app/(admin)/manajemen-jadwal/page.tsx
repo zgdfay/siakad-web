@@ -282,22 +282,23 @@ export default function ManajemenJadwalPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-center">Status</TableHead>
-                        <TableHead className="text-center">Mahasiswa</TableHead>
-                        <TableHead className="text-center">NIM</TableHead>
-                        <TableHead className="text-center">Kode</TableHead>
-                        <TableHead className="text-center">Mata Kuliah</TableHead>
-                        <TableHead className="text-center">Kelas</TableHead>
-                        <TableHead className="text-center">Jadwal</TableHead>
-                        <TableHead className="text-center">Tanggal</TableHead>
-                        <TableHead className="text-center">Dosen</TableHead>
-                        <TableHead className="text-center">SKS</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-center whitespace-nowrap">Status</TableHead>
+                          <TableHead className="text-center whitespace-nowrap">Mahasiswa</TableHead>
+                          <TableHead className="text-center whitespace-nowrap">NIM</TableHead>
+                          <TableHead className="text-center whitespace-nowrap">Kode</TableHead>
+                          <TableHead className="text-center whitespace-nowrap">Mata Kuliah</TableHead>
+                          <TableHead className="text-center whitespace-nowrap">Kelas</TableHead>
+                          <TableHead className="text-center whitespace-nowrap">Jadwal</TableHead>
+                          <TableHead className="text-center whitespace-nowrap">Tanggal</TableHead>
+                          <TableHead className="text-center whitespace-nowrap">Dosen</TableHead>
+                          <TableHead className="text-center whitespace-nowrap">SKS</TableHead>
+                        </TableRow>
+                      </TableHeader>
                     <TableBody>
                       {items.map((item) => {
                         const isSelesai = item.statusJadwal === 'SELESAI';
@@ -305,39 +306,40 @@ export default function ManajemenJadwalPage() {
                           <TableRow
                             key={item.id}
                             className={isSelesai ? 'opacity-60 bg-muted/30' : ''}>
-                            <TableCell className="text-center">
+                            <TableCell className="text-center whitespace-nowrap">
                               <Badge
                                 variant={isSelesai ? 'default' : 'secondary'}
                                 className={isSelesai ? 'bg-green-600' : ''}>
                                 {item.statusJadwal}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-center">{item.mahasiswa.name}</TableCell>
-                            <TableCell className="text-center font-mono text-sm">
+                            <TableCell className="text-center whitespace-nowrap">{item.mahasiswa.name}</TableCell>
+                            <TableCell className="text-center font-mono text-sm whitespace-nowrap">
                               {item.mahasiswa.nimOrNip}
                             </TableCell>
-                            <TableCell className="font-medium text-center">
+                            <TableCell className="font-medium text-center whitespace-nowrap">
                               {item.kode}
                             </TableCell>
-                            <TableCell className="text-center">{item.nama}</TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="text-center whitespace-nowrap">{item.nama}</TableCell>
+                            <TableCell className="text-center whitespace-nowrap">
                               <Badge variant="outline">{item.kelas}</Badge>
                             </TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="text-center whitespace-nowrap">
                               <span className="font-medium">{item.jadwal || '-'}</span>
                             </TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="text-center whitespace-nowrap">
                               <span className="text-sm text-muted-foreground">
                                 {formatTanggal(item.tanggalJadwal)}
                               </span>
                             </TableCell>
-                            <TableCell className="text-center">{item.dosen || '-'}</TableCell>
-                            <TableCell className="text-center">{item.sks}</TableCell>
+                            <TableCell className="text-center whitespace-nowrap">{item.dosen || '-'}</TableCell>
+                            <TableCell className="text-center whitespace-nowrap">{item.sks}</TableCell>
                           </TableRow>
                         );
                       })}
                     </TableBody>
-                  </Table>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </Card>

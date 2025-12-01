@@ -65,15 +65,15 @@ export function RingkasanPendaftaranModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-[calc(100%-2rem)] lg:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Ringkasan Pendaftaran</DialogTitle>
+          <DialogTitle className="text-xl sm:text-2xl">Ringkasan Pendaftaran</DialogTitle>
           <DialogDescription>
             Detail lengkap pendaftaran semester antara Anda
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="space-y-4 sm:space-y-6 mt-4">
           {/* Success Header */}
           <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-950/20 dark:to-emerald-950/20 dark:border-green-800/30">
             <CardContent className="pt-6">
@@ -117,8 +117,9 @@ export function RingkasanPendaftaranModal({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-center">Kode</TableHead>
@@ -138,6 +139,7 @@ export function RingkasanPendaftaranModal({
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </div>
             </CardContent>
           </Card>

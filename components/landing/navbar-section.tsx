@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/lib/routes';
+import { User } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -18,6 +20,53 @@ const navItems = [
 export function NavbarSection() {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<string>('hero');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user from API
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+
+    // Refresh user when page becomes visible (e.g., after login in another tab)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchUser();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // Get dashboard route based on user role
+  const getDashboardRoute = () => {
+    if (!user) return ROUTES.AUTH.LOGIN;
+    if (user.role === 'ADMIN') return ROUTES.ADMIN.DASHBOARD;
+    if (user.role === 'MAHASISWA') return ROUTES.MAHASISWA.DASHBOARD;
+    if (user.role === 'DOSEN') return ROUTES.MAHASISWA.DASHBOARD; // DOSEN bisa pakai route mahasiswa untuk sementara
+    return ROUTES.AUTH.LOGIN;
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -58,6 +107,7 @@ export function NavbarSection() {
     href: string
   ) => {
     e.preventDefault();
+    setIsMobileMenuOpen(false); // Close mobile menu on click
     if (href === '#') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
@@ -112,13 +162,74 @@ export function NavbarSection() {
             ))}
           </div>
 
-          {/* Login Button */}
+          {/* Desktop Button - Hidden on mobile */}
+          <div className="hidden md:block">
+            <Button
+              onClick={() =>
+                router.push(user ? getDashboardRoute() : ROUTES.AUTH.LOGIN)
+              }
+              className="bg-primary hover:bg-primary/90">
+              {user ? 'Dashboard' : 'Login'}
+              <i
+                className={cn(
+                  'ml-2',
+                  user ? 'fa-solid fa-house' : 'fa-solid fa-arrow-right-long'
+                )}></i>
+            </Button>
+          </div>
+
+          {/* Mobile Menu Button */}
           <Button
-            onClick={() => router.push(ROUTES.AUTH.LOGIN)}
-            className="bg-primary hover:bg-primary/90">
-            Login
-            <i className="fa-solid fa-arrow-right-long ml-2"></i>
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu">
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
           </Button>
+        </div>
+
+        {/* Mobile Menu */}
+        <div
+          className={cn(
+            'md:hidden overflow-hidden transition-all duration-300 ease-in-out',
+            isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          )}>
+          <div className="py-4 space-y-3 border-t">
+            {navItems.map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                onClick={(e) => handleNavClick(e, item.href)}
+                className={cn(
+                  'block px-4 py-2 text-sm transition-colors rounded-md',
+                  activeSection === item.id
+                    ? 'text-primary font-semibold bg-primary/10'
+                    : 'text-muted-foreground hover:text-primary hover:bg-accent'
+                )}>
+                {item.label}
+              </Link>
+            ))}
+            <div className="px-4 pt-2">
+              <Button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  router.push(user ? getDashboardRoute() : ROUTES.AUTH.LOGIN);
+                }}
+                className="w-full bg-primary hover:bg-primary/90">
+                {user ? 'Dashboard' : 'Login'}
+                <i
+                  className={cn(
+                    'ml-2',
+                    user ? 'fa-solid fa-gauge' : 'fa-solid fa-arrow-right-long'
+                  )}></i>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </nav>

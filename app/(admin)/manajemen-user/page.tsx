@@ -429,26 +429,28 @@ export default function ManajemenUserPage() {
           </div>
 
           {/* Tabel user */}
-          <div className="rounded-md border border-border overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+              <div className="rounded-md border border-border overflow-hidden">
+                <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
                     NIM / NIP
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
                     Nama
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
                     Email
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
                     Role
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
                     Status
                   </th>
-                  <th className="px-4 py-2 text-center font-medium text-muted-foreground">
+                  <th className="px-4 py-2 text-center font-medium text-muted-foreground whitespace-nowrap">
                     Aksi
                   </th>
                 </tr>
@@ -476,17 +478,17 @@ export default function ManajemenUserPage() {
                 ) : (
                   users.map((user) => (
                     <tr key={user.id}>
-                      <td className="px-4 py-3 font-medium text-foreground">
+                      <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
                         {user.nimOrNip}
                       </td>
-                      <td className="px-4 py-3 text-foreground">{user.name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className="px-4 py-3 text-foreground whitespace-nowrap">{user.name}</td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                         {user.email}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground capitalize">
+                      <td className="px-4 py-3 text-muted-foreground capitalize whitespace-nowrap">
                         {user.role}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <Badge
                           variant="outline"
                           className={
@@ -497,7 +499,7 @@ export default function ManajemenUserPage() {
                           {user.status === 'aktif' ? 'Aktif' : 'Nonaktif'}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-center whitespace-nowrap">
                         <div className="inline-flex flex-wrap gap-2 text-xs justify-center">
                           <Button
                             variant="outline"
@@ -542,7 +544,9 @@ export default function ManajemenUserPage() {
                   ))
                 )}
               </tbody>
-            </table>
+                </table>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

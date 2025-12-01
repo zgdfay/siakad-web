@@ -1,15 +1,14 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { Sidebar } from '@/components/layout/sidebar';
+import { Sidebar, SidebarToggle, SidebarProvider } from '@/components/layout/sidebar';
 import { UserProvider, formatUserForSidebar } from '@/components/layout/user-provider';
 import { User } from '@/lib/auth';
+import { ROUTES } from '@/lib/routes';
 
 interface AdminLayoutWrapperProps {
   children: ReactNode;
 }
-
-import { ROUTES } from '@/lib/routes';
 
 export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
   const navItems = [
@@ -46,10 +45,11 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
   ];
 
   return (
-    <UserProvider>
-      {(user) => (
-        <div className="min-h-screen bg-background">
-          <Sidebar
+    <SidebarProvider>
+      <UserProvider>
+        {(user) => (
+          <div className="min-h-screen bg-background">
+            <Sidebar
             logo={{
               src: '/logo/itb-yadika.png',
               alt: 'ITB YADIKA PASURUAN',
@@ -67,25 +67,29 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
           />
 
           {/* Main Content */}
-          <div className="ml-64">
+          <div className="lg:ml-64">
             <header className="sticky top-0 z-10 bg-white border-b shadow-sm">
-              <div className="flex h-16 items-center justify-between px-6">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Panel Admin
-                </h2>
+              <div className="flex h-16 items-center justify-between px-4 sm:px-6 gap-4">
+                <div className="flex items-center gap-4">
+                  <SidebarToggle />
+                  <h2 className="text-base sm:text-lg font-semibold text-foreground">
+                    Panel Admin
+                  </h2>
+                </div>
                 <div className="flex items-center space-x-4">
-                  <span className="text-sm text-muted-foreground">Admin</span>
+                  <span className="hidden sm:inline text-sm text-muted-foreground">Admin</span>
                 </div>
               </div>
             </header>
             
-            <main className="p-6">
+            <main className="p-4 sm:p-6">
               {children}
             </main>
           </div>
         </div>
       )}
-    </UserProvider>
+      </UserProvider>
+    </SidebarProvider>
   );
 }
 
