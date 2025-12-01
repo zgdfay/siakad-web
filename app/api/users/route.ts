@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
       email: user.account?.email || '',
       role: user.role.toLowerCase(),
       status: user.status.toLowerCase(),
+      updatedAt: user.updatedAt.toISOString(),
     }));
 
     return NextResponse.json({ users: formattedUsers }, { status: 200 });

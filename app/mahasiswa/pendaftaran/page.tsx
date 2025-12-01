@@ -51,6 +51,7 @@ export default function PilihSemesterAntaraPage() {
   const [loading, setLoading] = useState(true);
   const [selectedMataKuliah, setSelectedMataKuliah] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const maxSKS = 24;
 
@@ -247,23 +248,33 @@ export default function PilihSemesterAntaraPage() {
       return;
     }
 
-    // Simpan data untuk checkout page
-    const checkoutData = {
-      semesterId,
-      mataKuliah: selectedMK.map((mk) => ({
-        id: mk.id,
-        kode: mk.kode,
-        nama: mk.nama,
-        sks: mk.sks,
-        biaya: mk.biaya,
-      })),
-      totalBiaya,
-    };
+    try {
+      setIsNavigating(true);
 
-    sessionStorage.setItem('checkoutData', JSON.stringify(checkoutData));
+      // Simpan data untuk checkout page
+      const checkoutData = {
+        semesterId,
+        mataKuliah: selectedMK.map((mk) => ({
+          id: mk.id,
+          kode: mk.kode,
+          nama: mk.nama,
+          sks: mk.sks,
+          biaya: mk.biaya,
+        })),
+        totalBiaya,
+      };
 
-    // Redirect ke checkout page
-    router.push(`/mahasiswa/pendaftaran/${semesterId}/checkout`);
+      sessionStorage.setItem('checkoutData', JSON.stringify(checkoutData));
+
+      // Redirect ke checkout page
+      router.push(`/mahasiswa/pendaftaran/${semesterId}/checkout`);
+    } catch (error) {
+      console.error('Error navigating to checkout:', error);
+      toast.error('Gagal melanjutkan ke checkout', {
+        description: 'Silakan coba lagi',
+      });
+      setIsNavigating(false);
+    }
   };
 
   const activeSemester = semesterList.filter((s) => s.status === 'AKTIF');
@@ -497,14 +508,25 @@ export default function PilihSemesterAntaraPage() {
 
               <Button
                 onClick={handleNext}
-                disabled={selectedMataKuliah.length === 0 || totalSKS > maxSKS}
+                disabled={
+                  selectedMataKuliah.length === 0 ||
+                  totalSKS > maxSKS ||
+                  isNavigating
+                }
                 className="w-full"
                 size="lg">
-                {selectedMataKuliah.length === 0
-                  ? 'Pilih Mata Kuliah'
-                  : totalSKS > maxSKS
-                  ? `SKS Melebihi Batas (${totalSKS}/${maxSKS})`
-                  : `Lanjutkan ke Checkout (${selectedMataKuliah.length})`}
+                {isNavigating ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                    Memproses...
+                  </>
+                ) : selectedMataKuliah.length === 0 ? (
+                  'Pilih Mata Kuliah'
+                ) : totalSKS > maxSKS ? (
+                  `SKS Melebihi Batas (${totalSKS}/${maxSKS})`
+                ) : (
+                  `Lanjutkan ke Checkout (${selectedMataKuliah.length})`
+                )}
               </Button>
 
               {totalSKS > maxSKS && (

@@ -42,6 +42,7 @@ interface UserItem {
   email: string;
   role: 'mahasiswa' | 'dosen' | 'admin';
   status: 'aktif' | 'nonaktif';
+  updatedAt: string;
 }
 
 export default function ManajemenUserPage() {
@@ -220,6 +221,7 @@ export default function ManajemenUserPage() {
         role: roleValue as UserItem['role'],
         // Status default aktif, dapat diubah lewat modal edit
         status: 'aktif',
+        updatedAt: new Date().toISOString(),
       });
     }
 
@@ -348,6 +350,49 @@ export default function ManajemenUserPage() {
     }
   };
 
+  // Format tanggal relatif (misalnya "2 hari yang lalu")
+  const formatRelativeTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) {
+      return 'Baru saja';
+    }
+
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} menit yang lalu`;
+    }
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `${diffInHours} jam yang lalu`;
+    }
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) {
+      return `${diffInDays} hari yang lalu`;
+    }
+
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    if (diffInWeeks < 4) {
+      return `${diffInWeeks} minggu yang lalu`;
+    }
+
+    const diffInMonths = Math.floor(diffInDays / 30);
+    if (diffInMonths < 12) {
+      return `${diffInMonths} bulan yang lalu`;
+    }
+
+    // Jika lebih dari 1 tahun, tampilkan tanggal lengkap
+    return date.toLocaleDateString('id-ID', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
       {/* Header */}
@@ -433,117 +478,141 @@ export default function ManajemenUserPage() {
             <div className="inline-block min-w-full align-middle px-4 sm:px-0">
               <div className="rounded-md border border-border overflow-hidden">
                 <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
-                    NIM / NIP
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
-                    Nama
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
-                    Email
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
-                    Role
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
-                    Status
-                  </th>
-                  <th className="px-4 py-2 text-center font-medium text-muted-foreground whitespace-nowrap">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {loading ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-4 py-8 text-center text-muted-foreground text-sm">
-                      <div className="flex items-center justify-center gap-2">
-                        <i className="fa-solid fa-spinner fa-spin"></i>
-                        Memuat data...
-                      </div>
-                    </td>
-                  </tr>
-                ) : users.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-4 py-8 text-center text-muted-foreground text-sm">
-                      Tidak ada user yang ditemukan.
-                    </td>
-                  </tr>
-                ) : (
-                  users.map((user) => (
-                    <tr key={user.id}>
-                      <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
-                        {user.nimOrNip}
-                      </td>
-                      <td className="px-4 py-3 text-foreground whitespace-nowrap">{user.name}</td>
-                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                        {user.email}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground capitalize whitespace-nowrap">
-                        {user.role}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <Badge
-                          variant="outline"
-                          className={
-                            user.status === 'aktif'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : 'bg-red-50 text-red-700 border-red-200'
-                          }>
-                          {user.status === 'aktif' ? 'Aktif' : 'Nonaktif'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-center whitespace-nowrap">
-                        <div className="inline-flex flex-wrap gap-2 text-xs justify-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleOpenEdit(user)}>
-                            <i className="fa-solid fa-pen mr-1"></i>
-                            Edit
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive">
-                                <i className="fa-solid fa-trash mr-1"></i>
-                                Hapus
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Hapus user ini?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Data user akan dihapus dari daftar. Tindakan
-                                  ini tidak dapat dibatalkan.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Batal</AlertDialogCancel>
-                                <AlertDialogAction
-                                  className="bg-red-600 hover:bg-red-700 text-white"
-                                  onClick={() => handleDeleteUser(user.id)}>
-                                  Ya, Hapus
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </td>
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                        NIM / NIP
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                        Nama
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                        Email
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                        Role
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+                        Status
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap hidden lg:table-cell">
+                        Terakhir Diupdate
+                      </th>
+                      <th className="px-4 py-2 text-center font-medium text-muted-foreground whitespace-nowrap">
+                        Aksi
+                      </th>
                     </tr>
-                  ))
-                )}
-              </tbody>
+                  </thead>
+                  <tbody className="divide-y">
+                    {loading ? (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="px-4 py-8 text-center text-muted-foreground text-sm">
+                          <div className="flex items-center justify-center gap-2">
+                            <i className="fa-solid fa-spinner fa-spin"></i>
+                            Memuat data...
+                          </div>
+                        </td>
+                      </tr>
+                    ) : users.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="px-4 py-8 text-center text-muted-foreground text-sm">
+                          Tidak ada user yang ditemukan.
+                        </td>
+                      </tr>
+                    ) : (
+                      users.map((user) => (
+                        <tr key={user.id}>
+                          <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
+                            {user.nimOrNip}
+                          </td>
+                          <td className="px-4 py-3 text-foreground whitespace-nowrap">
+                            {user.name}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                            {user.email}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground capitalize whitespace-nowrap">
+                            {user.role}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <Badge
+                              variant="outline"
+                              className={
+                                user.status === 'aktif'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  : 'bg-red-50 text-red-700 border-red-200'
+                              }>
+                              {user.status === 'aktif' ? 'Aktif' : 'Nonaktif'}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground text-xs sm:text-sm whitespace-nowrap hidden lg:table-cell">
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {formatRelativeTime(user.updatedAt)}
+                              </span>
+                              <span className="text-xs text-muted-foreground/70">
+                                {new Date(user.updatedAt).toLocaleDateString(
+                                  'id-ID',
+                                  {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  }
+                                )}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center whitespace-nowrap">
+                            <div className="inline-flex flex-wrap gap-2 text-xs justify-center">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenEdit(user)}>
+                                <i className="fa-solid fa-pen mr-1"></i>
+                                Edit
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive">
+                                    <i className="fa-solid fa-trash mr-1"></i>
+                                    Hapus
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Hapus user ini?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Data user akan dihapus dari daftar.
+                                      Tindakan ini tidak dapat dibatalkan.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      className="bg-red-600 hover:bg-red-700 text-white"
+                                      onClick={() => handleDeleteUser(user.id)}>
+                                      Ya, Hapus
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
                 </table>
               </div>
             </div>
