@@ -212,7 +212,7 @@ export default function PembayaranPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih metode pembayaran" />
                   </SelectTrigger>
                   <SelectContent>

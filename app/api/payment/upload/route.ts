@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
-import { getSupabaseClient, STORAGE_BUCKET } from '@/lib/supabase';
+import { getCloudinary } from '@/lib/cloudinary';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -79,42 +79,48 @@ export async function POST(request: NextRequest) {
     // Generate unique filename
     const timestamp = Date.now();
     const fileExtension = file.name.split('.').pop();
-    const filename = `payment_${pendaftaranId}_${timestamp}.${fileExtension}`;
-    const filePath = `${pendaftaranId}/${filename}`;
+    const filename = `payment_${pendaftaranId}_${timestamp}`;
+    const folder = `payment-proofs/${pendaftaranId}`;
 
     try {
       // Convert file to buffer
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // Get Supabase client
-      const supabase = getSupabaseClient();
+      // Convert buffer to base64 string for Cloudinary
+      const base64String = buffer.toString('base64');
+      const dataUri = `data:${file.type};base64,${base64String}`;
 
-      // Upload file to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .upload(filePath, buffer, {
-          contentType: file.type,
-          upsert: false, // Don't overwrite existing files
-        });
+      // Get Cloudinary instance
+      const cloudinary = getCloudinary();
 
-      if (uploadError) {
-        console.error('Supabase upload error:', uploadError);
-        throw new Error(
-          uploadError.message || 'Gagal mengupload file ke storage'
+      // Upload file to Cloudinary
+      const uploadResult = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload(
+          dataUri,
+          {
+            folder: folder,
+            public_id: filename,
+            resource_type: file.type.startsWith('image/') ? 'image' : 'raw',
+            format: fileExtension,
+            overwrite: false,
+          },
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
         );
+      }) as any;
+
+      if (!uploadResult?.secure_url) {
+        throw new Error('File URL tidak ditemukan setelah upload');
       }
 
-      if (!uploadData?.path) {
-        throw new Error('File path tidak ditemukan setelah upload');
-      }
-
-      // Get public URL
-      const { data: urlData } = getSupabaseClient().storage
-        .from(STORAGE_BUCKET)
-        .getPublicUrl(uploadData.path);
-
-      const fileUrl = urlData.publicUrl;
+      const fileUrl = uploadResult.secure_url;
+      const publicId = uploadResult.public_id;
 
       // Only update database if file was successfully uploaded
       try {
@@ -142,12 +148,12 @@ export async function POST(request: NextRequest) {
           { status: 200 }
         );
       } catch (dbError: any) {
-        // If database update fails, delete the file from storage
+        // If database update fails, delete the file from Cloudinary
         try {
-          await getSupabaseClient().storage.from(STORAGE_BUCKET).remove([uploadData.path]);
-          console.log('File deleted from storage due to database update failure');
+          await getCloudinary().uploader.destroy(publicId);
+          console.log('File deleted from Cloudinary due to database update failure');
         } catch (deleteError) {
-          console.error('Error deleting file from storage after database update failure:', deleteError);
+          console.error('Error deleting file from Cloudinary after database update failure:', deleteError);
         }
         throw dbError;
       }
