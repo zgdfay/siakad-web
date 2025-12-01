@@ -78,14 +78,14 @@ export async function proxy(request: NextRequest) {
       } catch (error) {
         // Invalid session, clear cookie dan allow access ke public route
         const response = NextResponse.next();
-        const isSecure = 
+        const isSecure: boolean = 
           process.env.NODE_ENV === 'production' || 
-          process.env.VERCEL_URL ||
-          process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://');
+          !!process.env.VERCEL_URL ||
+          (process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://') ?? false);
         response.cookies.set('siakad_session', '', {
           expires: new Date(0),
           httpOnly: true,
-          secure: isSecure ?? false,
+          secure: isSecure,
           sameSite: 'lax',
           path: '/',
         });
@@ -119,14 +119,14 @@ export async function proxy(request: NextRequest) {
     const loginUrl = new URL(ROUTES.AUTH.LOGIN, request.url);
     loginUrl.searchParams.set('redirect', pathname);
     const response = NextResponse.redirect(loginUrl);
-    const isSecure = 
+    const isSecure: boolean = 
       process.env.NODE_ENV === 'production' || 
-      process.env.VERCEL_URL ||
-      process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://');
+      !!process.env.VERCEL_URL ||
+      (process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://') ?? false);
     response.cookies.set('siakad_session', '', {
       expires: new Date(0),
       httpOnly: true,
-      secure: isSecure ?? false,
+      secure: isSecure,
       sameSite: 'lax',
       path: '/',
     });
