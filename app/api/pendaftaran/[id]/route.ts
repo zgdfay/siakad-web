@@ -244,8 +244,9 @@ export async function PUT(
         const semesterNama = updatedPendaftaran.semester.nama;
 
         if (userEmail) {
-          // Generate URLs for SPK and Invoice
-          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+          // Generate URLs for SPK and Invoice using proper base URL
+          const { getBaseUrl } = await import('@/lib/url');
+          const baseUrl = getBaseUrl(request);
           const spkUrl = `${baseUrl}/api/pendaftaran/${pendaftaranId}/spk`;
           const invoiceUrl = `${baseUrl}/api/pendaftaran/${pendaftaranId}/invoice`;
 

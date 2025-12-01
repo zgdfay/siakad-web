@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { sendEmail } from '@/lib/email';
 import { getPendaftaranDiterimaEmailTemplate } from '@/lib/email-templates';
+import { getBaseUrl } from '@/lib/url';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -89,8 +90,8 @@ export async function POST(
     const userName = pendaftaran.userMaster.name || pendaftaran.userMaster.nimOrNip;
     const semesterNama = pendaftaran.semester.nama;
 
-    // Generate URLs for SPK and Invoice
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // Generate URLs for SPK and Invoice using proper base URL
+    const baseUrl = getBaseUrl(request);
     const spkUrl = `${baseUrl}/api/pendaftaran/${pendaftaranId}/spk`;
     const invoiceUrl = `${baseUrl}/api/pendaftaran/${pendaftaranId}/invoice`;
 

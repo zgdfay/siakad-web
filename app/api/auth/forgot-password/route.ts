@@ -67,8 +67,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Generate reset link
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // Generate reset link using proper base URL
+    const { getBaseUrl } = await import('@/lib/url');
+    const appUrl = getBaseUrl(request);
     const resetLink = `${appUrl}/reset-password?token=${resetToken}`;
 
     // Kirim email dengan template
