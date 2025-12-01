@@ -45,7 +45,7 @@ const techStack = [
 
 export function PartnerSection() {
   return (
-    <section className="py-12 sm:py-16 bg-gradient-to-br from-primary/5 via-background to-primary/5 border-y overflow-hidden">
+    <section className="py-12 sm:py-16 bg-linear-to-br from-primary/5 via-background to-primary/5 border-y overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6">
         <h2 className="text-center text-sm sm:text-base font-medium text-muted-foreground mb-8 sm:mb-12">
           Dibangun dengan teknologi terbaru

@@ -32,7 +32,7 @@ export function FooterSection() {
   };
 
   return (
-    <footer className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white border-t border-slate-700/50 py-12 sm:py-16">
+    <footer className="bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-white border-t border-slate-700/50 py-12 sm:py-16">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
           {/* Logo */}
