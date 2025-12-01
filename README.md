@@ -5,6 +5,7 @@ Sistem manajemen akademik berbasis web untuk mengelola pendaftaran mata kuliah s
 ## 🚀 Fitur Utama
 
 ### Untuk Mahasiswa
+
 - **Dashboard**: Ringkasan pendaftaran dan status akademik
 - **Pendaftaran Mata Kuliah**: Daftar mata kuliah semester antara dengan detail lengkap
 - **Riwayat Pendaftaran**: Lihat semua pendaftaran yang pernah dilakukan
@@ -13,6 +14,7 @@ Sistem manajemen akademik berbasis web untuk mengelola pendaftaran mata kuliah s
 - **Pengaturan**: Kelola profil dan password
 
 ### Untuk Admin
+
 - **Manajemen User**: Tambah, edit, dan kelola user (Mahasiswa, Dosen, Admin)
 - **Manajemen Semester Antara**: Kelola semester antara, periode, dan status
 - **Manajemen Mata Kuliah**: Kelola mata kuliah dan penugasan ke semester
@@ -33,7 +35,7 @@ Sistem manajemen akademik berbasis web untuk mengelola pendaftaran mata kuliah s
 
 ## 📋 Prasyarat
 
-- Node.js 18+ 
+- Node.js 18+
 - npm atau yarn
 - PostgreSQL database (atau Supabase)
 - Akun email untuk pengiriman email (Gmail/SMTP)
@@ -165,6 +167,7 @@ layanan-siakad/
 ## 📧 Email Service
 
 Sistem menggunakan Nodemailer untuk mengirim email. Dukungan untuk:
+
 - Gmail (dengan App Password)
 - SMTP custom
 - Development mode (log email tanpa mengirim)
@@ -172,6 +175,7 @@ Sistem menggunakan Nodemailer untuk mengirim email. Dukungan untuk:
 ### Email yang Dikirim
 
 1. **Pendaftaran Diterima**: Email otomatis saat admin memverifikasi pendaftaran sebagai "DITERIMA"
+
    - Berisi link download SPK dan Invoice
    - Dapat dikirim ulang secara manual oleh admin
 
@@ -209,6 +213,7 @@ Sistem menggunakan Nodemailer untuk mengirim email. Dukungan untuk:
 ### Environment Variables untuk Production
 
 Pastikan semua environment variables sudah diset dengan benar:
+
 - `DATABASE_URL`: Connection string ke database production
 - `DIRECT_URL`: Direct connection untuk migrations
 - `NEXT_PUBLIC_APP_URL`: URL aplikasi production
@@ -248,12 +253,14 @@ Pastikan semua environment variables sudah diset dengan benar:
 ### Best Practices
 
 1. **Security**:
+
    - Selalu validasi input di API routes
    - Gunakan Prisma untuk query (aman dari SQL injection)
    - Jangan expose sensitive data di response
    - Gunakan HTTPS di production
 
 2. **Performance**:
+
    - Gunakan Prisma connection pooling
    - Implementasi pagination untuk data besar
    - Optimasi images dengan Next.js Image component

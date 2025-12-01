@@ -8,30 +8,38 @@ import {
   MarqueeItem,
 } from '@/components/ui/shadcn-io/marquee';
 
-const partners = [
+const techStack = [
   {
-    name: 'ISEKI',
-    logo: '/partner-logo/iseki.svg',
+    name: 'Next.js',
+    logo: '/tech-stack/next-js-logo.svg',
   },
   {
-    name: 'PA',
-    logo: '/partner-logo/pa-logo.svg',
+    name: 'TypeScript',
+    logo: '/tech-stack/ts-logo.svg',
   },
   {
-    name: 'PN',
-    logo: '/partner-logo/pn-logo.svg',
+    name: 'Tailwind CSS',
+    logo: '/tech-stack/tailwindcss-logo.svg',
   },
   {
-    name: 'Polres',
-    logo: '/partner-logo/polres-logo.svg',
+    name: 'shadcn/ui',
+    logo: '/tech-stack/shadcn-logo.svg',
   },
   {
-    name: 'SEGI',
-    logo: '/partner-logo/segi-logo.svg',
+    name: 'Radix UI',
+    logo: '/tech-stack/radix-ui-logo.svg',
   },
   {
-    name: 'SPELL',
-    logo: '/partner-logo/spell-logo.svg',
+    name: 'Prisma ORM',
+    logo: '/tech-stack/prisma-orm-logo.svg',
+  },
+  {
+    name: 'PostgreSQL',
+    logo: '/tech-stack/postgreesql-logo.svg',
+  },
+  {
+    name: 'Supabase',
+    logo: '/tech-stack/supabase-logo.svg',
   },
 ];
 
@@ -40,21 +48,21 @@ export function PartnerSection() {
     <section className="py-12 sm:py-16 bg-gradient-to-br from-primary/5 via-background to-primary/5 border-y overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6">
         <h2 className="text-center text-sm sm:text-base font-medium text-muted-foreground mb-8 sm:mb-12">
-          Dipercaya oleh yang terbaik
+          Dibangun dengan teknologi terbaru
         </h2>
         <div className="relative">
           <Marquee>
             <MarqueeFade side="left" />
             <MarqueeContent pauseOnHover={false}>
-              {partners.map((partner, index) => (
-                <MarqueeItem key={`${partner.name}-${index}`}>
-                  <div className="flex items-center justify-center h-24 sm:h-32 w-48 sm:w-64">
+              {techStack.map((tech, index) => (
+                <MarqueeItem key={`${tech.name}-${index}`}>
+                  <div className="flex items-center justify-center h-16 sm:h-20 w-32 sm:w-40">
                     <Image
-                      src={partner.logo}
-                      alt={partner.name}
-                      width={256}
-                      height={128}
-                      className="object-contain max-w-full max-h-full"
+                      src={tech.logo}
+                      alt={tech.name}
+                      width={160}
+                      height={80}
+                      className="object-contain max-w-full max-h-full opacity-80 hover:opacity-100 transition-opacity"
                     />
                   </div>
                 </MarqueeItem>

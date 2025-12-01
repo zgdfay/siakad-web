@@ -32,7 +32,7 @@ export function FooterSection() {
   };
 
   return (
-    <footer className="bg-primary text-primary-foreground py-12 sm:py-16">
+    <footer className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white border-t border-slate-700/50 py-12 sm:py-16">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
           {/* Logo */}
@@ -46,9 +46,7 @@ export function FooterSection() {
                 className="object-contain"
               />
             </div>
-            <h4 className="font-bold text-primary-foreground text-lg">
-              SIAKAD 4.0
-            </h4>
+            <h4 className="font-bold text-white text-lg">SIAKAD 4.0</h4>
           </div>
 
           {/* Navigation Links */}
@@ -58,7 +56,7 @@ export function FooterSection() {
                 key={item.href}
                 href={item.href}
                 onClick={(e) => handleNavClick(e, item.href)}
-                className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                className="text-white/80 hover:text-white transition-colors">
                 {item.label}
               </Link>
             ))}
@@ -80,7 +78,7 @@ export function FooterSection() {
               href="https://www.youtube.com/channel/UCoFB-AQ8EZFJ2GFZfzpUZdA"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-10 h-10 rounded-full border border-primary-foreground/20 flex items-center justify-center text-primary-foreground/80 hover:text-primary-foreground hover:border-primary-foreground/40 transition-colors"
+              className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/80 hover:text-white hover:border-white/40 transition-colors"
               aria-label="YouTube">
               <i className="fa-brands fa-youtube"></i>
             </a>
@@ -88,7 +86,7 @@ export function FooterSection() {
               href="https://www.instagram.com/stie.yadika.bangil/"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-10 h-10 rounded-full border border-primary-foreground/20 flex items-center justify-center text-primary-foreground/80 hover:text-primary-foreground hover:border-primary-foreground/40 transition-colors"
+              className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/80 hover:text-white hover:border-white/40 transition-colors"
               aria-label="Instagram">
               <i className="fa-brands fa-instagram"></i>
             </a>
@@ -96,20 +94,20 @@ export function FooterSection() {
               href="https://maps.app.goo.gl/6KmibhTV1yKgt3Ky6"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-10 h-10 rounded-full border border-primary-foreground/20 flex items-center justify-center text-primary-foreground/80 hover:text-primary-foreground hover:border-primary-foreground/40 transition-colors"
+              className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/80 hover:text-white hover:border-white/40 transition-colors"
               aria-label="Google Maps">
               <i className="fa-solid fa-map-location-dot"></i>
             </a>
             <a
               href="tel:(0343) 746000"
-              className="w-10 h-10 rounded-full border border-primary-foreground/20 flex items-center justify-center text-primary-foreground/80 hover:text-primary-foreground hover:border-primary-foreground/40 transition-colors"
+              className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/80 hover:text-white hover:border-white/40 transition-colors"
               aria-label="Telepon">
               <i className="fa-solid fa-phone"></i>
             </a>
           </div>
 
           {/* Copyright */}
-          <div className="text-center text-sm text-primary-foreground/60">
+          <div className="text-center text-sm text-white/60">
             <p>© {currentYear} ITB YADIKA Pasuruan, All Rights Reserved.</p>
           </div>
         </div>
