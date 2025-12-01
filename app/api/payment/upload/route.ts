@@ -8,6 +8,10 @@ export const dynamic = 'force-dynamic';
 
 // POST - Upload bukti pembayaran
 export async function POST(request: NextRequest) {
+  // Declare variables in outer scope for rollback
+  let pendaftaran: any = null;
+  let canRollback = false;
+
   try {
     // Check authentication
     const user = await getSession();
@@ -39,9 +43,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if pendaftaran exists and belongs to user
-    const pendaftaran = await prisma.pendaftaran.findUnique({
+    pendaftaran = await prisma.pendaftaran.findUnique({
       where: { id: pendaftaranId },
-      include: { payment: true },
+      include: { 
+        payment: true,
+        detail: true,
+      },
     });
 
     if (!pendaftaran) {
@@ -57,6 +64,11 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
+
+    // Check if pendaftaran can be rolled back (only if status is MENUNGGU_VERIFIKASI and payment is BELUM_BAYAR)
+    canRollback = 
+      pendaftaran.status === 'MENUNGGU_VERIFIKASI' && 
+      pendaftaran.payment?.status === 'BELUM_BAYAR';
 
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
@@ -163,6 +175,42 @@ export async function POST(request: NextRequest) {
     }
   } catch (error: any) {
     console.error('Upload payment proof error:', error);
+    
+    // If upload fails and pendaftaran can be rolled back, delete it
+    if (canRollback && pendaftaran && pendaftaran.detail) {
+      try {
+        const pendaftaranId = pendaftaran.id;
+        await prisma.$transaction(async (tx) => {
+          // Revert terisi count for each mata kuliah
+          for (const detail of pendaftaran.detail) {
+            await tx.semesterMataKuliah.update({
+              where: { id: detail.semesterMataKuliahId },
+              data: {
+                terisi: {
+                  decrement: 1,
+                },
+              },
+            });
+          }
+
+          // Delete payment if exists
+          if (pendaftaran.payment) {
+            await tx.payment.delete({
+              where: { pendaftaranId },
+            });
+          }
+
+          // Delete pendaftaran (cascade will delete details)
+          await tx.pendaftaran.delete({
+            where: { id: pendaftaranId },
+          });
+        });
+        console.log('Pendaftaran rolled back due to upload failure');
+      } catch (rollbackError) {
+        console.error('Error rolling back pendaftaran:', rollbackError);
+        // Continue with error response even if rollback fails
+      }
+    }
     
     // Provide more specific error messages
     let errorMessage = 'Terjadi kesalahan saat mengupload bukti pembayaran';
