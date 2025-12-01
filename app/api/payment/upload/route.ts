@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
-import { supabase, STORAGE_BUCKET } from '@/lib/supabase';
+import { getSupabaseClient, STORAGE_BUCKET } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -87,6 +87,9 @@ export async function POST(request: NextRequest) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
+      // Get Supabase client
+      const supabase = getSupabaseClient();
+
       // Upload file to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(STORAGE_BUCKET)
@@ -107,7 +110,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Get public URL
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = getSupabaseClient().storage
         .from(STORAGE_BUCKET)
         .getPublicUrl(uploadData.path);
 
@@ -141,7 +144,7 @@ export async function POST(request: NextRequest) {
       } catch (dbError: any) {
         // If database update fails, delete the file from storage
         try {
-          await supabase.storage.from(STORAGE_BUCKET).remove([uploadData.path]);
+          await getSupabaseClient().storage.from(STORAGE_BUCKET).remove([uploadData.path]);
           console.log('File deleted from storage due to database update failure');
         } catch (deleteError) {
           console.error('Error deleting file from storage after database update failure:', deleteError);
