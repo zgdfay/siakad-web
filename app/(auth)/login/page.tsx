@@ -62,7 +62,7 @@ export default function LoginPage() {
           </div>
 
           {/* Right Side - Hero Image (Desktop) */}
-          <div className="hidden lg:flex items-center justify-center">
+          <div className="hidden lg:flex items-center justify-center mt-6 sm:mt-8">
             <div className="relative w-full h-full min-h-[500px] rounded-lg overflow-hidden">
               <Image
                 src="/hero/hero-image.jpg"
@@ -73,14 +73,6 @@ export default function LoginPage() {
               />
             </div>
           </div>
-        </div>
-
-        {/* Info Card (Mobile) - Below Login Form */}
-        <div className="lg:hidden mt-6 sm:mt-8">
-          <InfoCard
-            formattedDate={formattedDate}
-            formattedTime={formattedTime}
-          />
         </div>
 
         {/* Academic Calendar Section */}
