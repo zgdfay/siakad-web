@@ -9,13 +9,26 @@ const SESSION_COOKIE_NAME = 'siakad_session';
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 hari
 
 /**
+ * Determine if we should use secure cookies
+ * In Vercel/production, always use secure cookies for HTTPS
+ */
+export function shouldUseSecureCookie(): boolean {
+  // Always secure in production or if VERCEL_URL is set (Vercel deployment)
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL_URL) {
+    return true;
+  }
+  // In development, only use secure if explicitly set
+  return process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://') ?? false;
+}
+
+/**
  * Set session cookie dengan user data
  */
 export async function setSession(user: User): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(user), {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: shouldUseSecureCookie(),
     sameSite: 'lax',
     maxAge: SESSION_MAX_AGE,
     path: '/',

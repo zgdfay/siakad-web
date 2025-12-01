@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import { prisma } from '@/lib/prisma';
-import { setSession } from '@/lib/session';
+import { setSession, shouldUseSecureCookie } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     // Set cookie manually karena setSession menggunakan cookies() yang async
     response.cookies.set('siakad_session', JSON.stringify(userData), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: shouldUseSecureCookie(),
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 hari
       path: '/',

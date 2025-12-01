@@ -143,9 +143,10 @@ export async function POST(request: NextRequest) {
     );
 
     // Set cookie manually
+    const { shouldUseSecureCookie } = await import('@/lib/session');
     response.cookies.set('siakad_session', JSON.stringify(userData), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: shouldUseSecureCookie(),
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 hari
       path: '/',
