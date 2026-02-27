@@ -138,3 +138,99 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
+
+// POST - Create new jadwal (SemesterMataKuliah)
+export async function POST(request: NextRequest) {
+  try {
+    const user = await getSession();
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'PANITIA')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const {
+      semesterId,
+      mataKuliahId,
+      kelas,
+      jadwal,
+      tanggalJadwal,
+      dosen,
+      kuota,
+      biaya,
+      prasyarat,
+    } = body;
+
+    // Validation
+    if (!semesterId || !mataKuliahId || !kelas || !jadwal || !dosen || !kuota) {
+      return NextResponse.json(
+        { error: 'Semester, Mata Kuliah, Kelas, Jadwal, Dosen, dan Kuota wajib diisi' },
+        { status: 400 }
+      );
+    }
+
+    // Check for existing class in same semester and mata kuliah
+    const existing = await prisma.semesterMataKuliah.findUnique({
+      where: {
+        semesterId_mataKuliahId_kelas: {
+          semesterId,
+          mataKuliahId,
+          kelas,
+        },
+      },
+    });
+
+    if (existing) {
+      return NextResponse.json(
+        { error: 'Kelas untuk Mata Kuliah ini di Semester tersebut sudah ada' },
+        { status: 409 }
+      );
+    }
+
+    const dataCreation: any = {
+      semesterId,
+      mataKuliahId,
+      kelas,
+      jadwal,
+      dosen,
+      kuota: parseInt(kuota) || 30,
+      biaya: parseInt(biaya) || 0,
+      terisi: 0,
+      isPublished: true, // Auto publish on creation or according to requirements (set default)
+    };
+
+    if (tanggalJadwal) {
+      dataCreation.tanggalJadwal = new Date(tanggalJadwal);
+    }
+    
+    if (prasyarat) {
+      dataCreation.prasyarat = prasyarat;
+    }
+
+    const newJadwal = await prisma.semesterMataKuliah.create({
+      data: dataCreation,
+    });
+
+    return NextResponse.json(
+      {
+        message: 'Jadwal berhasil dibuat',
+        jadwal: newJadwal,
+      },
+      { status: 201 }
+    );
+  } catch (error: any) {
+    console.error('Create jadwal error:', error);
+    
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Jadwal kelas sudah terdaftar' },
+        { status: 409 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Terjadi kesalahan saat membuat jadwal baru' },
+      { status: 500 }
+    );
+  }
+}
+

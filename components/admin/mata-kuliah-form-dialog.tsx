@@ -21,15 +21,6 @@ export interface MataKuliahFormValues {
   kategori: "WAJIB" | "PILIHAN";
   status?: "AKTIF" | "NONAKTIF";
   deskripsi?: string;
-  semesterId?: string;
-  // Detail untuk assignment ke semester
-  kelas?: string;
-  jadwal?: string;
-  tanggalJadwal?: string;
-  dosen?: string;
-  kuota?: number;
-  biaya?: number;
-  prasyarat?: string;
 }
 
 interface SemesterOption {
@@ -68,28 +59,8 @@ export function MataKuliahFormDialog({
     kategori: "WAJIB",
     status: "AKTIF",
     deskripsi: "",
-    semesterId: "",
-    kelas: "A",
-    jadwal: "",
-    tanggalJadwal: "",
-    dosen: "",
-    kuota: 30,
-    biaya: 0,
-    prasyarat: "",
   });
-  const [semesters, setSemesters] = useState<SemesterOption[]>([]);
-  const [loadingSemesters, setLoadingSemesters] = useState(false);
-  const [dosens, setDosens] = useState<DosenOption[]>([]);
-  const [loadingDosens, setLoadingDosens] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Fetch semesters and dosens
-  useEffect(() => {
-    if (open) {
-      fetchSemesters();
-      fetchDosens();
-    }
-  }, [open]);
 
   // Reset form values when mode changes
   useEffect(() => {
@@ -103,74 +74,15 @@ export function MataKuliahFormDialog({
         kategori: "WAJIB",
         status: "AKTIF",
         deskripsi: "",
-        semesterId: "",
-        kelas: "A",
-        jadwal: "",
-        tanggalJadwal: "",
-        dosen: "",
-        kuota: 30,
-        biaya: 0,
-        prasyarat: "",
       });
       setIsSubmitting(false);
     }
   }, [open]);
 
-  const fetchSemesters = async () => {
-    try {
-      setLoadingSemesters(true);
-      const response = await fetch("/api/semesters");
-      if (!response.ok) throw new Error("Gagal mengambil data semester");
-      const data = await response.json();
-      // Transform data to match interface
-      const transformedSemesters: SemesterOption[] = (data.semesters || []).map(
-        (sem: any) => ({
-          id: sem.id,
-          nama: sem.nama,
-          tahun: sem.tahun,
-          periode: sem.periode,
-        }),
-      );
-      setSemesters(transformedSemesters);
-    } catch (error) {
-      console.error("Error fetching semesters:", error);
-    } finally {
-      setLoadingSemesters(false);
-    }
-  };
-
-  const fetchDosens = async () => {
-    try {
-      setLoadingDosens(true);
-      const response = await fetch("/api/users?role=DOSEN");
-      if (!response.ok) throw new Error("Gagal mengambil data dosen");
-      const data = await response.json();
-      const transformedDosens: DosenOption[] = (data.users || []).map(
-        (user: any) => ({
-          id: user.id,
-          name: user.name,
-        }),
-      );
-      setDosens(transformedDosens);
-    } catch (error) {
-      console.error("Error fetching dosens:", error);
-    } finally {
-      setLoadingDosens(false);
-    }
-  };
-
   useEffect(() => {
     if (mode === "edit" && initialData) {
       setFormValues({
         ...initialData,
-        semesterId: initialData.semesterId || "",
-        kelas: initialData.kelas || "A",
-        jadwal: initialData.jadwal || "",
-        tanggalJadwal: initialData.tanggalJadwal || "",
-        dosen: initialData.dosen || "",
-        kuota: initialData.kuota || 30,
-        biaya: initialData.biaya || 0,
-        prasyarat: initialData.prasyarat || "",
       });
     } else if (mode === "create") {
       setFormValues({
@@ -182,14 +94,6 @@ export function MataKuliahFormDialog({
         kategori: "WAJIB",
         status: "AKTIF",
         deskripsi: "",
-        semesterId: "",
-        kelas: "A",
-        jadwal: "",
-        tanggalJadwal: "",
-        dosen: "",
-        kuota: 30,
-        biaya: 0,
-        prasyarat: "",
       });
     }
   }, [mode, initialData, open]);
@@ -207,34 +111,6 @@ export function MataKuliahFormDialog({
   const handleSubmit = async () => {
     if (!formValues.kode || !formValues.nama || !formValues.prodi) {
       console.warn("Form validation failed: missing required fields");
-      return;
-    }
-    // Validate detail semester if semesterId is selected
-    if (formValues.semesterId) {
-      if (
-        !formValues.kelas?.trim() ||
-        !formValues.jadwal?.trim() ||
-        !formValues.dosen?.trim() ||
-        !formValues.kuota ||
-        formValues.kuota < 1 ||
-        formValues.biaya === undefined ||
-        formValues.biaya < 0
-      ) {
-        console.warn("Form validation failed: missing semester details", {
-          kelas: formValues.kelas,
-          jadwal: formValues.jadwal,
-          dosen: formValues.dosen,
-          kuota: formValues.kuota,
-          biaya: formValues.biaya,
-        });
-        return;
-      }
-    }
-    // For create mode, semesterId is required
-    if (mode === "create" && !formValues.semesterId) {
-      console.warn(
-        "Form validation failed: semesterId is required for create mode",
-      );
       return;
     }
 
@@ -257,16 +133,7 @@ export function MataKuliahFormDialog({
     !formValues.sks ||
     formValues.sks < 1 ||
     formValues.sks > 6 ||
-    !formValues.status ||
-    (mode === "create" && !formValues.semesterId) ||
-    (formValues.semesterId &&
-      (!formValues.kelas?.trim() ||
-        !formValues.jadwal?.trim() ||
-        !formValues.dosen?.trim() ||
-        formValues.kuota === undefined ||
-        formValues.kuota < 1 ||
-        formValues.biaya === undefined ||
-        formValues.biaya < 0));
+    !formValues.status;
 
   if (!open) return null;
 
@@ -402,191 +269,6 @@ export function MataKuliahFormDialog({
                 </Select>
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="semesterId">
-                Semester Antara{" "}
-                {mode === "create" && (
-                  <span className="text-destructive">*</span>
-                )}
-              </Label>
-              <Select
-                value={formValues.semesterId || undefined}
-                onValueChange={(value) => handleChange("semesterId", value)}
-                disabled={loadingSemesters || semesters.length === 0}
-              >
-                <SelectTrigger id="semesterId" className="w-full">
-                  <SelectValue
-                    placeholder={
-                      loadingSemesters
-                        ? "Memuat..."
-                        : semesters.length === 0
-                          ? "Tidak ada semester"
-                          : "Pilih semester antara"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {semesters.length > 0
-                    ? semesters.map((semester) => (
-                        <SelectItem key={semester.id} value={semester.id}>
-                          {semester.nama} ({semester.tahun} -{" "}
-                          {semester.periode === "GANJIL" ? "Ganjil" : "Genap"})
-                        </SelectItem>
-                      ))
-                    : null}
-                </SelectContent>
-              </Select>
-              {mode === "edit" && (
-                <p className="text-xs text-muted-foreground">
-                  Pilih semester untuk menambahkan atau mengubah assignment mata
-                  kuliah
-                </p>
-              )}
-            </div>
-
-            {(mode === "create" || formValues.semesterId) && (
-              <>
-                <div className="pb-2 border-b mt-4">
-                  <h3 className="font-semibold text-sm text-foreground">
-                    Detail Semester
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="kelas">
-                      Kelas <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="kelas"
-                      value={formValues.kelas || ""}
-                      onChange={(e) => handleChange("kelas", e.target.value)}
-                      placeholder="A"
-                      className="w-full"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dosen">
-                      Dosen <span className="text-destructive">*</span>
-                    </Label>
-                    <Select
-                      value={formValues.dosen || undefined}
-                      onValueChange={(value) => handleChange("dosen", value)}
-                      disabled={loadingDosens || dosens.length === 0}
-                    >
-                      <SelectTrigger id="dosen" className="w-full">
-                        <SelectValue
-                          placeholder={
-                            loadingDosens
-                              ? "Memuat..."
-                              : dosens.length === 0
-                                ? "Tidak ada dosen"
-                                : "Pilih dosen"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-56">
-                        {dosens.length > 0
-                          ? dosens.map((dosen) => (
-                              <SelectItem key={dosen.id} value={dosen.name}>
-                                {dosen.name}
-                              </SelectItem>
-                            ))
-                          : null}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="jadwal">
-                      Jadwal <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="jadwal"
-                      value={formValues.jadwal || ""}
-                      onChange={(e) => handleChange("jadwal", e.target.value)}
-                      placeholder="Senin, 08:00-10:00"
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="tanggalJadwal">
-                      Tanggal Jadwal (Opsional)
-                    </Label>
-                    <Input
-                      id="tanggalJadwal"
-                      type="date"
-                      value={
-                        formValues.tanggalJadwal
-                          ? typeof formValues.tanggalJadwal === "string" &&
-                            formValues.tanggalJadwal.includes("T")
-                            ? formValues.tanggalJadwal.split("T")[0]
-                            : typeof formValues.tanggalJadwal === "string"
-                              ? formValues.tanggalJadwal
-                              : new Date(formValues.tanggalJadwal)
-                                  .toISOString()
-                                  .split("T")[0]
-                          : ""
-                      }
-                      onChange={(e) =>
-                        handleChange("tanggalJadwal", e.target.value)
-                      }
-                      className="w-full"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Pilih tanggal untuk jadwal kuliah
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="kuota">
-                      Kuota <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="kuota"
-                      type="number"
-                      min="1"
-                      value={formValues.kuota || 30}
-                      onChange={(e) =>
-                        handleChange("kuota", parseInt(e.target.value) || 0)
-                      }
-                      placeholder="30"
-                      className="w-full"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="biaya">
-                      Biaya <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="biaya"
-                      type="number"
-                      min="0"
-                      value={formValues.biaya || 0}
-                      onChange={(e) =>
-                        handleChange("biaya", parseInt(e.target.value) || 0)
-                      }
-                      placeholder="0"
-                      className="w-full"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="prasyarat">Prasyarat (Opsional)</Label>
-                    <Input
-                      id="prasyarat"
-                      value={formValues.prasyarat || ""}
-                      onChange={(e) =>
-                        handleChange("prasyarat", e.target.value)
-                      }
-                      placeholder="Kode mata kuliah prasyarat"
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-              </>
-            )}
 
             <div className="space-y-2">
               <Label htmlFor="deskripsi">Deskripsi (Opsional)</Label>

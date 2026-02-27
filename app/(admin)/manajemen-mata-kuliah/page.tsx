@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,11 +28,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { UserFormDialog } from '@/components/admin/user-form-dialog';
-import { MataKuliahFormDialog } from '@/components/admin/mata-kuliah-form-dialog';
-import { MataKuliahEditDialog } from '@/components/admin/mata-kuliah-edit-dialog';
-import { MataKuliahDetailModal } from '@/components/admin/mata-kuliah-detail-modal';
+} from "@/components/ui/alert-dialog";
+import { UserFormDialog } from "@/components/admin/user-form-dialog";
+import { MataKuliahFormDialog } from "@/components/admin/mata-kuliah-form-dialog";
+import { MataKuliahEditDialog } from "@/components/admin/mata-kuliah-edit-dialog";
+import { MataKuliahDetailModal } from "@/components/admin/mata-kuliah-detail-modal";
 
 interface MataKuliahItem {
   id: string;
@@ -40,20 +40,20 @@ interface MataKuliahItem {
   nama: string;
   sks: number;
   prodi: string;
-  kategori: 'WAJIB' | 'PILIHAN';
-  status: 'AKTIF' | 'NONAKTIF';
+  kategori: "WAJIB" | "PILIHAN";
+  status: "AKTIF" | "NONAKTIF";
   deskripsi?: string | null;
 }
 
 export default function ManajemenMataKuliahPage() {
   const [mataKuliah, setMataKuliah] = useState<MataKuliahItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMataKuliahId, setEditingMataKuliahId] = useState<string | null>(
-    null
+    null,
   );
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
@@ -75,20 +75,20 @@ export default function ManajemenMataKuliahPage() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (statusFilter !== 'all') {
-        params.append('status', statusFilter);
+      if (statusFilter !== "all") {
+        params.append("status", statusFilter);
       }
       if (searchTerm) {
-        params.append('search', searchTerm);
+        params.append("search", searchTerm);
       }
 
       const response = await fetch(`/api/mata-kuliah?${params.toString()}`);
-      if (!response.ok) throw new Error('Gagal mengambil data mata kuliah');
+      if (!response.ok) throw new Error("Gagal mengambil data mata kuliah");
       const data = await response.json();
       setMataKuliah(data.mataKuliah || []);
     } catch (error) {
-      console.error('Error fetching mata kuliah:', error);
-      toast.error('Gagal mengambil data mata kuliah');
+      console.error("Error fetching mata kuliah:", error);
+      toast.error("Gagal mengambil data mata kuliah");
     } finally {
       setLoading(false);
     }
@@ -118,170 +118,44 @@ export default function ManajemenMataKuliahPage() {
 
   const handleSubmit = async (values: any) => {
     try {
-      // Extract semesterId if provided
-      const { semesterId, ...mataKuliahData } = values;
-
-      // Create mata kuliah first
-      const response = await fetch('/api/mata-kuliah', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mataKuliahData),
+      const response = await fetch("/api/mata-kuliah", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Gagal menambahkan mata kuliah');
+        throw new Error(data.error || "Gagal menambahkan mata kuliah");
       }
 
-      const result = await response.json();
-      const newMataKuliahId = result.mataKuliah.id;
-
-      // If semesterId is provided, assign mata kuliah to semester
-      if (semesterId && newMataKuliahId) {
-        try {
-          console.log('Assigning mata kuliah to semester:', {
-            semesterId,
-            mataKuliahId: newMataKuliahId,
-            kelas: values.kelas,
-            jadwal: values.jadwal,
-            dosen: values.dosen,
-            kuota: values.kuota,
-            biaya: values.biaya,
-          });
-
-          const assignResponse = await fetch(
-            `/api/semesters/${semesterId}/mata-kuliah`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                mataKuliahId: newMataKuliahId,
-                kelas: values.kelas || 'A',
-                jadwal: values.jadwal || 'TBA',
-                tanggalJadwal: values.tanggalJadwal || null,
-                dosen: values.dosen || 'TBA',
-                kuota: values.kuota || 30,
-                biaya: values.biaya || 0,
-                prasyarat: values.prasyarat || null,
-              }),
-            }
-          );
-
-          if (!assignResponse.ok) {
-            const errorData = await assignResponse.json().catch(() => ({}));
-            console.error('Assign error:', errorData);
-            throw new Error(
-              errorData.error || 'Gagal mengassign mata kuliah ke semester'
-            );
-          }
-
-          const assignResult = await assignResponse.json();
-          console.log('Assign success:', assignResult);
-          toast.success('Mata kuliah berhasil diassign ke semester');
-        } catch (assignError: any) {
-          console.error('Assign error:', assignError);
-          toast.error(
-            assignError.message || 'Gagal mengassign mata kuliah ke semester'
-          );
-          // Don't throw, continue to show success for mata kuliah creation
-        }
-      }
-
-      toast.success('Mata kuliah berhasil ditambahkan');
+      toast.success("Mata kuliah berhasil ditambahkan");
       setDialogOpen(false);
       fetchMataKuliah();
     } catch (error: any) {
-      toast.error(error.message || 'Terjadi kesalahan');
+      toast.error(error.message || "Terjadi kesalahan");
     }
   };
 
   const handleEditSubmit = async (values: any) => {
     try {
-      // Update mata kuliah basic info
-      const { semesterAssignments, ...mataKuliahData } = values;
-
       const response = await fetch(`/api/mata-kuliah/${values.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mataKuliahData),
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Gagal memperbarui mata kuliah');
+        throw new Error(data.error || "Gagal memperbarui mata kuliah");
       }
 
-      // Handle semester assignments
-      if (semesterAssignments && semesterAssignments.length > 0) {
-        for (const assignment of semesterAssignments) {
-          try {
-            // Check if this is a new assignment (id starts with 'new-')
-            if (assignment.id.startsWith('new-')) {
-              // Create new assignment
-              const assignResponse = await fetch(
-                `/api/semesters/${assignment.semesterId}/mata-kuliah`,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    mataKuliahId: values.id,
-                    kelas: assignment.kelas,
-                    jadwal: assignment.jadwal,
-                    tanggalJadwal: assignment.tanggalJadwal || null,
-                    dosen: assignment.dosen,
-                    kuota: assignment.kuota,
-                    biaya: assignment.biaya,
-                    prasyarat: assignment.prasyarat || null,
-                  }),
-                }
-              );
-
-              if (!assignResponse.ok) {
-                const errorData = await assignResponse.json();
-                throw new Error(
-                  errorData.error || 'Gagal menambahkan assignment mata kuliah'
-                );
-              }
-            } else {
-              // Update existing assignment
-              const updateResponse = await fetch(
-                `/api/semesters/${assignment.semesterId}/mata-kuliah/${assignment.id}`,
-                {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    kelas: assignment.kelas,
-                    jadwal: assignment.jadwal,
-                    tanggalJadwal: assignment.tanggalJadwal || null,
-                    dosen: assignment.dosen,
-                    kuota: assignment.kuota,
-                    biaya: assignment.biaya,
-                    prasyarat: assignment.prasyarat || null,
-                  }),
-                }
-              );
-
-              if (!updateResponse.ok) {
-                const errorData = await updateResponse.json();
-                throw new Error(
-                  errorData.error || 'Gagal memperbarui assignment mata kuliah'
-                );
-              }
-            }
-          } catch (assignError: any) {
-            toast.error(
-              assignError.message || 'Gagal memperbarui assignment mata kuliah'
-            );
-          }
-        }
-      }
-
-      toast.success('Mata kuliah berhasil diperbarui');
+      toast.success("Mata kuliah berhasil diperbarui");
       setEditDialogOpen(false);
       setEditingMataKuliahId(null);
       fetchMataKuliah();
     } catch (error: any) {
-      toast.error(error.message || 'Terjadi kesalahan');
+      toast.error(error.message || "Terjadi kesalahan");
     }
   };
 
@@ -290,19 +164,19 @@ export default function ManajemenMataKuliahPage() {
 
     try {
       const response = await fetch(`/api/mata-kuliah/${deleteDialog.id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Gagal menghapus mata kuliah');
+        throw new Error(data.error || "Gagal menghapus mata kuliah");
       }
 
-      toast.success('Mata kuliah berhasil dihapus');
+      toast.success("Mata kuliah berhasil dihapus");
       setDeleteDialog({ open: false, id: null });
       fetchMataKuliah();
     } catch (error: any) {
-      toast.error(error.message || 'Gagal menghapus mata kuliah');
+      toast.error(error.message || "Gagal menghapus mata kuliah");
     }
   };
 
@@ -323,7 +197,8 @@ export default function ManajemenMataKuliahPage() {
         <Button
           size="sm"
           className="w-full sm:w-auto"
-          onClick={handleOpenCreate}>
+          onClick={handleOpenCreate}
+        >
           <i className="fa-solid fa-plus mr-2"></i>
           Tambah Mata Kuliah
         </Button>
@@ -396,7 +271,8 @@ export default function ManajemenMataKuliahPage() {
                   <tr>
                     <td
                       colSpan={7}
-                      className="px-4 py-8 text-center text-muted-foreground text-sm">
+                      className="px-4 py-8 text-center text-muted-foreground text-sm"
+                    >
                       <div className="flex items-center justify-center gap-2">
                         <i className="fa-solid fa-spinner fa-spin"></i>
                         Memuat data...
@@ -407,7 +283,8 @@ export default function ManajemenMataKuliahPage() {
                   <tr>
                     <td
                       colSpan={7}
-                      className="px-4 py-8 text-center text-muted-foreground text-sm">
+                      className="px-4 py-8 text-center text-muted-foreground text-sm"
+                    >
                       Belum ada data mata kuliah
                     </td>
                   </tr>
@@ -425,16 +302,17 @@ export default function ManajemenMataKuliahPage() {
                         {mk.prodi}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {mk.kategori === 'WAJIB' ? 'Wajib' : 'Pilihan'}
+                        {mk.kategori === "WAJIB" ? "Wajib" : "Pilihan"}
                       </td>
                       <td className="px-4 py-3">
                         <Badge
                           className={
-                            mk.status === 'AKTIF'
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800'
-                              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800'
-                          }>
-                          {mk.status === 'AKTIF' ? 'Aktif' : 'Nonaktif'}
+                            mk.status === "AKTIF"
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800"
+                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800"
+                          }
+                        >
+                          {mk.status === "AKTIF" ? "Aktif" : "Nonaktif"}
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
@@ -444,14 +322,16 @@ export default function ManajemenMataKuliahPage() {
                             size="sm"
                             onClick={() =>
                               setDetailDialog({ open: true, id: mk.id })
-                            }>
+                            }
+                          >
                             <i className="fa-solid fa-eye mr-1"></i>
                             Detail
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleOpenEdit(mk)}>
+                            onClick={() => handleOpenEdit(mk)}
+                          >
                             <i className="fa-solid fa-pen mr-1"></i>
                             Edit
                           </Button>
@@ -461,7 +341,8 @@ export default function ManajemenMataKuliahPage() {
                             className="text-destructive hover:text-destructive"
                             onClick={() =>
                               setDeleteDialog({ open: true, id: mk.id })
-                            }>
+                            }
+                          >
                             <i className="fa-solid fa-trash mr-1"></i>
                             Hapus
                           </Button>
@@ -520,7 +401,8 @@ export default function ManajemenMataKuliahPage() {
       {/* Delete Confirmation Dialog */}
       <AlertDialog
         open={deleteDialog.open}
-        onOpenChange={(open) => setDeleteDialog({ open, id: null })}>
+        onOpenChange={(open) => setDeleteDialog({ open, id: null })}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Mata Kuliah?</AlertDialogTitle>
@@ -533,7 +415,8 @@ export default function ManajemenMataKuliahPage() {
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-white">
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-white"
+            >
               Hapus
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -28,6 +28,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import {
+  JadwalFormDialog,
+  JadwalFormValues,
+} from "@/components/panitia/jadwal-form-dialog";
 
 interface JadwalItem {
   id: string;
@@ -69,6 +73,7 @@ export default function ManajemenJadwalPage() {
   const [semesters, setSemesters] = useState<
     Array<{ id: string; nama: string }>
   >([]);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchSemesters();
@@ -151,6 +156,27 @@ export default function ManajemenJadwalPage() {
     }
   };
 
+  const handleCreateJadwal = async (values: JadwalFormValues) => {
+    try {
+      const response = await fetch("/api/admin/jadwal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Gagal membuat jadwal kelas");
+      }
+
+      toast.success("Jadwal kelas berhasil dibuat");
+      setFormDialogOpen(false);
+      fetchJadwal();
+    } catch (error: any) {
+      toast.error(error.message || "Terjadi kesalahan");
+    }
+  };
+
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -191,13 +217,18 @@ export default function ManajemenJadwalPage() {
     <div className="space-y-4 sm:space-y-6">
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            Manajemen Jadwal
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Atur publikasi dan lihat master jadwal kuliah
-          </p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+              Manajemen Jadwal
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Atur publikasi dan lihat master jadwal kuliah
+            </p>
+          </div>
+          <Button onClick={() => setFormDialogOpen(true)}>
+            <i className="fa-solid fa-plus mr-2"></i> Tambah Jadwal Kelas
+          </Button>
         </div>
 
         {/* Stats Cards */}
@@ -424,6 +455,12 @@ export default function ManajemenJadwalPage() {
           ))
         )}
       </div>
+
+      <JadwalFormDialog
+        open={formDialogOpen}
+        onOpenChange={setFormDialogOpen}
+        onSubmit={handleCreateJadwal}
+      />
     </div>
   );
 }
