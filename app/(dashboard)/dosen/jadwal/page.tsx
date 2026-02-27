@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 interface Jadwal {
   id: string;
   kuotaPendaftar: number;
-  jadwal: string[];
+  jadwal: string;
   ruangan: string;
   mataKuliah: {
     kode: string;
@@ -134,12 +134,8 @@ export default function DosenJadwalPage() {
                     {s.mataKuliah.sks} SKS / Smt {s.mataKuliah.semester}
                   </TableCell>
                   <TableCell>
-                    {s.jadwal.length > 0 ? (
-                      <ul className="list-disc list-inside text-sm">
-                        {s.jadwal.map((j, i) => (
-                          <li key={i}>{j}</li>
-                        ))}
-                      </ul>
+                    {s.jadwal ? (
+                      <span className="text-sm font-medium">{s.jadwal}</span>
                     ) : (
                       <span className="text-muted-foreground italic">
                         Menunggu Jadwal
