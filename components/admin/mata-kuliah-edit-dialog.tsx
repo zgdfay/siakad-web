@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 export interface MataKuliahEditValues {
   id: string;
@@ -19,8 +19,8 @@ export interface MataKuliahEditValues {
   nama: string;
   sks: number;
   prodi: string;
-  kategori: 'WAJIB' | 'PILIHAN';
-  status: 'AKTIF' | 'NONAKTIF';
+  kategori: "WAJIB" | "PILIHAN";
+  status: "AKTIF" | "NONAKTIF";
   deskripsi?: string | null;
   semesterAssignments?: {
     id: string;
@@ -49,6 +49,11 @@ interface SemesterOption {
   periode: string;
 }
 
+interface DosenOption {
+  id: string;
+  name: string;
+}
+
 interface MataKuliahEditDialogProps {
   open: boolean;
   mataKuliahId: string | null;
@@ -63,35 +68,38 @@ export function MataKuliahEditDialog({
   onSubmit,
 }: MataKuliahEditDialogProps) {
   const [formValues, setFormValues] = useState<MataKuliahEditValues>({
-    id: '',
-    kode: '',
-    nama: '',
+    id: "",
+    kode: "",
+    nama: "",
     sks: 3,
-    prodi: '',
-    kategori: 'WAJIB',
-    status: 'AKTIF',
-    deskripsi: '',
+    prodi: "",
+    kategori: "WAJIB",
+    status: "AKTIF",
+    deskripsi: "",
     semesterAssignments: [],
   });
   const [semesters, setSemesters] = useState<SemesterOption[]>([]);
   const [loadingSemesters, setLoadingSemesters] = useState(false);
+  const [dosens, setDosens] = useState<DosenOption[]>([]);
+  const [loadingDosens, setLoadingDosens] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedSemesterId, setSelectedSemesterId] = useState<string>('');
+  const [selectedSemesterId, setSelectedSemesterId] = useState<string>("");
   const [newAssignment, setNewAssignment] = useState({
-    kelas: 'A',
-    jadwal: '',
-    tanggalJadwal: '',
-    dosen: '',
+    kelas: "A",
+    jadwal: "",
+    tanggalJadwal: "",
+    dosen: "",
     kuota: 30,
     biaya: 0,
-    prasyarat: '',
+    prasyarat: "",
   });
 
-  // Fetch semesters
+  // Fetch semesters and dosens
   useEffect(() => {
     if (open) {
       fetchSemesters();
+      fetchDosens();
     }
   }, [open]);
 
@@ -102,25 +110,25 @@ export function MataKuliahEditDialog({
     } else if (!open) {
       // Reset form when closed
       setFormValues({
-        id: '',
-        kode: '',
-        nama: '',
+        id: "",
+        kode: "",
+        nama: "",
         sks: 3,
-        prodi: '',
-        kategori: 'WAJIB',
-        status: 'AKTIF',
-        deskripsi: '',
+        prodi: "",
+        kategori: "WAJIB",
+        status: "AKTIF",
+        deskripsi: "",
         semesterAssignments: [],
       });
-      setSelectedSemesterId('');
+      setSelectedSemesterId("");
       setNewAssignment({
-        kelas: 'A',
-        jadwal: '',
-        tanggalJadwal: '',
-        dosen: '',
+        kelas: "A",
+        jadwal: "",
+        tanggalJadwal: "",
+        dosen: "",
         kuota: 30,
         biaya: 0,
-        prasyarat: '',
+        prasyarat: "",
       });
       setIsSubmitting(false);
     }
@@ -129,8 +137,8 @@ export function MataKuliahEditDialog({
   const fetchSemesters = async () => {
     try {
       setLoadingSemesters(true);
-      const response = await fetch('/api/semesters');
-      if (!response.ok) throw new Error('Gagal mengambil data semester');
+      const response = await fetch("/api/semesters");
+      if (!response.ok) throw new Error("Gagal mengambil data semester");
       const data = await response.json();
       // Transform data to match interface
       const transformedSemesters: SemesterOption[] = (data.semesters || []).map(
@@ -139,15 +147,35 @@ export function MataKuliahEditDialog({
           nama: sem.nama,
           tahun: sem.tahun,
           periode: sem.periode,
-        })
+        }),
       );
       setSemesters(transformedSemesters);
     } catch (error) {
-      console.error('Error fetching semesters:', error);
-      toast.error('Gagal mengambil data semester');
+      console.error("Error fetching semesters:", error);
+      toast.error("Gagal mengambil data semester");
       setSemesters([]);
     } finally {
       setLoadingSemesters(false);
+    }
+  };
+
+  const fetchDosens = async () => {
+    try {
+      setLoadingDosens(true);
+      const response = await fetch("/api/users?role=DOSEN");
+      if (!response.ok) throw new Error("Gagal mengambil data dosen");
+      const data = await response.json();
+      const transformedDosens: DosenOption[] = (data.users || []).map(
+        (user: any) => ({
+          id: user.id,
+          name: user.name,
+        }),
+      );
+      setDosens(transformedDosens);
+    } catch (error) {
+      console.error("Error fetching dosens:", error);
+    } finally {
+      setLoadingDosens(false);
     }
   };
 
@@ -157,7 +185,7 @@ export function MataKuliahEditDialog({
     try {
       setLoadingData(true);
       const response = await fetch(`/api/mata-kuliah/${mataKuliahId}`);
-      if (!response.ok) throw new Error('Gagal mengambil data mata kuliah');
+      if (!response.ok) throw new Error("Gagal mengambil data mata kuliah");
       const data = await response.json();
 
       // Transform data
@@ -169,7 +197,7 @@ export function MataKuliahEditDialog({
         prodi: data.mataKuliah.prodi,
         kategori: data.mataKuliah.kategori,
         status: data.mataKuliah.status,
-        deskripsi: data.mataKuliah.deskripsi || '',
+        deskripsi: data.mataKuliah.deskripsi || "",
         semesterAssignments:
           data.mataKuliah.semester?.map((sm: any) => ({
             id: sm.id,
@@ -193,8 +221,8 @@ export function MataKuliahEditDialog({
 
       setFormValues(transformedData);
     } catch (error) {
-      console.error('Error fetching mata kuliah data:', error);
-      toast.error('Gagal mengambil data mata kuliah');
+      console.error("Error fetching mata kuliah data:", error);
+      toast.error("Gagal mengambil data mata kuliah");
     } finally {
       setLoadingData(false);
     }
@@ -202,7 +230,7 @@ export function MataKuliahEditDialog({
 
   const handleChange = (
     field: keyof MataKuliahEditValues,
-    value: string | number
+    value: string | number,
   ) => {
     setFormValues((prev) => ({
       ...prev,
@@ -228,7 +256,7 @@ export function MataKuliahEditDialog({
       newAssignment.biaya === undefined ||
       newAssignment.biaya < 0
     ) {
-      toast.error('Lengkapi semua field detail semester');
+      toast.error("Lengkapi semua field detail semester");
       return;
     }
 
@@ -260,15 +288,15 @@ export function MataKuliahEditDialog({
     }));
 
     // Reset new assignment form
-    setSelectedSemesterId('');
+    setSelectedSemesterId("");
     setNewAssignment({
-      kelas: 'A',
-      jadwal: '',
-      tanggalJadwal: '',
-      dosen: '',
+      kelas: "A",
+      jadwal: "",
+      tanggalJadwal: "",
+      dosen: "",
       kuota: 30,
       biaya: 0,
-      prasyarat: '',
+      prasyarat: "",
     });
   };
 
@@ -283,13 +311,13 @@ export function MataKuliahEditDialog({
   const handleUpdateAssignment = (
     assignmentId: string,
     field: string,
-    value: string | number
+    value: string | number,
   ) => {
     setFormValues((prev) => ({
       ...prev,
       semesterAssignments:
         prev.semesterAssignments?.map((a) =>
-          a.id === assignmentId ? { ...a, [field]: value } : a
+          a.id === assignmentId ? { ...a, [field]: value } : a,
         ) || [],
     }));
   };
@@ -300,7 +328,7 @@ export function MataKuliahEditDialog({
       !formValues.nama.trim() ||
       !formValues.prodi.trim()
     ) {
-      toast.error('Lengkapi semua field yang wajib diisi');
+      toast.error("Lengkapi semua field yang wajib diisi");
       return;
     }
 
@@ -350,12 +378,13 @@ export function MataKuliahEditDialog({
         onClick={() => onOpenChange(false)}
       />
       {/* Main Content */}
-      <div className="relative z-50 w-full max-w-5xl max-h-[90vh] rounded-lg border bg-background shadow-lg flex flex-col overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+      <div className="relative z-50 w-[95vw] max-w-5xl max-h-[90vh] rounded-lg border bg-background shadow-lg flex flex-col overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
         {/* Close Button */}
         <button
           onClick={() => onOpenChange(false)}
           className="absolute top-4 right-4 z-10 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none bg-background/80 backdrop-blur-sm p-2"
-          aria-label="Close">
+          aria-label="Close"
+        >
           <i className="fa-solid fa-xmark text-lg"></i>
         </button>
 
@@ -380,7 +409,7 @@ export function MataKuliahEditDialog({
                   id="kode"
                   value={formValues.kode}
                   onChange={(e) =>
-                    handleChange('kode', e.target.value.toUpperCase())
+                    handleChange("kode", e.target.value.toUpperCase())
                   }
                   placeholder="MK001"
                   className="w-full"
@@ -397,7 +426,7 @@ export function MataKuliahEditDialog({
                   max="6"
                   value={formValues.sks}
                   onChange={(e) =>
-                    handleChange('sks', parseInt(e.target.value) || 0)
+                    handleChange("sks", parseInt(e.target.value) || 0)
                   }
                   placeholder="3"
                   className="w-full"
@@ -412,7 +441,7 @@ export function MataKuliahEditDialog({
               <Input
                 id="nama"
                 value={formValues.nama}
-                onChange={(e) => handleChange('nama', e.target.value)}
+                onChange={(e) => handleChange("nama", e.target.value)}
                 placeholder="Masukkan nama mata kuliah"
                 className="w-full"
               />
@@ -426,7 +455,7 @@ export function MataKuliahEditDialog({
                 <Input
                   id="prodi"
                   value={formValues.prodi}
-                  onChange={(e) => handleChange('prodi', e.target.value)}
+                  onChange={(e) => handleChange("prodi", e.target.value)}
                   placeholder="S1 Informatika"
                   className="w-full"
                 />
@@ -437,9 +466,10 @@ export function MataKuliahEditDialog({
                 </Label>
                 <Select
                   value={formValues.kategori}
-                  onValueChange={(value: 'WAJIB' | 'PILIHAN') =>
-                    handleChange('kategori', value)
-                  }>
+                  onValueChange={(value: "WAJIB" | "PILIHAN") =>
+                    handleChange("kategori", value)
+                  }
+                >
                   <SelectTrigger id="kategori" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -455,9 +485,10 @@ export function MataKuliahEditDialog({
                 </Label>
                 <Select
                   value={formValues.status}
-                  onValueChange={(value: 'AKTIF' | 'NONAKTIF') =>
-                    handleChange('status', value)
-                  }>
+                  onValueChange={(value: "AKTIF" | "NONAKTIF") =>
+                    handleChange("status", value)
+                  }
+                >
                   <SelectTrigger id="status" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -474,8 +505,8 @@ export function MataKuliahEditDialog({
               <textarea
                 id="deskripsi"
                 className="w-full min-h-[80px] px-3 py-2 border rounded-md resize-none"
-                value={formValues.deskripsi || ''}
-                onChange={(e) => handleChange('deskripsi', e.target.value)}
+                value={formValues.deskripsi || ""}
+                onChange={(e) => handleChange("deskripsi", e.target.value)}
                 placeholder="Masukkan deskripsi mata kuliah..."
                 rows={3}
               />
@@ -491,17 +522,18 @@ export function MataKuliahEditDialog({
                   {formValues.semesterAssignments.map((assignment) => (
                     <div
                       key={assignment.id}
-                      className="border rounded-lg p-4 space-y-3 bg-muted/30">
+                      className="border rounded-lg p-4 space-y-3 bg-muted/30"
+                    >
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="font-semibold text-sm text-foreground">
                             {assignment.semester.nama}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {assignment.semester.tahun} -{' '}
-                            {assignment.semester.periode === 'GANJIL'
-                              ? 'Ganjil'
-                              : 'Genap'}
+                            {assignment.semester.tahun} -{" "}
+                            {assignment.semester.periode === "GANJIL"
+                              ? "Ganjil"
+                              : "Genap"}
                           </p>
                         </div>
                         <Button
@@ -509,7 +541,8 @@ export function MataKuliahEditDialog({
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemoveAssignment(assignment.id)}
-                          className="text-destructive hover:text-destructive">
+                          className="text-destructive hover:text-destructive"
+                        >
                           <i className="fa-solid fa-trash"></i>
                         </Button>
                       </div>
@@ -521,8 +554,8 @@ export function MataKuliahEditDialog({
                             onChange={(e) =>
                               handleUpdateAssignment(
                                 assignment.id,
-                                'kelas',
-                                e.target.value
+                                "kelas",
+                                e.target.value,
                               )
                             }
                             className="h-8"
@@ -535,8 +568,8 @@ export function MataKuliahEditDialog({
                             onChange={(e) =>
                               handleUpdateAssignment(
                                 assignment.id,
-                                'jadwal',
-                                e.target.value
+                                "jadwal",
+                                e.target.value,
                               )
                             }
                             className="h-8"
@@ -548,8 +581,8 @@ export function MataKuliahEditDialog({
                             type="date"
                             value={
                               assignment.tanggalJadwal
-                                ? typeof assignment.tanggalJadwal === 'string'
-                                  ? assignment.tanggalJadwal.includes('T')
+                                ? typeof assignment.tanggalJadwal === "string"
+                                  ? assignment.tanggalJadwal.includes("T")
                                     ? assignment.tanggalJadwal.slice(0, 10)
                                     : new Date(assignment.tanggalJadwal)
                                         .toISOString()
@@ -557,13 +590,13 @@ export function MataKuliahEditDialog({
                                   : new Date(assignment.tanggalJadwal)
                                       .toISOString()
                                       .slice(0, 10)
-                                : ''
+                                : ""
                             }
                             onChange={(e) =>
                               handleUpdateAssignment(
                                 assignment.id,
-                                'tanggalJadwal',
-                                e.target.value
+                                "tanggalJadwal",
+                                e.target.value,
                               )
                             }
                             className="h-8"
@@ -571,17 +604,28 @@ export function MataKuliahEditDialog({
                         </div>
                         <div className="space-y-1.5">
                           <Label className="text-xs">Dosen</Label>
-                          <Input
-                            value={assignment.dosen}
-                            onChange={(e) =>
+                          <Select
+                            value={assignment.dosen || undefined}
+                            onValueChange={(value) =>
                               handleUpdateAssignment(
                                 assignment.id,
-                                'dosen',
-                                e.target.value
+                                "dosen",
+                                value,
                               )
                             }
-                            className="h-8"
-                          />
+                            disabled={loadingDosens || dosens.length === 0}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="Pilih dosen" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-56">
+                              {dosens.map((dosen) => (
+                                <SelectItem key={dosen.id} value={dosen.name}>
+                                  {dosen.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-1.5">
                           <Label className="text-xs">Kuota</Label>
@@ -592,8 +636,8 @@ export function MataKuliahEditDialog({
                             onChange={(e) =>
                               handleUpdateAssignment(
                                 assignment.id,
-                                'kuota',
-                                parseInt(e.target.value) || 0
+                                "kuota",
+                                parseInt(e.target.value) || 0,
                               )
                             }
                             className="h-8"
@@ -608,8 +652,8 @@ export function MataKuliahEditDialog({
                             onChange={(e) =>
                               handleUpdateAssignment(
                                 assignment.id,
-                                'biaya',
-                                parseInt(e.target.value) || 0
+                                "biaya",
+                                parseInt(e.target.value) || 0,
                               )
                             }
                             className="h-8"
@@ -618,12 +662,12 @@ export function MataKuliahEditDialog({
                         <div className="space-y-1.5">
                           <Label className="text-xs">Prasyarat</Label>
                           <Input
-                            value={assignment.prasyarat || ''}
+                            value={assignment.prasyarat || ""}
                             onChange={(e) =>
                               handleUpdateAssignment(
                                 assignment.id,
-                                'prasyarat',
-                                e.target.value
+                                "prasyarat",
+                                e.target.value,
                               )
                             }
                             className="h-8"
@@ -646,15 +690,16 @@ export function MataKuliahEditDialog({
                   <Select
                     value={selectedSemesterId}
                     onValueChange={setSelectedSemesterId}
-                    disabled={loadingSemesters || semesters.length === 0}>
+                    disabled={loadingSemesters || semesters.length === 0}
+                  >
                     <SelectTrigger id="newSemesterId" className="w-full">
                       <SelectValue
                         placeholder={
                           loadingSemesters
-                            ? 'Memuat...'
+                            ? "Memuat..."
                             : semesters.length === 0
-                            ? 'Tidak ada semester'
-                            : 'Pilih semester antara'
+                              ? "Tidak ada semester"
+                              : "Pilih semester antara"
                         }
                       />
                     </SelectTrigger>
@@ -664,15 +709,15 @@ export function MataKuliahEditDialog({
                           .filter(
                             (s) =>
                               !formValues.semesterAssignments?.some(
-                                (a) => a.semesterId === s.id
-                              )
+                                (a) => a.semesterId === s.id,
+                              ),
                           )
                           .map((semester) => (
                             <SelectItem key={semester.id} value={semester.id}>
-                              {semester.nama} ({semester.tahun} -{' '}
-                              {semester.periode === 'GANJIL'
-                                ? 'Ganjil'
-                                : 'Genap'}
+                              {semester.nama} ({semester.tahun} -{" "}
+                              {semester.periode === "GANJIL"
+                                ? "Ganjil"
+                                : "Genap"}
                               )
                             </SelectItem>
                           ))
@@ -695,7 +740,7 @@ export function MataKuliahEditDialog({
                         <Input
                           value={newAssignment.kelas}
                           onChange={(e) =>
-                            handleNewAssignmentChange('kelas', e.target.value)
+                            handleNewAssignmentChange("kelas", e.target.value)
                           }
                           placeholder="A"
                           className="h-8"
@@ -708,7 +753,7 @@ export function MataKuliahEditDialog({
                         <Input
                           value={newAssignment.jadwal}
                           onChange={(e) =>
-                            handleNewAssignmentChange('jadwal', e.target.value)
+                            handleNewAssignmentChange("jadwal", e.target.value)
                           }
                           placeholder="Senin, 08:00-10:00"
                           className="h-8"
@@ -723,8 +768,8 @@ export function MataKuliahEditDialog({
                           value={newAssignment.tanggalJadwal}
                           onChange={(e) =>
                             handleNewAssignmentChange(
-                              'tanggalJadwal',
-                              e.target.value
+                              "tanggalJadwal",
+                              e.target.value,
                             )
                           }
                           className="h-8"
@@ -734,14 +779,24 @@ export function MataKuliahEditDialog({
                         <Label className="text-xs">
                           Dosen <span className="text-destructive">*</span>
                         </Label>
-                        <Input
-                          value={newAssignment.dosen}
-                          onChange={(e) =>
-                            handleNewAssignmentChange('dosen', e.target.value)
+                        <Select
+                          value={newAssignment.dosen || undefined}
+                          onValueChange={(value) =>
+                            handleNewAssignmentChange("dosen", value)
                           }
-                          placeholder="Nama Dosen atau NIP"
-                          className="h-8"
-                        />
+                          disabled={loadingDosens || dosens.length === 0}
+                        >
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder="Pilih dosen" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-56">
+                            {dosens.map((dosen) => (
+                              <SelectItem key={dosen.id} value={dosen.name}>
+                                {dosen.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs">
@@ -753,8 +808,8 @@ export function MataKuliahEditDialog({
                           value={newAssignment.kuota}
                           onChange={(e) =>
                             handleNewAssignmentChange(
-                              'kuota',
-                              parseInt(e.target.value) || 0
+                              "kuota",
+                              parseInt(e.target.value) || 0,
                             )
                           }
                           placeholder="30"
@@ -771,8 +826,8 @@ export function MataKuliahEditDialog({
                           value={newAssignment.biaya}
                           onChange={(e) =>
                             handleNewAssignmentChange(
-                              'biaya',
-                              parseInt(e.target.value) || 0
+                              "biaya",
+                              parseInt(e.target.value) || 0,
                             )
                           }
                           placeholder="0"
@@ -785,8 +840,8 @@ export function MataKuliahEditDialog({
                           value={newAssignment.prasyarat}
                           onChange={(e) =>
                             handleNewAssignmentChange(
-                              'prasyarat',
-                              e.target.value
+                              "prasyarat",
+                              e.target.value,
                             )
                           }
                           placeholder="Kode mata kuliah prasyarat"
@@ -799,7 +854,8 @@ export function MataKuliahEditDialog({
                       variant="outline"
                       size="sm"
                       onClick={handleAddAssignment}
-                      className="w-full sm:w-auto">
+                      className="w-full sm:w-auto"
+                    >
                       <i className="fa-solid fa-plus mr-2"></i>
                       Tambah Assignment
                     </Button>
@@ -815,19 +871,21 @@ export function MataKuliahEditDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}>
+            disabled={isSubmitting}
+          >
             Batal
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isFormIncomplete || isSubmitting}>
+            disabled={isFormIncomplete || isSubmitting}
+          >
             {isSubmitting ? (
               <>
                 <i className="fa-solid fa-spinner fa-spin mr-2"></i>
                 Menyimpan...
               </>
             ) : (
-              'Simpan Perubahan'
+              "Simpan Perubahan"
             )}
           </Button>
         </div>

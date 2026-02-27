@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogPortal,
   DialogOverlay,
   DialogClose,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
 export interface MataKuliahFormValues {
   id?: string;
@@ -24,8 +24,8 @@ export interface MataKuliahFormValues {
   nama: string;
   sks: number;
   prodi: string;
-  kategori: 'WAJIB' | 'PILIHAN';
-  status?: 'AKTIF' | 'NONAKTIF';
+  kategori: "WAJIB" | "PILIHAN";
+  status?: "AKTIF" | "NONAKTIF";
   deskripsi?: string;
   semesterId?: string;
   // Detail untuk assignment ke semester
@@ -45,9 +45,14 @@ interface SemesterOption {
   periode: string;
 }
 
+interface DosenOption {
+  id: string;
+  name: string;
+}
+
 interface MataKuliahFormDialogProps {
   open: boolean;
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   initialData?: MataKuliahFormValues | null;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: MataKuliahFormValues) => void;
@@ -62,30 +67,33 @@ export function MataKuliahFormDialog({
 }: MataKuliahFormDialogProps) {
   const [formValues, setFormValues] = useState<MataKuliahFormValues>({
     id: undefined,
-    kode: '',
-    nama: '',
+    kode: "",
+    nama: "",
     sks: 3,
-    prodi: '',
-    kategori: 'WAJIB',
-    status: 'AKTIF',
-    deskripsi: '',
-    semesterId: '',
-    kelas: 'A',
-    jadwal: '',
-    tanggalJadwal: '',
-    dosen: '',
+    prodi: "",
+    kategori: "WAJIB",
+    status: "AKTIF",
+    deskripsi: "",
+    semesterId: "",
+    kelas: "A",
+    jadwal: "",
+    tanggalJadwal: "",
+    dosen: "",
     kuota: 30,
     biaya: 0,
-    prasyarat: '',
+    prasyarat: "",
   });
   const [semesters, setSemesters] = useState<SemesterOption[]>([]);
   const [loadingSemesters, setLoadingSemesters] = useState(false);
+  const [dosens, setDosens] = useState<DosenOption[]>([]);
+  const [loadingDosens, setLoadingDosens] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch semesters
+  // Fetch semesters and dosens
   useEffect(() => {
     if (open) {
       fetchSemesters();
+      fetchDosens();
     }
   }, [open]);
 
@@ -94,21 +102,21 @@ export function MataKuliahFormDialog({
     if (!open) {
       setFormValues({
         id: undefined,
-        kode: '',
-        nama: '',
+        kode: "",
+        nama: "",
         sks: 3,
-        prodi: '',
-        kategori: 'WAJIB',
-        status: 'AKTIF',
-        deskripsi: '',
-        semesterId: '',
-        kelas: 'A',
-        jadwal: '',
-        tanggalJadwal: '',
-        dosen: '',
+        prodi: "",
+        kategori: "WAJIB",
+        status: "AKTIF",
+        deskripsi: "",
+        semesterId: "",
+        kelas: "A",
+        jadwal: "",
+        tanggalJadwal: "",
+        dosen: "",
         kuota: 30,
         biaya: 0,
-        prasyarat: '',
+        prasyarat: "",
       });
       setIsSubmitting(false);
     }
@@ -117,8 +125,8 @@ export function MataKuliahFormDialog({
   const fetchSemesters = async () => {
     try {
       setLoadingSemesters(true);
-      const response = await fetch('/api/semesters');
-      if (!response.ok) throw new Error('Gagal mengambil data semester');
+      const response = await fetch("/api/semesters");
+      if (!response.ok) throw new Error("Gagal mengambil data semester");
       const data = await response.json();
       // Transform data to match interface
       const transformedSemesters: SemesterOption[] = (data.semesters || []).map(
@@ -127,54 +135,74 @@ export function MataKuliahFormDialog({
           nama: sem.nama,
           tahun: sem.tahun,
           periode: sem.periode,
-        })
+        }),
       );
       setSemesters(transformedSemesters);
     } catch (error) {
-      console.error('Error fetching semesters:', error);
+      console.error("Error fetching semesters:", error);
     } finally {
       setLoadingSemesters(false);
     }
   };
 
+  const fetchDosens = async () => {
+    try {
+      setLoadingDosens(true);
+      const response = await fetch("/api/users?role=DOSEN");
+      if (!response.ok) throw new Error("Gagal mengambil data dosen");
+      const data = await response.json();
+      const transformedDosens: DosenOption[] = (data.users || []).map(
+        (user: any) => ({
+          id: user.id,
+          name: user.name,
+        }),
+      );
+      setDosens(transformedDosens);
+    } catch (error) {
+      console.error("Error fetching dosens:", error);
+    } finally {
+      setLoadingDosens(false);
+    }
+  };
+
   useEffect(() => {
-    if (mode === 'edit' && initialData) {
+    if (mode === "edit" && initialData) {
       setFormValues({
         ...initialData,
-        semesterId: initialData.semesterId || '',
-        kelas: initialData.kelas || 'A',
-        jadwal: initialData.jadwal || '',
-        tanggalJadwal: initialData.tanggalJadwal || '',
-        dosen: initialData.dosen || '',
+        semesterId: initialData.semesterId || "",
+        kelas: initialData.kelas || "A",
+        jadwal: initialData.jadwal || "",
+        tanggalJadwal: initialData.tanggalJadwal || "",
+        dosen: initialData.dosen || "",
         kuota: initialData.kuota || 30,
         biaya: initialData.biaya || 0,
-        prasyarat: initialData.prasyarat || '',
+        prasyarat: initialData.prasyarat || "",
       });
-    } else if (mode === 'create') {
+    } else if (mode === "create") {
       setFormValues({
         id: undefined,
-        kode: '',
-        nama: '',
+        kode: "",
+        nama: "",
         sks: 3,
-        prodi: '',
-        kategori: 'WAJIB',
-        status: 'AKTIF',
-        deskripsi: '',
-        semesterId: '',
-        kelas: 'A',
-        jadwal: '',
-        tanggalJadwal: '',
-        dosen: '',
+        prodi: "",
+        kategori: "WAJIB",
+        status: "AKTIF",
+        deskripsi: "",
+        semesterId: "",
+        kelas: "A",
+        jadwal: "",
+        tanggalJadwal: "",
+        dosen: "",
         kuota: 30,
         biaya: 0,
-        prasyarat: '',
+        prasyarat: "",
       });
     }
   }, [mode, initialData, open]);
 
   const handleChange = (
     field: keyof MataKuliahFormValues,
-    value: string | number
+    value: string | number,
   ) => {
     setFormValues((prev) => ({
       ...prev,
@@ -184,7 +212,7 @@ export function MataKuliahFormDialog({
 
   const handleSubmit = async () => {
     if (!formValues.kode || !formValues.nama || !formValues.prodi) {
-      console.warn('Form validation failed: missing required fields');
+      console.warn("Form validation failed: missing required fields");
       return;
     }
     // Validate detail semester if semesterId is selected
@@ -198,7 +226,7 @@ export function MataKuliahFormDialog({
         formValues.biaya === undefined ||
         formValues.biaya < 0
       ) {
-        console.warn('Form validation failed: missing semester details', {
+        console.warn("Form validation failed: missing semester details", {
           kelas: formValues.kelas,
           jadwal: formValues.jadwal,
           dosen: formValues.dosen,
@@ -209,19 +237,19 @@ export function MataKuliahFormDialog({
       }
     }
     // For create mode, semesterId is required
-    if (mode === 'create' && !formValues.semesterId) {
+    if (mode === "create" && !formValues.semesterId) {
       console.warn(
-        'Form validation failed: semesterId is required for create mode'
+        "Form validation failed: semesterId is required for create mode",
       );
       return;
     }
 
-    console.log('Submitting form with values:', formValues);
+    console.log("Submitting form with values:", formValues);
     setIsSubmitting(true);
     try {
       await onSubmit(formValues);
     } catch (error) {
-      console.error('Error in handleSubmit:', error);
+      console.error("Error in handleSubmit:", error);
       throw error;
     } finally {
       setIsSubmitting(false);
@@ -236,7 +264,7 @@ export function MataKuliahFormDialog({
     formValues.sks < 1 ||
     formValues.sks > 6 ||
     !formValues.status ||
-    (mode === 'create' && !formValues.semesterId) ||
+    (mode === "create" && !formValues.semesterId) ||
     (formValues.semesterId &&
       (!formValues.kelas?.trim() ||
         !formValues.jadwal?.trim() ||
@@ -250,7 +278,7 @@ export function MataKuliahFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
         <DialogOverlay />
-        <div className="fixed top-[50%] left-[50%] z-50 w-full max-w-5xl h-[90vh] max-h-[90vh] translate-x-[-50%] translate-y-[-50%] rounded-lg border bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 flex flex-col overflow-hidden">
+        <div className="fixed top-[50%] left-[50%] z-50 w-[95vw] max-w-5xl max-h-[90vh] translate-x-[-50%] translate-y-[-50%] rounded-lg border bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 flex flex-col overflow-hidden">
           <DialogClose className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-10">
             <i className="fa-solid fa-xmark text-lg"></i>
             <span className="sr-only">Close</span>
@@ -259,12 +287,12 @@ export function MataKuliahFormDialog({
           {/* Header - Fixed */}
           <div className="p-6 pb-4 pr-12 border-b shrink-0">
             <h2 className="text-xl font-semibold">
-              {mode === 'create' ? 'Tambah Mata Kuliah' : 'Edit Mata Kuliah'}
+              {mode === "create" ? "Tambah Mata Kuliah" : "Edit Mata Kuliah"}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {mode === 'create'
-                ? 'Isi data mata kuliah dengan lengkap.'
-                : 'Perbarui informasi mata kuliah sesuai kebutuhan.'}
+              {mode === "create"
+                ? "Isi data mata kuliah dengan lengkap."
+                : "Perbarui informasi mata kuliah sesuai kebutuhan."}
             </p>
           </div>
 
@@ -280,7 +308,7 @@ export function MataKuliahFormDialog({
                     id="kode"
                     value={formValues.kode}
                     onChange={(e) =>
-                      handleChange('kode', e.target.value.toUpperCase())
+                      handleChange("kode", e.target.value.toUpperCase())
                     }
                     placeholder="MK001"
                     className="w-full"
@@ -297,7 +325,7 @@ export function MataKuliahFormDialog({
                     max="6"
                     value={formValues.sks}
                     onChange={(e) =>
-                      handleChange('sks', parseInt(e.target.value) || 0)
+                      handleChange("sks", parseInt(e.target.value) || 0)
                     }
                     placeholder="3"
                     className="w-full"
@@ -312,7 +340,7 @@ export function MataKuliahFormDialog({
                 <Input
                   id="nama"
                   value={formValues.nama}
-                  onChange={(e) => handleChange('nama', e.target.value)}
+                  onChange={(e) => handleChange("nama", e.target.value)}
                   placeholder="Masukkan nama mata kuliah"
                   className="w-full"
                 />
@@ -326,7 +354,7 @@ export function MataKuliahFormDialog({
                   <Input
                     id="prodi"
                     value={formValues.prodi}
-                    onChange={(e) => handleChange('prodi', e.target.value)}
+                    onChange={(e) => handleChange("prodi", e.target.value)}
                     placeholder="S1 Informatika"
                     className="w-full"
                   />
@@ -337,9 +365,10 @@ export function MataKuliahFormDialog({
                   </Label>
                   <Select
                     value={formValues.kategori}
-                    onValueChange={(value: 'WAJIB' | 'PILIHAN') =>
-                      handleChange('kategori', value)
-                    }>
+                    onValueChange={(value: "WAJIB" | "PILIHAN") =>
+                      handleChange("kategori", value)
+                    }
+                  >
                     <SelectTrigger id="kategori" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
@@ -355,9 +384,10 @@ export function MataKuliahFormDialog({
                   </Label>
                   <Select
                     value={formValues.status}
-                    onValueChange={(value: 'AKTIF' | 'NONAKTIF') =>
-                      handleChange('status', value)
-                    }>
+                    onValueChange={(value: "AKTIF" | "NONAKTIF") =>
+                      handleChange("status", value)
+                    }
+                  >
                     <SelectTrigger id="status" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
@@ -371,23 +401,24 @@ export function MataKuliahFormDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="semesterId">
-                  Semester Antara{' '}
-                  {mode === 'create' && (
+                  Semester Antara{" "}
+                  {mode === "create" && (
                     <span className="text-destructive">*</span>
                   )}
                 </Label>
                 <Select
                   value={formValues.semesterId || undefined}
-                  onValueChange={(value) => handleChange('semesterId', value)}
-                  disabled={loadingSemesters || semesters.length === 0}>
+                  onValueChange={(value) => handleChange("semesterId", value)}
+                  disabled={loadingSemesters || semesters.length === 0}
+                >
                   <SelectTrigger id="semesterId" className="w-full">
                     <SelectValue
                       placeholder={
                         loadingSemesters
-                          ? 'Memuat...'
+                          ? "Memuat..."
                           : semesters.length === 0
-                          ? 'Tidak ada semester'
-                          : 'Pilih semester antara'
+                            ? "Tidak ada semester"
+                            : "Pilih semester antara"
                       }
                     />
                   </SelectTrigger>
@@ -395,15 +426,15 @@ export function MataKuliahFormDialog({
                     {semesters.length > 0
                       ? semesters.map((semester) => (
                           <SelectItem key={semester.id} value={semester.id}>
-                            {semester.nama} ({semester.tahun} -{' '}
-                            {semester.periode === 'GANJIL' ? 'Ganjil' : 'Genap'}
+                            {semester.nama} ({semester.tahun} -{" "}
+                            {semester.periode === "GANJIL" ? "Ganjil" : "Genap"}
                             )
                           </SelectItem>
                         ))
                       : null}
                   </SelectContent>
                 </Select>
-                {mode === 'edit' && (
+                {mode === "edit" && (
                   <p className="text-xs text-muted-foreground">
                     Pilih semester untuk menambahkan atau mengubah assignment
                     mata kuliah
@@ -411,7 +442,7 @@ export function MataKuliahFormDialog({
                 )}
               </div>
 
-              {(mode === 'create' || formValues.semesterId) && (
+              {(mode === "create" || formValues.semesterId) && (
                 <>
                   <div className="pb-2 border-b mt-4">
                     <h3 className="font-semibold text-sm text-foreground">
@@ -426,8 +457,8 @@ export function MataKuliahFormDialog({
                       </Label>
                       <Input
                         id="kelas"
-                        value={formValues.kelas || ''}
-                        onChange={(e) => handleChange('kelas', e.target.value)}
+                        value={formValues.kelas || ""}
+                        onChange={(e) => handleChange("kelas", e.target.value)}
                         placeholder="A"
                         className="w-full"
                       />
@@ -436,13 +467,32 @@ export function MataKuliahFormDialog({
                       <Label htmlFor="dosen">
                         Dosen <span className="text-destructive">*</span>
                       </Label>
-                      <Input
-                        id="dosen"
-                        value={formValues.dosen || ''}
-                        onChange={(e) => handleChange('dosen', e.target.value)}
-                        placeholder="Nama Dosen atau NIP"
-                        className="w-full"
-                      />
+                      <Select
+                        value={formValues.dosen || undefined}
+                        onValueChange={(value) => handleChange("dosen", value)}
+                        disabled={loadingDosens || dosens.length === 0}
+                      >
+                        <SelectTrigger id="dosen" className="w-full">
+                          <SelectValue
+                            placeholder={
+                              loadingDosens
+                                ? "Memuat..."
+                                : dosens.length === 0
+                                  ? "Tidak ada dosen"
+                                  : "Pilih dosen"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-56">
+                          {dosens.length > 0
+                            ? dosens.map((dosen) => (
+                                <SelectItem key={dosen.id} value={dosen.name}>
+                                  {dosen.name}
+                                </SelectItem>
+                              ))
+                            : null}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="jadwal">
@@ -450,8 +500,8 @@ export function MataKuliahFormDialog({
                       </Label>
                       <Input
                         id="jadwal"
-                        value={formValues.jadwal || ''}
-                        onChange={(e) => handleChange('jadwal', e.target.value)}
+                        value={formValues.jadwal || ""}
+                        onChange={(e) => handleChange("jadwal", e.target.value)}
                         placeholder="Senin, 08:00-10:00"
                         className="w-full"
                       />
@@ -468,18 +518,18 @@ export function MataKuliahFormDialog({
                         type="date"
                         value={
                           formValues.tanggalJadwal
-                            ? typeof formValues.tanggalJadwal === 'string' &&
-                              formValues.tanggalJadwal.includes('T')
-                              ? formValues.tanggalJadwal.split('T')[0]
-                              : typeof formValues.tanggalJadwal === 'string'
-                              ? formValues.tanggalJadwal
-                              : new Date(formValues.tanggalJadwal)
-                                  .toISOString()
-                                  .split('T')[0]
-                            : ''
+                            ? typeof formValues.tanggalJadwal === "string" &&
+                              formValues.tanggalJadwal.includes("T")
+                              ? formValues.tanggalJadwal.split("T")[0]
+                              : typeof formValues.tanggalJadwal === "string"
+                                ? formValues.tanggalJadwal
+                                : new Date(formValues.tanggalJadwal)
+                                    .toISOString()
+                                    .split("T")[0]
+                            : ""
                         }
                         onChange={(e) =>
-                          handleChange('tanggalJadwal', e.target.value)
+                          handleChange("tanggalJadwal", e.target.value)
                         }
                         className="w-full"
                       />
@@ -497,7 +547,7 @@ export function MataKuliahFormDialog({
                         min="1"
                         value={formValues.kuota || 30}
                         onChange={(e) =>
-                          handleChange('kuota', parseInt(e.target.value) || 0)
+                          handleChange("kuota", parseInt(e.target.value) || 0)
                         }
                         placeholder="30"
                         className="w-full"
@@ -513,7 +563,7 @@ export function MataKuliahFormDialog({
                         min="0"
                         value={formValues.biaya || 0}
                         onChange={(e) =>
-                          handleChange('biaya', parseInt(e.target.value) || 0)
+                          handleChange("biaya", parseInt(e.target.value) || 0)
                         }
                         placeholder="0"
                         className="w-full"
@@ -523,9 +573,9 @@ export function MataKuliahFormDialog({
                       <Label htmlFor="prasyarat">Prasyarat (Opsional)</Label>
                       <Input
                         id="prasyarat"
-                        value={formValues.prasyarat || ''}
+                        value={formValues.prasyarat || ""}
                         onChange={(e) =>
-                          handleChange('prasyarat', e.target.value)
+                          handleChange("prasyarat", e.target.value)
                         }
                         placeholder="Kode mata kuliah prasyarat"
                         className="w-full"
@@ -540,8 +590,8 @@ export function MataKuliahFormDialog({
                 <textarea
                   id="deskripsi"
                   className="w-full min-h-[80px] px-3 py-2 border rounded-md resize-none"
-                  value={formValues.deskripsi || ''}
-                  onChange={(e) => handleChange('deskripsi', e.target.value)}
+                  value={formValues.deskripsi || ""}
+                  onChange={(e) => handleChange("deskripsi", e.target.value)}
                   placeholder="Masukkan deskripsi mata kuliah..."
                   rows={3}
                 />
@@ -554,21 +604,23 @@ export function MataKuliahFormDialog({
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}>
+              disabled={isSubmitting}
+            >
               Batal
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={isFormIncomplete || isSubmitting}>
+              disabled={isFormIncomplete || isSubmitting}
+            >
               {isSubmitting ? (
                 <>
                   <i className="fa-solid fa-spinner fa-spin mr-2"></i>
                   Menyimpan...
                 </>
-              ) : mode === 'create' ? (
-                'Simpan Mata Kuliah'
+              ) : mode === "create" ? (
+                "Simpan Mata Kuliah"
               ) : (
-                'Simpan Perubahan'
+                "Simpan Perubahan"
               )}
             </Button>
           </div>
