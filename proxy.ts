@@ -19,14 +19,35 @@ const authRoutes = [
   ROUTES.AUTH.RESET_PASSWORD,
 ];
 
-// Admin routes yang perlu proteksi
 const adminRoutes = [
   ROUTES.ADMIN.DASHBOARD,
   ROUTES.ADMIN.MANAJEMEN_USER,
   ROUTES.ADMIN.MANAJEMEN_MATA_KULIAH,
   ROUTES.ADMIN.SEMESTER_ANTARA,
-  ROUTES.ADMIN.PENDAFTARAN,
   ROUTES.ADMIN.PENGATURAN,
+];
+
+// Panitia routes
+const panitiaRoutes = [
+  ROUTES.PANITIA.DASHBOARD,
+  ROUTES.PANITIA.VERIFIKASI_KHS,
+  ROUTES.PANITIA.PENDAFTARAN,
+  ROUTES.PANITIA.MANAJEMEN_JADWAL,
+  ROUTES.PANITIA.REKAP_PESERTA,
+  ROUTES.PANITIA.ARSIP_NILAI,
+];
+
+// Keuangan routes
+const keuanganRoutes = [
+  ROUTES.KEUANGAN.DASHBOARD,
+  ROUTES.KEUANGAN.PEMBAYARAN,
+];
+
+// Dosen routes
+const dosenRoutes = [
+  ROUTES.DOSEN.DASHBOARD,
+  ROUTES.DOSEN.JADWAL,
+  ROUTES.DOSEN.NILAI,
 ];
 
 export async function proxy(request: NextRequest) {
@@ -69,8 +90,12 @@ export async function proxy(request: NextRequest) {
         if (user && user.id && user.role) {
           if (user.role === 'ADMIN') {
             return NextResponse.redirect(new URL(ROUTES.ADMIN.DASHBOARD, request.url));
+          } else if (user.role === 'PANITIA') {
+            return NextResponse.redirect(new URL(ROUTES.PANITIA.DASHBOARD, request.url));
+          } else if (user.role === 'KEUANGAN') {
+            return NextResponse.redirect(new URL(ROUTES.KEUANGAN.DASHBOARD, request.url));
           } else if (user.role === 'DOSEN') {
-            return NextResponse.redirect(new URL('/dosen', request.url));
+            return NextResponse.redirect(new URL(ROUTES.DOSEN.DASHBOARD, request.url));
           } else if (user.role === 'MAHASISWA') {
             return NextResponse.redirect(new URL(ROUTES.MAHASISWA.DASHBOARD, request.url));
           }
@@ -133,20 +158,25 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  // Check role-based access for admin routes
+  // Check role-based access for specific routes
   if (adminRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'))) {
-    // Check if user is ADMIN
     if (user.role !== 'ADMIN') {
-      // Redirect to unauthorized page
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
-  } else if (pathname.startsWith(ROUTES.MAHASISWA.DASHBOARD) || pathname.startsWith(ROUTES.MAHASISWA.PENDAFTARAN) || pathname.startsWith(ROUTES.MAHASISWA.RIWAYAT) || pathname.startsWith(ROUTES.MAHASISWA.PENGATURAN) || pathname.startsWith(ROUTES.MAHASISWA.JADWAL) || pathname.startsWith(ROUTES.MAHASISWA.UNDUHAN)) {
-    if (user.role !== 'MAHASISWA') {
-      // Redirect to unauthorized page
+  } else if (panitiaRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'))) {
+    if (user.role !== 'PANITIA' && user.role !== 'ADMIN') { // Admin might also be given access if needed, but strict by default
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
-  } else if (pathname.startsWith('/dosen')) {
+  } else if (keuanganRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'))) {
+    if (user.role !== 'KEUANGAN' && user.role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    }
+  } else if (dosenRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'))) {
     if (user.role !== 'DOSEN') {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    }
+  } else if (pathname.startsWith(ROUTES.MAHASISWA.DASHBOARD)) {
+    if (user.role !== 'MAHASISWA') {
       // Redirect to unauthorized page
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }

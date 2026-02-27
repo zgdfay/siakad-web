@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { ROUTES } from '@/lib/routes';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface DashboardStats {
   semesterCount: number;
@@ -37,10 +37,10 @@ export default function AdminDashboard() {
         // Fetch all data in parallel
         const [semestersRes, mataKuliahRes, usersRes, pendaftaranRes] =
           await Promise.all([
-            fetch('/api/semesters'),
-            fetch('/api/mata-kuliah'),
-            fetch('/api/users?role=mahasiswa'),
-            fetch('/api/pendaftaran'),
+            fetch("/api/semesters"),
+            fetch("/api/mata-kuliah"),
+            fetch("/api/users?role=mahasiswa"),
+            fetch("/api/pendaftaran"),
           ]);
 
         const [semestersData, mataKuliahData, usersData, pendaftaranData] =
@@ -58,7 +58,7 @@ export default function AdminDashboard() {
           pendaftaranCount: pendaftaranData.pendaftaran?.length || 0,
         });
       } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
+        console.error("Error fetching dashboard stats:", error);
       } finally {
         setLoading(false);
       }
@@ -165,10 +165,11 @@ export default function AdminDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link href={ROUTES.ADMIN.PENDAFTARAN}>
+              <Link href={ROUTES.PANITIA.PENDAFTARAN}>
                 <Button
                   variant="outline"
-                  className="w-full border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/20">
+                  className="w-full border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/20"
+                >
                   <i className="fa-solid fa-arrow-right mr-2"></i>
                   Buka Halaman Pendaftaran
                 </Button>
@@ -193,7 +194,8 @@ export default function AdminDashboard() {
               <Link href={ROUTES.ADMIN.SEMESTER_ANTARA}>
                 <Button
                   variant="outline"
-                  className="w-full border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20">
+                  className="w-full border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20"
+                >
                   <i className="fa-solid fa-arrow-right mr-2"></i>
                   Buka Pengelolaan Semester
                 </Button>
@@ -217,7 +219,8 @@ export default function AdminDashboard() {
               <Link href={ROUTES.ADMIN.MANAJEMEN_USER}>
                 <Button
                   variant="outline"
-                  className="w-full border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20">
+                  className="w-full border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                >
                   <i className="fa-solid fa-arrow-right mr-2"></i>
                   Buka Manajemen User
                 </Button>
@@ -241,7 +244,8 @@ export default function AdminDashboard() {
               <Link href={ROUTES.ADMIN.MANAJEMEN_MATA_KULIAH}>
                 <Button
                   variant="outline"
-                  className="w-full border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/20">
+                  className="w-full border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+                >
                   <i className="fa-solid fa-arrow-right mr-2"></i>
                   Buka Manajemen Mata Kuliah
                 </Button>

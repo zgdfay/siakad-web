@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Only admin can access
-    if (user.role !== 'ADMIN') {
+    // Only admin and panitia can access
+    if (user.role !== 'ADMIN' && user.role !== 'PANITIA') {
       return NextResponse.json(
         {
-          error: 'Akses ditolak. Hanya admin yang dapat mengakses halaman ini.',
+          error: 'Akses ditolak. Hanya admin dan panitia yang dapat mengakses halaman ini.',
         },
         { status: 403 }
       );

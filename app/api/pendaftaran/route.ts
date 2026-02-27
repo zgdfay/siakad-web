@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Only admin can view all pendaftaran
-    if (user.role !== 'ADMIN') {
+    // Only admin and panitia can view all pendaftaran
+    if (user.role !== 'ADMIN' && user.role !== 'PANITIA') {
       return NextResponse.json(
         { error: 'Akses ditolak' },
         { status: 403 }

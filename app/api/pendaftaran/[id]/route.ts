@@ -60,8 +60,8 @@ export async function GET(
       );
     }
 
-    // Check access: mahasiswa can only see their own, admin can see all
-    if (user.role !== 'ADMIN' && pendaftaran.userMasterId !== user.id) {
+    // Check access: mahasiswa can only see their own, admin and panitia can see all
+    if (user.role !== 'ADMIN' && user.role !== 'PANITIA' && pendaftaran.userMasterId !== user.id) {
       return NextResponse.json(
         { error: 'Akses ditolak' },
         { status: 403 }
@@ -93,10 +93,10 @@ export async function PUT(
       );
     }
 
-    // Only admin can verify
-    if (user.role !== 'ADMIN') {
+    // Only admin and panitia can verify
+    if (user.role !== 'ADMIN' && user.role !== 'PANITIA') {
       return NextResponse.json(
-        { error: 'Akses ditolak. Hanya admin yang dapat memverifikasi pendaftaran.' },
+        { error: 'Akses ditolak. Hanya admin dan panitia yang dapat memverifikasi pendaftaran.' },
         { status: 403 }
       );
     }
@@ -310,10 +310,10 @@ export async function DELETE(
       );
     }
 
-    // Only admin can delete
-    if (user.role !== 'ADMIN') {
+    // Only admin and panitia can delete
+    if (user.role !== 'ADMIN' && user.role !== 'PANITIA') {
       return NextResponse.json(
-        { error: 'Akses ditolak. Hanya admin yang dapat menghapus pendaftaran.' },
+        { error: 'Akses ditolak. Hanya admin dan panitia yang dapat menghapus pendaftaran.' },
         { status: 403 }
       );
     }

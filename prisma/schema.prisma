@@ -89,20 +89,22 @@ model SemesterMataKuliah {
 }
 
 model Pendaftaran {
-  id           String              @id @default(uuid())
-  userMasterId String
-  semesterId   String
-  totalSKS     Int                 @default(0)
-  totalBiaya   Int                 @default(0)
-  status       PendaftaranStatus   @default(MENUNGGU_VERIFIKASI)
-  catatan      String?
-  catatanAdmin String?
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  payment      Payment?
-  semester     Semester            @relation(fields: [semesterId], references: [id], onDelete: Cascade)
-  userMaster   UserMaster          @relation(fields: [userMasterId], references: [id], onDelete: Cascade)
-  detail       PendaftaranDetail[]
+  id              String              @id @default(uuid())
+  userMasterId    String
+  semesterId      String
+  totalSKS        Int                 @default(0)
+  totalBiaya      Int                 @default(0)
+  khsUrl          String?
+  statusKelayakan StatusKelayakan     @default(BELUM_DIPROSES)
+  status          PendaftaranStatus   @default(MENUNGGU_VERIFIKASI)
+  catatan         String?
+  catatanAdmin    String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  payment         Payment?
+  semester        Semester            @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  userMaster      UserMaster          @relation(fields: [userMasterId], references: [id], onDelete: Cascade)
+  detail          PendaftaranDetail[]
 
   @@index([userMasterId])
   @@index([semesterId])
@@ -119,10 +121,24 @@ model PendaftaranDetail {
   updatedAt            DateTime           @updatedAt
   pendaftaran          Pendaftaran        @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
   semesterMataKuliah   SemesterMataKuliah @relation(fields: [semesterMataKuliahId], references: [id], onDelete: Cascade)
+  nilai                Nilai?
 
   @@unique([pendaftaranId, semesterMataKuliahId])
   @@index([pendaftaranId])
   @@index([statusJadwal])
+}
+
+model Nilai {
+  id                  String            @id @default(uuid())
+  pendaftaranDetailId String            @unique
+  nilaiAngka          Float?
+  nilaiHuruf          String?
+  status              NilaiStatus       @default(DRAFT)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  pendaftaranDetail   PendaftaranDetail @relation(fields: [pendaftaranDetailId], references: [id], onDelete: Cascade)
+
+  @@index([status])
 }
 
 model Payment {
@@ -132,6 +148,8 @@ model Payment {
   status           PaymentStatus @default(BELUM_BAYAR)
   metodePembayaran String?
   buktiPembayaran  String?
+  xenditInvoiceId  String?       @unique
+  paymentUrl       String?
   tanggalBayar     DateTime?
   catatan          String?
   createdAt        DateTime      @default(now())
@@ -146,6 +164,8 @@ enum Role {
   MAHASISWA
   DOSEN
   ADMIN
+  KEUANGAN
+  PANITIA
 }
 
 enum UserStatus {
@@ -180,6 +200,12 @@ enum PendaftaranStatus {
   DIBATALKAN
 }
 
+enum StatusKelayakan {
+  BELUM_DIPROSES
+  LAYAK
+  TIDAK_LAYAK
+}
+
 enum PaymentStatus {
   BELUM_BAYAR
   MENUNGGU_VERIFIKASI
@@ -190,4 +216,10 @@ enum PaymentStatus {
 enum JadwalStatus {
   AKTIF
   SELESAI
+}
+
+enum NilaiStatus {
+  DRAFT
+  SUBMITTED
+  LOCKED
 }

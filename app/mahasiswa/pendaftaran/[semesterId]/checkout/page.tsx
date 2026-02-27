@@ -1,16 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -18,29 +20,29 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { toast } from 'sonner';
+} from "@/components/ui/table";
+import { toast } from "sonner";
 
 // Mock data - akan diganti dengan data dari API
 const mockMataKuliah = [
   {
-    id: 'mk1',
-    kode: 'MK001',
-    nama: 'Pemrograman Web',
+    id: "mk1",
+    kode: "MK001",
+    nama: "Pemrograman Web",
     sks: 3,
     biaya: 500000,
   },
   {
-    id: 'mk2',
-    kode: 'MK002',
-    nama: 'Basis Data',
+    id: "mk2",
+    kode: "MK002",
+    nama: "Basis Data",
     sks: 3,
     biaya: 500000,
   },
   {
-    id: 'mk3',
-    kode: 'MK003',
-    nama: 'Jaringan Komputer',
+    id: "mk3",
+    kode: "MK003",
+    nama: "Jaringan Komputer",
     sks: 3,
     biaya: 500000,
   },
@@ -52,6 +54,7 @@ export default function CheckoutPage() {
   const semesterId = params.semesterId as string;
   const [selectedMataKuliah, setSelectedMataKuliah] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [khsFile, setKhsFile] = useState<File | null>(null);
 
   const [checkoutData, setCheckoutData] = useState<{
     semesterId: string;
@@ -67,21 +70,21 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     // Ambil dari session storage (dari halaman pendaftaran baru)
-    const saved = sessionStorage.getItem('checkoutData');
+    const saved = sessionStorage.getItem("checkoutData");
     if (saved) {
       const data = JSON.parse(saved);
       setCheckoutData(data);
       setSelectedMataKuliah(data.mataKuliah.map((mk: { id: string }) => mk.id));
     } else {
       // Fallback ke method lama untuk kompatibilitas
-      const savedOld = sessionStorage.getItem('selectedMataKuliah');
+      const savedOld = sessionStorage.getItem("selectedMataKuliah");
       if (savedOld) {
         setSelectedMataKuliah(JSON.parse(savedOld));
       } else {
-        toast.error('Data tidak ditemukan', {
-          description: 'Silakan pilih mata kuliah terlebih dahulu',
+        toast.error("Data tidak ditemukan", {
+          description: "Silakan pilih mata kuliah terlebih dahulu",
         });
-        router.push('/mahasiswa/pendaftaran');
+        router.push("/mahasiswa/pendaftaran");
       }
     }
   }, [semesterId, router]);
@@ -98,9 +101,9 @@ export default function CheckoutPage() {
     setLoading(true);
     try {
       // Submit pendaftaran ke API
-      const response = await fetch('/api/pendaftaran', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/pendaftaran", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           semesterId,
           mataKuliahIds: selectedMK.map((mk) => mk.id),
@@ -113,47 +116,63 @@ export default function CheckoutPage() {
         if (response.status === 409 && data.overlappingMataKuliah) {
           throw new Error(
             data.detail ||
-              `Anda sudah memiliki pendaftaran yang diterima untuk: ${data.overlappingMataKuliah}`
+              `Anda sudah memiliki pendaftaran yang diterima untuk: ${data.overlappingMataKuliah}`,
           );
         }
-        throw new Error(data.error || 'Gagal membuat pendaftaran');
+        throw new Error(data.error || "Gagal membuat pendaftaran");
       }
 
       const result = await response.json();
       const pendaftaranId = result.pendaftaran.id;
 
-      toast.success('Pendaftaran berhasil dibuat', {
-        description: 'Silakan lanjutkan ke halaman pembayaran',
+      // Upload KHS file if provided
+      if (khsFile) {
+        const formData = new FormData();
+        formData.append("pendaftaranId", pendaftaranId);
+        formData.append("file", khsFile);
+
+        const khsResponse = await fetch("/api/pendaftaran/upload-khs", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!khsResponse.ok) {
+          throw new Error(
+            "Pendaftaran berhasil, tetapi gagal mengupload KHS. Silakan upload menyusul atau hubungi Panitia.",
+          );
+        }
+      }
+
+      toast.success("Pendaftaran berhasil dibuat", {
+        description: "Silakan lanjutkan ke halaman pembayaran",
       });
 
       // Simpan pendaftaran ID untuk halaman pembayaran
+      sessionStorage.setItem("pendaftaranId", pendaftaranId);
       sessionStorage.setItem(
-        'pendaftaranId',
-        pendaftaranId
-      );
-      sessionStorage.setItem(
-        'checkoutData',
+        "checkoutData",
         JSON.stringify({
           pendaftaranId,
           semesterId,
           mataKuliah: selectedMK,
           totalBiaya,
-        })
+        }),
       );
 
       router.push(`/mahasiswa/pendaftaran/${semesterId}/pembayaran`);
     } catch (error: any) {
       // Tampilkan toast dengan pesan yang lebih jelas
-      const errorMessage = error.message || 'Terjadi kesalahan saat menyimpan data';
-      
+      const errorMessage =
+        error.message || "Terjadi kesalahan saat menyimpan data";
+
       // Jika error tentang mata kuliah yang sudah terdaftar
-      if (errorMessage.includes('sudah memiliki pendaftaran yang diterima')) {
-        toast.error('Mata Kuliah Sudah Terdaftar', {
+      if (errorMessage.includes("sudah memiliki pendaftaran yang diterima")) {
+        toast.error("Mata Kuliah Sudah Terdaftar", {
           description: errorMessage,
           duration: 6000, // Tampilkan lebih lama agar user sempat membaca
         });
       } else {
-        toast.error('Gagal Membuat Pendaftaran', {
+        toast.error("Gagal Membuat Pendaftaran", {
           description: errorMessage,
         });
       }
@@ -194,22 +213,36 @@ export default function CheckoutPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="whitespace-nowrap">Kode</TableHead>
-                          <TableHead className="whitespace-nowrap">Nama Mata Kuliah</TableHead>
-                          <TableHead className="text-right whitespace-nowrap">SKS</TableHead>
-                          <TableHead className="text-right whitespace-nowrap">Biaya</TableHead>
+                          <TableHead className="whitespace-nowrap">
+                            Kode
+                          </TableHead>
+                          <TableHead className="whitespace-nowrap">
+                            Nama Mata Kuliah
+                          </TableHead>
+                          <TableHead className="text-right whitespace-nowrap">
+                            SKS
+                          </TableHead>
+                          <TableHead className="text-right whitespace-nowrap">
+                            Biaya
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {selectedMK.map((mk) => (
                           <TableRow key={mk.id}>
-                            <TableCell className="font-medium whitespace-nowrap">{mk.kode}</TableCell>
-                            <TableCell className="whitespace-nowrap">{mk.nama}</TableCell>
-                            <TableCell className="text-right whitespace-nowrap">{mk.sks}</TableCell>
+                            <TableCell className="font-medium whitespace-nowrap">
+                              {mk.kode}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {mk.nama}
+                            </TableCell>
                             <TableCell className="text-right whitespace-nowrap">
-                              {new Intl.NumberFormat('id-ID', {
-                                style: 'currency',
-                                currency: 'IDR',
+                              {mk.sks}
+                            </TableCell>
+                            <TableCell className="text-right whitespace-nowrap">
+                              {new Intl.NumberFormat("id-ID", {
+                                style: "currency",
+                                currency: "IDR",
                               }).format(mk.biaya)}
                             </TableCell>
                           </TableRow>
@@ -248,6 +281,32 @@ export default function CheckoutPage() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Persyaratan Pendaftaran (KHS)</CardTitle>
+                <CardDescription>
+                  Upload Kartu Hasil Studi (KHS) terakhir untuk verifikasi
+                  kelayakan mengikuti Semester Antara.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="khsFile">
+                    Upload File KHS (JPG, PNG, PDF)
+                  </Label>
+                  <Input
+                    id="khsFile"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={(e) => setKhsFile(e.target.files?.[0] || null)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Maksimal ukuran file: 5MB
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Summary & Payment */}
@@ -272,9 +331,9 @@ export default function CheckoutPage() {
                     <div className="flex justify-between">
                       <span className="font-semibold">Total Biaya</span>
                       <span className="text-xl font-bold text-primary">
-                        {new Intl.NumberFormat('id-ID', {
-                          style: 'currency',
-                          currency: 'IDR',
+                        {new Intl.NumberFormat("id-ID", {
+                          style: "currency",
+                          currency: "IDR",
                         }).format(totalBiaya)}
                       </span>
                     </div>
@@ -283,16 +342,17 @@ export default function CheckoutPage() {
 
                 <Button
                   onClick={handleSubmit}
-                  disabled={loading}
+                  disabled={loading || !khsFile}
                   className="w-full"
-                  size="lg">
+                  size="lg"
+                >
                   {loading ? (
                     <>
                       <i className="fa-solid fa-spinner fa-spin mr-2"></i>
                       Memproses...
                     </>
                   ) : (
-                    'Lanjutkan ke Pembayaran'
+                    "Lanjutkan ke Pembayaran"
                   )}
                 </Button>
 
@@ -300,7 +360,8 @@ export default function CheckoutPage() {
                   onClick={() => router.back()}
                   variant="outline"
                   disabled={loading}
-                  className="w-full">
+                  className="w-full"
+                >
                   <i className="fa-solid fa-arrow-left mr-2"></i>
                   Kembali
                 </Button>

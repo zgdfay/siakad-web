@@ -7,7 +7,7 @@ export interface User {
   nim: string;
   name: string | null;
   email: string;
-  role: 'ADMIN' | 'DOSEN' | 'MAHASISWA';
+  role: 'ADMIN' | 'DOSEN' | 'MAHASISWA' | 'KEUANGAN' | 'PANITIA';
   status: 'AKTIF' | 'NONAKTIF';
 }
 

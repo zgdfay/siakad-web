@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
                 mataKuliah: true,
               },
             },
+            nilai: true,
           },
         },
         payment: true,

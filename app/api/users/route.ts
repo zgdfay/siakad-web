@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate role
-    const validRoles = ['MAHASISWA', 'DOSEN', 'ADMIN'];
+    const validRoles = ['MAHASISWA', 'DOSEN', 'ADMIN', 'PANITIA', 'KEUANGAN'];
     if (!validRoles.includes(role.toUpperCase())) {
       return NextResponse.json(
         { error: 'Role tidak valid' },
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
       data: {
         nimOrNip,
         name: name?.trim() || null,
-        role: role.toUpperCase() as 'MAHASISWA' | 'DOSEN' | 'ADMIN',
+        role: role.toUpperCase() as 'MAHASISWA' | 'DOSEN' | 'ADMIN' | 'PANITIA' | 'KEUANGAN',
         status: (status?.toUpperCase() || 'AKTIF') as 'AKTIF' | 'NONAKTIF',
         ...(email && email.trim() && {
           account: {

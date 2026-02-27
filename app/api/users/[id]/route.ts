@@ -112,7 +112,7 @@ export async function PUT(
 
     // Validate role
     if (role) {
-      const validRoles = ['MAHASISWA', 'DOSEN', 'ADMIN'];
+      const validRoles = ['MAHASISWA', 'DOSEN', 'ADMIN', 'PANITIA', 'KEUANGAN'];
       if (!validRoles.includes(role.toUpperCase())) {
         return NextResponse.json(
           { error: 'Role tidak valid' },

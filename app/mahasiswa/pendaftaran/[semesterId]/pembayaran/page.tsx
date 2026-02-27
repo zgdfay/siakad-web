@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useParams } from "next/navigation";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface CheckoutData {
   pendaftaranId?: string;
@@ -40,7 +40,7 @@ export default function PembayaranPage() {
   const params = useParams();
   const semesterId = params.semesterId as string;
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,8 +48,8 @@ export default function PembayaranPage() {
 
   useEffect(() => {
     // Ambil dari session storage
-    const saved = sessionStorage.getItem('checkoutData');
-    const pendaftaranId = sessionStorage.getItem('pendaftaranId');
+    const saved = sessionStorage.getItem("checkoutData");
+    const pendaftaranId = sessionStorage.getItem("pendaftaranId");
     if (saved) {
       const data = JSON.parse(saved);
       if (pendaftaranId) {
@@ -57,10 +57,10 @@ export default function PembayaranPage() {
       }
       setCheckoutData(data);
     } else {
-      toast.error('Data tidak ditemukan', {
-        description: 'Silakan mulai dari awal',
+      toast.error("Data tidak ditemukan", {
+        description: "Silakan mulai dari awal",
       });
-      router.push('/mahasiswa/pendaftaran');
+      router.push("/mahasiswa/pendaftaran");
     }
   }, [router]);
 
@@ -70,14 +70,14 @@ export default function PembayaranPage() {
 
     // Validate file type
     const allowedTypes = [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'application/pdf',
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "application/pdf",
     ];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Format file tidak didukung', {
-        description: 'Gunakan JPG, PNG, atau PDF (maksimal 5MB)',
+      toast.error("Format file tidak didukung", {
+        description: "Gunakan JPG, PNG, atau PDF (maksimal 5MB)",
       });
       return;
     }
@@ -85,8 +85,8 @@ export default function PembayaranPage() {
     // Validate file size (max 5MB)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      toast.error('Ukuran file terlalu besar', {
-        description: 'Maksimal 5MB',
+      toast.error("Ukuran file terlalu besar", {
+        description: "Maksimal 5MB",
       });
       return;
     }
@@ -94,7 +94,7 @@ export default function PembayaranPage() {
     setPaymentFile(file);
 
     // Create preview for images
-    if (file.type.startsWith('image/')) {
+    if (file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewUrl(reader.result as string);
@@ -107,77 +107,98 @@ export default function PembayaranPage() {
 
   const handlePayment = async () => {
     if (!paymentMethod) {
-      toast.error('Pilih metode pembayaran', {
-        description: 'Silakan pilih metode pembayaran terlebih dahulu',
+      toast.error("Pilih metode pembayaran", {
+        description: "Silakan pilih metode pembayaran terlebih dahulu",
       });
       return;
     }
 
     // For bank_transfer, file is required
-    if (paymentMethod === 'bank_transfer' && !paymentFile) {
-      toast.error('Upload bukti pembayaran', {
-        description: 'Silakan upload bukti transfer terlebih dahulu',
+    if (paymentMethod === "bank_transfer" && !paymentFile) {
+      toast.error("Upload bukti pembayaran", {
+        description: "Silakan upload bukti transfer terlebih dahulu",
       });
       return;
     }
 
     if (!checkoutData?.pendaftaranId) {
-      toast.error('Data pendaftaran tidak ditemukan', {
-        description: 'Silakan mulai dari awal',
+      toast.error("Data pendaftaran tidak ditemukan", {
+        description: "Silakan mulai dari awal",
       });
-      router.push('/mahasiswa/pendaftaran');
+      router.push("/mahasiswa/pendaftaran");
       return;
     }
 
     setLoading(true);
     try {
-      if (paymentMethod === 'bank_transfer' && paymentFile) {
+      if (paymentMethod === "bank_transfer" && paymentFile) {
         // Upload bukti pembayaran
         const formData = new FormData();
-        formData.append('pendaftaranId', checkoutData.pendaftaranId);
-        formData.append('metodePembayaran', paymentMethod);
-        formData.append('file', paymentFile);
+        formData.append("pendaftaranId", checkoutData.pendaftaranId);
+        formData.append("metodePembayaran", paymentMethod);
+        formData.append("file", paymentFile);
 
-        const response = await fetch('/api/payment/upload', {
-          method: 'POST',
+        const response = await fetch("/api/payment/upload", {
+          method: "POST",
           body: formData,
         });
 
         if (!response.ok) {
           const data = await response.json();
-          throw new Error(data.error || 'Gagal mengupload bukti pembayaran');
+          throw new Error(data.error || "Gagal mengupload bukti pembayaran");
         }
 
-        toast.success('Bukti pembayaran berhasil diupload', {
-          description: 'Menunggu verifikasi dari admin',
+        toast.success("Bukti pembayaran berhasil diupload", {
+          description: "Menunggu verifikasi dari admin",
         });
+      } else if (paymentMethod === "xendit") {
+        const response = await fetch("/api/payment/xendit/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pendaftaranId: checkoutData.pendaftaranId }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Gagal membuat tagihan Xendit");
+        }
+
+        const data = await response.json();
+
+        // Clear session storage before redirecting outside
+        sessionStorage.removeItem("checkoutData");
+        sessionStorage.removeItem("pendaftaranId");
+
+        toast.success(data.message || "Mengalihkan ke halaman pembayaran...");
+        window.location.href = data.paymentUrl;
+        return; // Prevent standard navigation below
       } else {
-        // For other payment methods (midtrans/xendit), you can integrate payment gateway here
-        toast.info('Fitur pembayaran online sedang dalam pengembangan', {
-          description: 'Silakan gunakan transfer bank untuk saat ini',
+        // For other payment methods (midtrans), you can integrate payment gateway here
+        toast.info("Fitur pembayaran ini sedang dalam pengembangan", {
+          description: "Silakan gunakan transfer bank atau Xendit",
         });
         return;
       }
 
       // Get pendaftaranId from session or response
-      const pendaftaranId = sessionStorage.getItem('pendaftaranId');
+      const pendaftaranId = sessionStorage.getItem("pendaftaranId");
 
-      // Clear session storage
-      sessionStorage.removeItem('checkoutData');
-      sessionStorage.removeItem('pendaftaranId');
+      // Clear session storage (only if it's not xendit, since xendit redirects us away anyway, but we already cleared it)
+      sessionStorage.removeItem("checkoutData");
+      sessionStorage.removeItem("pendaftaranId");
 
       // Redirect ke success page
       if (pendaftaranId) {
         router.push(
-          `/mahasiswa/pendaftaran/${semesterId}/pembayaran/success?pendaftaranId=${pendaftaranId}`
+          `/mahasiswa/pendaftaran/${semesterId}/pembayaran/success?pendaftaranId=${pendaftaranId}`,
         );
       } else {
-        router.push('/mahasiswa/riwayat');
+        router.push("/mahasiswa/riwayat");
       }
     } catch (error: any) {
-      toast.error('Pembayaran gagal', {
+      toast.error("Pembayaran gagal", {
         description:
-          error.message || 'Terjadi kesalahan saat memproses pembayaran',
+          error.message || "Terjadi kesalahan saat memproses pembayaran",
       });
     } finally {
       setLoading(false);
@@ -237,7 +258,7 @@ export default function PembayaranPage() {
                   </SelectContent>
                 </Select>
 
-                {paymentMethod === 'bank_transfer' && (
+                {paymentMethod === "bank_transfer" && (
                   <div className="space-y-4">
                     <div className="p-4 bg-muted rounded-lg border border-primary/20">
                       <p className="text-sm font-medium mb-3 text-foreground">
@@ -278,7 +299,7 @@ export default function PembayaranPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="paymentFile">
-                        Upload Bukti Pembayaran{' '}
+                        Upload Bukti Pembayaran{" "}
                         <span className="text-destructive">*</span>
                       </Label>
                       <Input
@@ -318,16 +339,16 @@ export default function PembayaranPage() {
                   </div>
                 )}
 
-                {paymentMethod && paymentMethod !== 'bank_transfer' && (
+                {paymentMethod && paymentMethod !== "bank_transfer" && (
                   <div className="p-4 bg-muted rounded-lg">
                     <p className="text-sm text-muted-foreground">
-                      {paymentMethod === 'midtrans' && (
+                      {paymentMethod === "midtrans" && (
                         <>
                           Pembayaran akan dilakukan melalui Midtrans. Anda akan
                           diarahkan ke halaman pembayaran yang aman.
                         </>
                       )}
-                      {paymentMethod === 'xendit' && (
+                      {paymentMethod === "xendit" && (
                         <>
                           Pembayaran akan dilakukan melalui Xendit. Pilih
                           e-wallet yang Anda inginkan.
@@ -357,8 +378,8 @@ export default function PembayaranPage() {
                   <span className="font-medium">
                     {checkoutData.mataKuliah.reduce(
                       (sum, mk) => sum + mk.sks,
-                      0
-                    )}{' '}
+                      0,
+                    )}{" "}
                     SKS
                   </span>
                 </div>
@@ -366,9 +387,9 @@ export default function PembayaranPage() {
                   <div className="flex justify-between">
                     <span className="font-semibold">Total Pembayaran</span>
                     <span className="text-xl font-bold text-primary">
-                      {new Intl.NumberFormat('id-ID', {
-                        style: 'currency',
-                        currency: 'IDR',
+                      {new Intl.NumberFormat("id-ID", {
+                        style: "currency",
+                        currency: "IDR",
                       }).format(checkoutData.totalBiaya)}
                     </span>
                   </div>
@@ -392,15 +413,16 @@ export default function PembayaranPage() {
                   disabled={
                     loading ||
                     !paymentMethod ||
-                    (paymentMethod === 'bank_transfer' && !paymentFile)
+                    (paymentMethod === "bank_transfer" && !paymentFile)
                   }
                   className="w-full min-h-[44px]"
-                  size="lg">
+                  size="lg"
+                >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2 min-w-0">
                       <span className="truncate">Memproses Pembayaran...</span>
                     </span>
-                  ) : paymentMethod === 'bank_transfer' ? (
+                  ) : paymentMethod === "bank_transfer" ? (
                     <span className="flex items-center justify-center gap-2">
                       <span>Upload Bukti Pembayaran</span>
                     </span>
@@ -415,7 +437,8 @@ export default function PembayaranPage() {
                   variant="outline"
                   disabled={loading}
                   className="w-full"
-                  size="lg">
+                  size="lg"
+                >
                   <i className="fa-solid fa-arrow-left mr-2"></i>
                   Kembali
                 </Button>

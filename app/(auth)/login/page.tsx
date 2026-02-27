@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { LoginForm } from '@/components/auth/login-form';
-import { InfoCard } from '@/components/auth/info-card';
-import { AcademicCalendar } from '@/components/academic/academic-calendar';
-import { ROUTES } from '@/lib/routes';
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { LoginForm } from "@/components/auth/login-form";
+import { InfoCard } from "@/components/auth/info-card";
+import { AcademicCalendar } from "@/components/academic/academic-calendar";
+import { ROUTES } from "@/lib/routes";
 
 export default function LoginPage() {
   const router = useRouter();
 
   const handleLogin = async (data: { nim: string; password: string }) => {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         nim: data.nim,
@@ -25,15 +25,19 @@ export default function LoginPage() {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.error || 'NIM atau password salah');
+      throw new Error(result.error || "NIM atau password salah");
     }
 
     // Session cookie sudah di-set oleh API, tidak perlu localStorage
     // Redirect berdasarkan role
-    if (result.user.role === 'ADMIN') {
+    if (result.user.role === "ADMIN") {
       router.push(ROUTES.ADMIN.DASHBOARD);
-    } else if (result.user.role === 'DOSEN') {
-      router.push('/dosen'); // TODO: Buat halaman dosen jika diperlukan
+    } else if (result.user.role === "PANITIA") {
+      router.push(ROUTES.PANITIA.DASHBOARD);
+    } else if (result.user.role === "KEUANGAN") {
+      router.push(ROUTES.KEUANGAN.DASHBOARD);
+    } else if (result.user.role === "DOSEN") {
+      router.push(ROUTES.DOSEN.DASHBOARD);
     } else {
       router.push(ROUTES.MAHASISWA.DASHBOARD);
     }
@@ -41,14 +45,14 @@ export default function LoginPage() {
   };
 
   const currentDate = new Date();
-  const formattedDate = currentDate.toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  const formattedDate = currentDate.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
-  const formattedTime = currentDate.toLocaleTimeString('id-ID', {
-    hour: '2-digit',
-    minute: '2-digit',
+  const formattedTime = currentDate.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
   return (

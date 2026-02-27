@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,20 +8,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
-export type UserRole = 'mahasiswa' | 'dosen' | 'admin';
-export type UserStatus = 'aktif' | 'nonaktif';
+export type UserRole = "mahasiswa" | "dosen" | "admin" | "panitia" | "keuangan";
+export type UserStatus = "aktif" | "nonaktif";
 
 export interface UserFormValues {
   id?: string;
@@ -34,7 +34,7 @@ export interface UserFormValues {
 
 interface UserFormDialogProps {
   open: boolean;
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   initialData?: UserFormValues | null;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: UserFormValues) => void;
@@ -49,25 +49,25 @@ export function UserFormDialog({
 }: UserFormDialogProps) {
   const [formValues, setFormValues] = useState<UserFormValues>({
     id: undefined,
-    nimOrNip: '',
-    name: '',
-    email: '',
-    role: 'mahasiswa',
-    status: 'aktif',
+    nimOrNip: "",
+    name: "",
+    email: "",
+    role: "mahasiswa",
+    status: "aktif",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (mode === 'edit' && initialData) {
+    if (mode === "edit" && initialData) {
       setFormValues(initialData);
-    } else if (mode === 'create') {
+    } else if (mode === "create") {
       setFormValues({
         id: undefined,
-        nimOrNip: '',
-        name: '',
-        email: '',
-        role: 'mahasiswa',
-        status: 'aktif',
+        nimOrNip: "",
+        name: "",
+        email: "",
+        role: "mahasiswa",
+        status: "aktif",
       });
     }
   }, [mode, initialData, open]);
@@ -98,12 +98,12 @@ export function UserFormDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? 'Tambah User Baru' : 'Edit Data User'}
+            {mode === "create" ? "Tambah User Baru" : "Edit Data User"}
           </DialogTitle>
           <DialogDescription>
-            {mode === 'create'
-              ? 'Isi data user dengan lengkap untuk menambahkan akun baru.'
-              : 'Perbarui informasi user sesuai kebutuhan.'}
+            {mode === "create"
+              ? "Isi data user dengan lengkap untuk menambahkan akun baru."
+              : "Perbarui informasi user sesuai kebutuhan."}
           </DialogDescription>
         </DialogHeader>
 
@@ -114,7 +114,7 @@ export function UserFormDialog({
               <Input
                 id="nimOrNip"
                 value={formValues.nimOrNip}
-                onChange={(e) => handleChange('nimOrNip', e.target.value)}
+                onChange={(e) => handleChange("nimOrNip", e.target.value)}
                 placeholder="Masukkan NIM atau NIP"
               />
             </div>
@@ -122,15 +122,16 @@ export function UserFormDialog({
               <Label htmlFor="role">Role</Label>
               <Select
                 value={formValues.role}
-                onValueChange={(value: UserRole) =>
-                  handleChange('role', value)
-                }>
+                onValueChange={(value: UserRole) => handleChange("role", value)}
+              >
                 <SelectTrigger id="role" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="mahasiswa">Mahasiswa</SelectItem>
                   <SelectItem value="dosen">Dosen</SelectItem>
+                  <SelectItem value="panitia">Panitia</SelectItem>
+                  <SelectItem value="keuangan">Keuangan</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -139,12 +140,13 @@ export function UserFormDialog({
 
           <div className="space-y-2">
             <Label htmlFor="name">
-              Nama Lengkap <span className="text-muted-foreground text-xs">(Opsional)</span>
+              Nama Lengkap{" "}
+              <span className="text-muted-foreground text-xs">(Opsional)</span>
             </Label>
             <Input
               id="name"
-              value={formValues.name || ''}
-              onChange={(e) => handleChange('name', e.target.value)}
+              value={formValues.name || ""}
+              onChange={(e) => handleChange("name", e.target.value)}
               placeholder="Masukkan nama lengkap"
             />
             <p className="text-xs text-muted-foreground">
@@ -154,17 +156,19 @@ export function UserFormDialog({
 
           <div className="space-y-2">
             <Label htmlFor="email">
-              Email <span className="text-muted-foreground text-xs">(Opsional)</span>
+              Email{" "}
+              <span className="text-muted-foreground text-xs">(Opsional)</span>
             </Label>
             <Input
               id="email"
               type="email"
-              value={formValues.email || ''}
-              onChange={(e) => handleChange('email', e.target.value)}
+              value={formValues.email || ""}
+              onChange={(e) => handleChange("email", e.target.value)}
               placeholder="nama@domain.ac.id (akan diisi saat self-register)"
             />
             <p className="text-xs text-muted-foreground">
-              Email dapat dikosongkan. Mahasiswa akan mengisi email saat melakukan self-register.
+              Email dapat dikosongkan. Mahasiswa akan mengisi email saat
+              melakukan self-register.
             </p>
           </div>
 
@@ -173,8 +177,9 @@ export function UserFormDialog({
             <Select
               value={formValues.status}
               onValueChange={(value: UserStatus) =>
-                handleChange('status', value)
-              }>
+                handleChange("status", value)
+              }
+            >
               <SelectTrigger id="status" className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -190,21 +195,23 @@ export function UserFormDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}>
+            disabled={isSubmitting}
+          >
             Batal
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isFormIncomplete || isSubmitting}>
+            disabled={isFormIncomplete || isSubmitting}
+          >
             {isSubmitting ? (
               <>
                 <i className="fa-solid fa-spinner fa-spin mr-2"></i>
                 Menyimpan...
               </>
-            ) : mode === 'create' ? (
-              'Simpan User'
+            ) : mode === "create" ? (
+              "Simpan User"
             ) : (
-              'Simpan Perubahan'
+              "Simpan Perubahan"
             )}
           </Button>
         </DialogFooter>
