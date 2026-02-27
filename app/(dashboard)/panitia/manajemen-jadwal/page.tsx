@@ -25,11 +25,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 interface JadwalItem {
   id: string;
-  pendaftaranDetailId: string;
   kode: string;
   nama: string;
   kelas: string;
@@ -37,12 +38,11 @@ interface JadwalItem {
   tanggalJadwal?: string | Date | null;
   dosen: string;
   sks: number;
-  statusJadwal: "AKTIF" | "SELESAI";
-  mahasiswa: {
-    nimOrNip: string;
-    name: string;
-  };
+  kuota: number;
+  terdaftar: number;
+  isPublished: boolean;
   semester: {
+    id: string;
     nama: string;
     tahun: string;
     periode: string;
@@ -51,16 +51,16 @@ interface JadwalItem {
 
 interface JadwalStats {
   total: number;
-  aktif: number;
-  selesai: number;
+  published: number;
+  draft: number;
 }
 
 export default function ManajemenJadwalPage() {
   const [jadwal, setJadwal] = useState<JadwalItem[]>([]);
   const [stats, setStats] = useState<JadwalStats>({
     total: 0,
-    aktif: 0,
-    selesai: 0,
+    published: 0,
+    draft: 0,
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -95,7 +95,7 @@ export default function ManajemenJadwalPage() {
       setLoading(true);
       const params = new URLSearchParams();
       if (statusFilter !== "all") {
-        params.append("statusJadwal", statusFilter);
+        params.append("isPublished", statusFilter);
       }
       if (semesterFilter !== "all") {
         params.append("semesterId", semesterFilter);
@@ -109,12 +109,45 @@ export default function ManajemenJadwalPage() {
       const data = await response.json();
 
       setJadwal(data.jadwal || []);
-      setStats(data.stats || { total: 0, aktif: 0, selesai: 0 });
+      setStats(data.stats || { total: 0, published: 0, draft: 0 });
     } catch (error) {
       console.error("Error fetching jadwal:", error);
       toast.error("Gagal mengambil data jadwal");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const togglePublish = async (id: string, currentStatus: boolean) => {
+    try {
+      const newStatus = !currentStatus;
+
+      // Optimitic update
+      setJadwal((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, isPublished: newStatus } : item,
+        ),
+      );
+      setStats((prev) => ({
+        ...prev,
+        published: newStatus ? prev.published + 1 : prev.published - 1,
+        draft: newStatus ? prev.draft - 1 : prev.draft + 1,
+      }));
+
+      const res = await fetch("/api/admin/jadwal", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, isPublished: newStatus }),
+      });
+
+      if (!res.ok) throw new Error("Gagal mengubah status publikasi");
+
+      const data = await res.json();
+      toast.success(data.message);
+    } catch (error) {
+      console.error("Error toggling publish status:", error);
+      toast.error("Gagal mengubah status publikasi");
+      fetchJadwal(); // revert optimistic update
     }
   };
 
@@ -135,8 +168,6 @@ export default function ManajemenJadwalPage() {
         day: "numeric",
         month: "short",
         year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
       });
     } catch {
       return "-";
@@ -165,7 +196,7 @@ export default function ManajemenJadwalPage() {
             Manajemen Jadwal
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Monitoring dan melihat semua jadwal kuliah mahasiswa
+            Atur publikasi dan lihat master jadwal kuliah
           </p>
         </div>
 
@@ -174,7 +205,7 @@ export default function ManajemenJadwalPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Jadwal
+                Total Jadwal Kelas
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -184,24 +215,24 @@ export default function ManajemenJadwalPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Jadwal Aktif
+                Jadwal Dipublish
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {stats.aktif}
+              <div className="text-2xl font-bold text-green-600">
+                {stats.published}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Jadwal Selesai
+                Jadwal Draft
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {stats.selesai}
+              <div className="text-2xl font-bold text-amber-600">
+                {stats.draft}
               </div>
             </CardContent>
           </Card>
@@ -217,21 +248,21 @@ export default function ManajemenJadwalPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Cari</label>
                 <Input
-                  placeholder="Cari nama, NIM, atau mata kuliah..."
+                  placeholder="Cari kode, nama MK, atau dosen..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
+                <label className="text-sm font-medium">Status Publikasi</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="Semua Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Semua Status</SelectItem>
-                    <SelectItem value="AKTIF">Aktif</SelectItem>
-                    <SelectItem value="SELESAI">Selesai</SelectItem>
+                    <SelectItem value="true">Published</SelectItem>
+                    <SelectItem value="false">Draft</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -262,7 +293,7 @@ export default function ManajemenJadwalPage() {
         {loading ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">Memuat data jadwal...</p>
+              <p className="text-muted-foreground">Memuat jadwal...</p>
             </CardContent>
           </Card>
         ) : Object.keys(jadwalBySemester).length === 0 ? (
@@ -274,9 +305,6 @@ export default function ManajemenJadwalPage() {
               <p className="text-muted-foreground mb-2">
                 Tidak ada jadwal ditemukan
               </p>
-              <p className="text-sm text-muted-foreground">
-                Coba ubah filter atau pencarian Anda
-              </p>
             </CardContent>
           </Card>
         ) : (
@@ -287,8 +315,8 @@ export default function ManajemenJadwalPage() {
                   <div>
                     <CardTitle>{semesterNama}</CardTitle>
                     <CardDescription>
-                      {items.length} jadwal -{" "}
-                      {items.reduce((sum, item) => sum + item.sks, 0)} SKS
+                      {items.length} kelas -{" "}
+                      {items.reduce((sum, item) => sum + item.sks, 0)} SKS total
                     </CardDescription>
                   </div>
                   <Badge variant="outline">
@@ -305,23 +333,23 @@ export default function ManajemenJadwalPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="text-center whitespace-nowrap">
-                            Status
-                          </TableHead>
-                          <TableHead className="text-center whitespace-nowrap">
-                            Mahasiswa
-                          </TableHead>
-                          <TableHead className="text-center whitespace-nowrap">
-                            NIM
+                          <TableHead className="w-[100px] text-center whitespace-nowrap">
+                            Publish
                           </TableHead>
                           <TableHead className="text-center whitespace-nowrap">
                             Kode
                           </TableHead>
-                          <TableHead className="text-center whitespace-nowrap">
+                          <TableHead className="whitespace-nowrap">
                             Mata Kuliah
                           </TableHead>
                           <TableHead className="text-center whitespace-nowrap">
                             Kelas
+                          </TableHead>
+                          <TableHead className="whitespace-nowrap">
+                            Dosen
+                          </TableHead>
+                          <TableHead className="text-center whitespace-nowrap">
+                            SKS
                           </TableHead>
                           <TableHead className="text-center whitespace-nowrap">
                             Jadwal
@@ -330,65 +358,63 @@ export default function ManajemenJadwalPage() {
                             Tanggal
                           </TableHead>
                           <TableHead className="text-center whitespace-nowrap">
-                            Dosen
-                          </TableHead>
-                          <TableHead className="text-center whitespace-nowrap">
-                            SKS
+                            Terisi
                           </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {items.map((item) => {
-                          const isSelesai = item.statusJadwal === "SELESAI";
-                          return (
-                            <TableRow
-                              key={item.id}
-                              className={
-                                isSelesai ? "opacity-60 bg-muted/30" : ""
-                              }
-                            >
-                              <TableCell className="text-center whitespace-nowrap">
-                                <Badge
-                                  variant={isSelesai ? "default" : "secondary"}
-                                  className={isSelesai ? "bg-green-600" : ""}
+                        {items.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="text-center">
+                              <div className="flex flex-col items-center gap-1">
+                                <Switch
+                                  checked={item.isPublished}
+                                  onCheckedChange={() =>
+                                    togglePublish(item.id, item.isPublished)
+                                  }
+                                />
+                                <span
+                                  className={`text-[10px] font-medium ${item.isPublished ? "text-green-600" : "text-amber-600"}`}
                                 >
-                                  {item.statusJadwal}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-center whitespace-nowrap">
-                                {item.mahasiswa.name}
-                              </TableCell>
-                              <TableCell className="text-center font-mono text-sm whitespace-nowrap">
-                                {item.mahasiswa.nimOrNip}
-                              </TableCell>
-                              <TableCell className="font-medium text-center whitespace-nowrap">
-                                {item.kode}
-                              </TableCell>
-                              <TableCell className="text-center whitespace-nowrap">
-                                {item.nama}
-                              </TableCell>
-                              <TableCell className="text-center whitespace-nowrap">
-                                <Badge variant="outline">{item.kelas}</Badge>
-                              </TableCell>
-                              <TableCell className="text-center whitespace-nowrap">
-                                <span className="font-medium">
-                                  {item.jadwal || "-"}
+                                  {item.isPublished ? "PUBLISHED" : "DRAFT"}
                                 </span>
-                              </TableCell>
-                              <TableCell className="text-center whitespace-nowrap">
-                                <span className="text-sm text-muted-foreground">
-                                  {formatTanggal(item.tanggalJadwal)}
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-center whitespace-nowrap">
-                                {item.dosen || "-"}
-                              </TableCell>
-                              <TableCell className="text-center whitespace-nowrap">
-                                {item.sks}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-medium text-center whitespace-nowrap">
+                              {item.kode}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap font-medium">
+                              {item.nama}
+                            </TableCell>
+                            <TableCell className="text-center whitespace-nowrap">
+                              <Badge variant="outline">{item.kelas}</Badge>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {item.dosen || "-"}
+                            </TableCell>
+                            <TableCell className="text-center whitespace-nowrap">
+                              {item.sks}
+                            </TableCell>
+                            <TableCell className="text-center whitespace-nowrap">
+                              <span className="font-medium">
+                                {item.jadwal || "-"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-center whitespace-nowrap">
+                              <span className="text-sm text-muted-foreground">
+                                {formatTanggal(item.tanggalJadwal)}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-center whitespace-nowrap">
+                              <span className="font-medium">
+                                {item.terdaftar}
+                              </span>
+                              <span className="text-muted-foreground text-xs ml-1">
+                                / {item.kuota}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                       </TableBody>
                     </Table>
                   </div>

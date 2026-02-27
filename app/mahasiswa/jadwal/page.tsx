@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -24,8 +24,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { toast } from 'sonner';
+} from "@/components/ui/table";
+import { toast } from "sonner";
 
 interface JadwalItem {
   id: string;
@@ -37,7 +37,7 @@ interface JadwalItem {
   tanggalJadwal?: string | Date | null;
   dosen: string;
   sks: number;
-  statusJadwal: 'AKTIF' | 'SELESAI';
+  statusJadwal: "AKTIF" | "SELESAI";
   semester: {
     nama: string;
     tahun: string;
@@ -45,55 +45,58 @@ interface JadwalItem {
   };
 }
 
-type FilterStatus = 'SEMUA' | 'AKTIF' | 'SELESAI';
+type FilterStatus = "SEMUA" | "AKTIF" | "SELESAI";
 
 export default function JadwalKuliahPage() {
   const [jadwal, setJadwal] = useState<JadwalItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('SEMUA');
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("SEMUA");
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchJadwal = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/pendaftaran/user/me');
-        if (!response.ok) throw new Error('Gagal mengambil data jadwal');
+        const response = await fetch("/api/pendaftaran/user/me");
+        if (!response.ok) throw new Error("Gagal mengambil data jadwal");
         const data = await response.json();
 
         // Filter hanya pendaftaran yang DITERIMA
         const diterimaPendaftaran = (data.pendaftaran || []).filter(
-          (p: any) => p.status === 'DITERIMA'
+          (p: any) => p.status === "DITERIMA",
         );
 
         // Extract jadwal dari semua pendaftaran yang diterima
         const allJadwal: JadwalItem[] = [];
         diterimaPendaftaran.forEach((pendaftaran: any) => {
           pendaftaran.detail.forEach((detail: any) => {
-            allJadwal.push({
-              id: detail.semesterMataKuliah.id,
-              pendaftaranDetailId: detail.id,
-              kode: detail.semesterMataKuliah.mataKuliah.kode,
-              nama: detail.semesterMataKuliah.mataKuliah.nama,
-              kelas: detail.semesterMataKuliah.kelas,
-              jadwal: detail.semesterMataKuliah.jadwal,
-              tanggalJadwal: detail.semesterMataKuliah.tanggalJadwal || null,
-              dosen: detail.semesterMataKuliah.dosen,
-              sks: detail.semesterMataKuliah.mataKuliah.sks,
-              statusJadwal: detail.statusJadwal || 'AKTIF',
-              semester: {
-                nama: pendaftaran.semester.nama,
-                tahun: pendaftaran.semester.tahun,
-                periode: pendaftaran.semester.periode,
-              },
-            });
+            // Hanya tampilkan jadwal yang sudah di-publish
+            if (detail.semesterMataKuliah?.isPublished) {
+              allJadwal.push({
+                id: detail.semesterMataKuliah.id,
+                pendaftaranDetailId: detail.id,
+                kode: detail.semesterMataKuliah.mataKuliah.kode,
+                nama: detail.semesterMataKuliah.mataKuliah.nama,
+                kelas: detail.semesterMataKuliah.kelas,
+                jadwal: detail.semesterMataKuliah.jadwal,
+                tanggalJadwal: detail.semesterMataKuliah.tanggalJadwal || null,
+                dosen: detail.semesterMataKuliah.dosen,
+                sks: detail.semesterMataKuliah.mataKuliah.sks,
+                statusJadwal: detail.statusJadwal || "AKTIF",
+                semester: {
+                  nama: pendaftaran.semester.nama,
+                  tahun: pendaftaran.semester.tahun,
+                  periode: pendaftaran.semester.periode,
+                },
+              });
+            }
           });
         });
 
         setJadwal(allJadwal);
       } catch (error) {
-        console.error('Error fetching jadwal:', error);
-        toast.error('Gagal mengambil data jadwal');
+        console.error("Error fetching jadwal:", error);
+        toast.error("Gagal mengambil data jadwal");
       } finally {
         setLoading(false);
       }
@@ -104,24 +107,24 @@ export default function JadwalKuliahPage() {
 
   const handleToggleStatus = async (
     pendaftaranDetailId: string,
-    currentStatus: 'AKTIF' | 'SELESAI'
+    currentStatus: "AKTIF" | "SELESAI",
   ) => {
-    const newStatus = currentStatus === 'AKTIF' ? 'SELESAI' : 'AKTIF';
+    const newStatus = currentStatus === "AKTIF" ? "SELESAI" : "AKTIF";
     setUpdatingIds((prev) => new Set(prev).add(pendaftaranDetailId));
 
     try {
       const response = await fetch(
         `/api/pendaftaran-detail/${pendaftaranDetailId}/status-jadwal`,
         {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ statusJadwal: newStatus }),
-        }
+        },
       );
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Gagal memperbarui status jadwal');
+        throw new Error(data.error || "Gagal memperbarui status jadwal");
       }
 
       // Update local state
@@ -129,18 +132,18 @@ export default function JadwalKuliahPage() {
         prev.map((item) =>
           item.pendaftaranDetailId === pendaftaranDetailId
             ? { ...item, statusJadwal: newStatus }
-            : item
-        )
+            : item,
+        ),
       );
 
       toast.success(
-        newStatus === 'SELESAI'
-          ? 'Jadwal ditandai sebagai selesai'
-          : 'Jadwal dikembalikan ke aktif'
+        newStatus === "SELESAI"
+          ? "Jadwal ditandai sebagai selesai"
+          : "Jadwal dikembalikan ke aktif",
       );
     } catch (error: any) {
-      console.error('Error updating status:', error);
-      toast.error(error.message || 'Gagal memperbarui status jadwal');
+      console.error("Error updating status:", error);
+      toast.error(error.message || "Gagal memperbarui status jadwal");
     } finally {
       setUpdatingIds((prev) => {
         const newSet = new Set(prev);
@@ -152,19 +155,22 @@ export default function JadwalKuliahPage() {
 
   // Filter jadwal berdasarkan status
   const filteredJadwal =
-    filterStatus === 'SEMUA'
+    filterStatus === "SEMUA"
       ? jadwal
       : jadwal.filter((item) => item.statusJadwal === filterStatus);
 
   // Group by semester
-  const jadwalBySemester = filteredJadwal.reduce((acc, item) => {
-    const key = item.semester.nama;
-    if (!acc[key]) {
-      acc[key] = [];
-    }
-    acc[key].push(item);
-    return acc;
-  }, {} as Record<string, JadwalItem[]>);
+  const jadwalBySemester = filteredJadwal.reduce(
+    (acc, item) => {
+      const key = item.semester.nama;
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(item);
+      return acc;
+    },
+    {} as Record<string, JadwalItem[]>,
+  );
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -182,7 +188,8 @@ export default function JadwalKuliahPage() {
           <div className="flex items-center gap-2">
             <Select
               value={filterStatus}
-              onValueChange={(value: FilterStatus) => setFilterStatus(value)}>
+              onValueChange={(value: FilterStatus) => setFilterStatus(value)}
+            >
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="Filter Status" />
               </SelectTrigger>
@@ -223,15 +230,15 @@ export default function JadwalKuliahPage() {
                   <div>
                     <CardTitle>{semesterNama}</CardTitle>
                     <CardDescription>
-                      {items.length} mata kuliah -{' '}
+                      {items.length} mata kuliah -{" "}
                       {items.reduce((sum, item) => sum + item.sks, 0)} SKS
                     </CardDescription>
                   </div>
                   <Badge variant="outline">
-                    {items[0].semester.tahun} -{' '}
-                    {items[0].semester.periode === 'GANJIL'
-                      ? 'Ganjil'
-                      : 'Genap'}
+                    {items[0].semester.tahun} -{" "}
+                    {items[0].semester.periode === "GANJIL"
+                      ? "Ganjil"
+                      : "Genap"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -255,33 +262,34 @@ export default function JadwalKuliahPage() {
                     <TableBody>
                       {items.map((item) => {
                         const formatTanggal = (
-                          tanggal: string | Date | null | undefined
+                          tanggal: string | Date | null | undefined,
                         ) => {
-                          if (!tanggal) return '-';
+                          if (!tanggal) return "-";
                           try {
                             const date = new Date(tanggal);
-                            return date.toLocaleDateString('id-ID', {
-                              weekday: 'long',
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric',
+                            return date.toLocaleDateString("id-ID", {
+                              weekday: "long",
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
                             });
                           } catch {
-                            return '-';
+                            return "-";
                           }
                         };
 
                         const isUpdating = updatingIds.has(
-                          item.pendaftaranDetailId
+                          item.pendaftaranDetailId,
                         );
-                        const isSelesai = item.statusJadwal === 'SELESAI';
+                        const isSelesai = item.statusJadwal === "SELESAI";
 
                         return (
                           <TableRow
                             key={item.id}
                             className={
-                              isSelesai ? 'opacity-60 bg-muted/30' : ''
-                            }>
+                              isSelesai ? "opacity-60 bg-muted/30" : ""
+                            }
+                          >
                             <TableCell className="text-center">
                               <Button
                                 variant="ghost"
@@ -289,11 +297,12 @@ export default function JadwalKuliahPage() {
                                 onClick={() =>
                                   handleToggleStatus(
                                     item.pendaftaranDetailId,
-                                    item.statusJadwal
+                                    item.statusJadwal,
                                   )
                                 }
                                 disabled={isUpdating}
-                                className="h-8 w-8 p-0">
+                                className="h-8 w-8 p-0"
+                              >
                                 {isUpdating ? (
                                   <i className="fa-solid fa-spinner fa-spin text-muted-foreground"></i>
                                 ) : isSelesai ? (
@@ -314,7 +323,7 @@ export default function JadwalKuliahPage() {
                             </TableCell>
                             <TableCell className="text-center">
                               <span className="font-medium">
-                                {item.jadwal || '-'}
+                                {item.jadwal || "-"}
                               </span>
                             </TableCell>
                             <TableCell className="text-center">
@@ -323,7 +332,7 @@ export default function JadwalKuliahPage() {
                               </span>
                             </TableCell>
                             <TableCell className="text-center">
-                              {item.dosen || '-'}
+                              {item.dosen || "-"}
                             </TableCell>
                             <TableCell className="text-center">
                               {item.sks}

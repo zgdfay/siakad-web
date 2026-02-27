@@ -5,176 +5,135 @@ import { getSession } from '@/lib/session';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// GET - Get all jadwal for admin monitoring
+// GET - Get all jadwal master (SemesterMataKuliah) for admin/panitia
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication
     const user = await getSession();
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Tidak terautentikasi' },
-        { status: 401 }
-      );
-    }
-
-    // Only admin and panitia can access
-    if (user.role !== 'ADMIN' && user.role !== 'PANITIA') {
-      return NextResponse.json(
-        {
-          error: 'Akses ditolak. Hanya admin dan panitia yang dapat mengakses halaman ini.',
-        },
-        { status: 403 }
-      );
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'PANITIA')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const statusJadwal = searchParams.get('statusJadwal');
+    const isPublishedParam = searchParams.get('isPublished');
     const semesterId = searchParams.get('semesterId');
     const search = searchParams.get('search');
 
-    // Build where clause
-    const where: any = {
-      pendaftaran: {
-        status: 'DITERIMA',
-      },
-    };
+    const where: any = {};
 
-    if (statusJadwal && statusJadwal !== 'all') {
-      where.statusJadwal = statusJadwal;
+    if (isPublishedParam && isPublishedParam !== 'all') {
+      where.isPublished = isPublishedParam === 'true';
     }
 
     if (semesterId && semesterId !== 'all') {
-      where.pendaftaran = {
-        ...where.pendaftaran,
-        semesterId,
-      };
+      where.semesterId = semesterId;
     }
 
     if (search) {
       where.OR = [
         {
-          semesterMataKuliah: {
-            mataKuliah: {
-              nama: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
+          mataKuliah: {
+            nama: { contains: search, mode: 'insensitive' },
           },
         },
         {
-          semesterMataKuliah: {
-            mataKuliah: {
-              kode: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
+          mataKuliah: {
+            kode: { contains: search, mode: 'insensitive' },
           },
         },
         {
-          pendaftaran: {
-            userMaster: {
-              nimOrNip: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-          },
-        },
-        {
-          pendaftaran: {
-            userMaster: {
-              name: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-          },
+          dosen: { contains: search, mode: 'insensitive' },
         },
       ];
     }
 
-    // Fetch all jadwal
-    const pendaftaranDetails = await prisma.pendaftaranDetail.findMany({
+    const semesterMataKuliahs = await prisma.semesterMataKuliah.findMany({
       where,
       include: {
-        semesterMataKuliah: {
-          include: {
-            mataKuliah: true,
+        mataKuliah: true,
+        semester: {
+          select: {
+            id: true,
+            nama: true,
+            tahun: true,
+            periode: true,
           },
         },
-        pendaftaran: {
-          include: {
-            userMaster: {
-              select: {
-                nimOrNip: true,
-                name: true,
-              },
-            },
-            semester: {
-              select: {
-                nama: true,
-                tahun: true,
-                periode: true,
-              },
-            },
-          },
+        _count: {
+          select: { pendaftaranDetail: true },
         },
       },
       orderBy: [
-        { pendaftaran: { semester: { tahun: 'desc' } } },
-        { pendaftaran: { semester: { periode: 'desc' } } },
-        { semesterMataKuliah: { mataKuliah: { kode: 'asc' } } },
+        { semester: { tahun: 'desc' } },
+        { semester: { periode: 'desc' } },
+        { mataKuliah: { kode: 'asc' } },
       ],
     });
 
-    // Transform data
-    const jadwal = pendaftaranDetails.map(
-      (detail: (typeof pendaftaranDetails)[0]) => ({
-        id: detail.semesterMataKuliah.id,
-        pendaftaranDetailId: detail.id,
-        kode: detail.semesterMataKuliah.mataKuliah.kode,
-        nama: detail.semesterMataKuliah.mataKuliah.nama,
-        kelas: detail.semesterMataKuliah.kelas,
-        jadwal: detail.semesterMataKuliah.jadwal,
-        tanggalJadwal: detail.semesterMataKuliah.tanggalJadwal,
-        dosen: detail.semesterMataKuliah.dosen,
-        sks: detail.semesterMataKuliah.mataKuliah.sks,
-        statusJadwal: detail.statusJadwal,
-        mahasiswa: {
-          nimOrNip: detail.pendaftaran.userMaster.nimOrNip,
-          name: detail.pendaftaran.userMaster.name,
-        },
-        semester: {
-          nama: detail.pendaftaran.semester.nama,
-          tahun: detail.pendaftaran.semester.tahun,
-          periode: detail.pendaftaran.semester.periode,
-        },
-      })
-    );
+    const jadwal = semesterMataKuliahs.map((smk: any) => ({
+      id: smk.id,
+      kode: smk.mataKuliah.kode,
+      nama: smk.mataKuliah.nama,
+      kelas: smk.kelas,
+      jadwal: smk.jadwal,
+      tanggalJadwal: smk.tanggalJadwal,
+      dosen: smk.dosen,
+      sks: smk.mataKuliah.sks,
+      kuota: smk.kuota,
+      terdaftar: smk._count.pendaftaranDetail,
+      isPublished: smk.isPublished,
+      semester: {
+        id: smk.semester.id,
+        nama: smk.semester.nama,
+        tahun: smk.semester.tahun,
+        periode: smk.semester.periode,
+      },
+    }));
 
-    // Calculate stats
     const total = jadwal.length;
-    const aktif = jadwal.filter(
-      (j: (typeof jadwal)[0]) => j.statusJadwal === 'AKTIF'
-    ).length;
-    const selesai = jadwal.filter(
-      (j: (typeof jadwal)[0]) => j.statusJadwal === 'SELESAI'
-    ).length;
+    const published = jadwal.filter((j) => j.isPublished).length;
+    const draft = total - published;
 
     return NextResponse.json({
       jadwal,
-      stats: {
-        total,
-        aktif,
-        selesai,
-      },
+      stats: { total, published, draft },
     });
   } catch (error: any) {
     console.error('Get admin jadwal error:', error);
     return NextResponse.json(
       { error: 'Terjadi kesalahan saat mengambil data jadwal' },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH - Toggle isPublished status
+export async function PATCH(request: NextRequest) {
+  try {
+    const user = await getSession();
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'PANITIA')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, isPublished } = body;
+
+    if (!id || typeof isPublished !== 'boolean') {
+      return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
+    }
+
+    const updated = await prisma.semesterMataKuliah.update({
+      where: { id },
+      data: { isPublished },
+    });
+
+    return NextResponse.json({
+      message: `Jadwal berhasil di-${isPublished ? 'publish' : 'unpublish'}`,
+      jadwal: updated,
+    });
+  } catch (error: any) {
+    console.error('Patch admin jadwal error:', error);
+    return NextResponse.json(
+      { error: 'Gagal memperbarui status publikasi jadwal' },
       { status: 500 }
     );
   }

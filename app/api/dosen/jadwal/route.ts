@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
         },
         semester: {
           status: 'AKTIF'
-        }
+        },
+        isPublished: true
       },
       include: {
         mataKuliah: true,
