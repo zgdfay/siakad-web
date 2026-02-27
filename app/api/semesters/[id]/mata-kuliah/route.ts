@@ -82,20 +82,19 @@ export async function POST(
 
     const body = await request.json();
     console.log('Request body:', body);
-    const { mataKuliahId, kelas, jadwal, tanggalJadwal, dosen, kuota, biaya, prasyarat } = body;
+    const { mataKuliahId, kelas, jadwal, tanggalJadwal, dosen, kuota, prasyarat } = body;
 
     // Validation
-    if (!mataKuliahId || !kelas || !jadwal || !dosen || kuota === undefined || biaya === undefined) {
+    if (!mataKuliahId || !kelas || !jadwal || !dosen || kuota === undefined) {
       console.error('Validation failed:', {
         mataKuliahId: !!mataKuliahId,
         kelas: !!kelas,
         jadwal: !!jadwal,
         dosen: !!dosen,
         kuota: kuota !== undefined,
-        biaya: biaya !== undefined,
       });
       return NextResponse.json(
-        { error: 'Mata kuliah, kelas, jadwal, dosen, kuota, dan biaya wajib diisi' },
+        { error: 'Mata kuliah, kelas, jadwal, dosen, dan kuota wajib diisi' },
         { status: 400 }
       );
     }
@@ -151,7 +150,6 @@ export async function POST(
       tanggalJadwal: tanggalJadwal ? new Date(tanggalJadwal) : null,
       dosen,
       kuota: parseInt(kuota),
-      biaya: parseInt(biaya),
       prasyarat: prasyarat || null,
     });
 
@@ -165,7 +163,6 @@ export async function POST(
         dosen,
         kuota: parseInt(kuota),
         terisi: 0,
-        biaya: parseInt(biaya),
         prasyarat: prasyarat || null,
       },
       include: {

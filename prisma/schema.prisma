@@ -57,6 +57,7 @@ model MataKuliah {
   kategori  MataKuliahKategori
   status    MataKuliahStatus     @default(AKTIF)
   deskripsi String?
+  biaya     Int                  @default(0)
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
   semester  SemesterMataKuliah[]
@@ -75,7 +76,6 @@ model SemesterMataKuliah {
   dosen             String
   kuota             Int                 @default(0)
   terisi            Int                 @default(0)
-  biaya             Int                 @default(0)
   prasyarat         String?
   isPublished       Boolean             @default(false)
   createdAt         DateTime            @default(now())

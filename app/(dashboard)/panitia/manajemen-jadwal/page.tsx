@@ -287,7 +287,7 @@ export default function ManajemenJadwalPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Status Publikasi</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Semua Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -303,7 +303,7 @@ export default function ManajemenJadwalPage() {
                   value={semesterFilter}
                   onValueChange={setSemesterFilter}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Semua Semester" />
                   </SelectTrigger>
                   <SelectContent>

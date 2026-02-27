@@ -278,7 +278,7 @@ export async function POST(request: NextRequest) {
     let totalBiaya = 0;
     for (const smk of semester.mataKuliah) {
       totalSKS += smk.mataKuliah.sks;
-      totalBiaya += smk.biaya;
+      totalBiaya += smk.mataKuliah.biaya;
     }
 
     // Create pendaftaran with details in transaction

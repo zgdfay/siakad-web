@@ -22,6 +22,7 @@ export interface MataKuliahEditValues {
   kategori: "WAJIB" | "PILIHAN";
   status: "AKTIF" | "NONAKTIF";
   deskripsi?: string | null;
+  biaya?: number;
 }
 
 interface SemesterOption {
@@ -58,6 +59,7 @@ export function MataKuliahEditDialog({
     kategori: "WAJIB",
     status: "AKTIF",
     deskripsi: "",
+    biaya: 0,
   });
   const [loadingData, setLoadingData] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,6 +79,7 @@ export function MataKuliahEditDialog({
         kategori: "WAJIB",
         status: "AKTIF",
         deskripsi: "",
+        biaya: 0,
       });
       setIsSubmitting(false);
     }
@@ -101,6 +104,7 @@ export function MataKuliahEditDialog({
         kategori: data.mataKuliah.kategori,
         status: data.mataKuliah.status,
         deskripsi: data.mataKuliah.deskripsi || "",
+        biaya: data.mataKuliah.biaya || 0,
       };
 
       setFormValues(transformedData);
@@ -229,6 +233,20 @@ export function MataKuliahEditDialog({
                     handleChange("sks", parseInt(e.target.value) || 0)
                   }
                   placeholder="3"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="biaya">Biaya (Opsional)</Label>
+                <Input
+                  id="biaya"
+                  type="number"
+                  min="0"
+                  value={formValues.biaya}
+                  onChange={(e) =>
+                    handleChange("biaya", parseInt(e.target.value) || 0)
+                  }
+                  placeholder="0"
                   className="w-full"
                 />
               </div>

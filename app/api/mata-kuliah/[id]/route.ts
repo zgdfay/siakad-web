@@ -76,7 +76,7 @@ export async function PUT(
     const mataKuliahId = resolvedParams.id;
 
     const body = await request.json();
-    const { kode, nama, sks, prodi, kategori, status, deskripsi } = body;
+    const { kode, nama, sks, prodi, kategori, status, deskripsi, biaya } = body;
 
     // Check if mata kuliah exists
     const existingMataKuliah = await prisma.mataKuliah.findUnique({
@@ -145,6 +145,7 @@ export async function PUT(
     if (kategori) updateData.kategori = kategori.toUpperCase();
     if (status) updateData.status = status.toUpperCase();
     if (deskripsi !== undefined) updateData.deskripsi = deskripsi || null;
+    if (biaya !== undefined) updateData.biaya = parseInt(biaya.toString()) || 0;
 
     const updatedMataKuliah = await prisma.mataKuliah.update({
       where: { id: mataKuliahId },

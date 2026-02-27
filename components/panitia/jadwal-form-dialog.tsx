@@ -21,7 +21,6 @@ export interface JadwalFormValues {
   tanggalJadwal: string;
   dosen: string;
   kuota: number;
-  biaya: number;
   prasyarat: string;
 }
 
@@ -50,7 +49,6 @@ export function JadwalFormDialog({
     tanggalJadwal: "",
     dosen: "",
     kuota: 30,
-    biaya: 0,
     prasyarat: "",
   });
 
@@ -73,7 +71,6 @@ export function JadwalFormDialog({
         tanggalJadwal: "",
         dosen: "",
         kuota: 30,
-        biaya: 0,
         prasyarat: "",
       });
     }
@@ -203,7 +200,7 @@ export function JadwalFormDialog({
                 onValueChange={(val) => handleChange("semesterId", val)}
                 disabled={loading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih Semester" />
                 </SelectTrigger>
                 <SelectContent>
@@ -225,7 +222,7 @@ export function JadwalFormDialog({
                 onValueChange={(val) => handleChange("mataKuliahId", val)}
                 disabled={loading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih Mata Kuliah" />
                 </SelectTrigger>
                 <SelectContent className="max-h-56">
@@ -282,7 +279,7 @@ export function JadwalFormDialog({
                 onValueChange={(val) => handleChange("dosen", val)}
                 disabled={loading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih Dosen" />
                 </SelectTrigger>
                 <SelectContent className="max-h-56">
@@ -295,7 +292,7 @@ export function JadwalFormDialog({
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <div className="space-y-2">
                 <Label>
                   Kuota <span className="text-destructive">*</span>
@@ -306,17 +303,6 @@ export function JadwalFormDialog({
                   value={formValues.kuota}
                   onChange={(e) =>
                     handleChange("kuota", parseInt(e.target.value) || 0)
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Biaya (Ops. Rp)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={formValues.biaya}
-                  onChange={(e) =>
-                    handleChange("biaya", parseInt(e.target.value) || 0)
                   }
                 />
               </div>

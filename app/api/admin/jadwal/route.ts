@@ -156,7 +156,6 @@ export async function POST(request: NextRequest) {
       tanggalJadwal,
       dosen,
       kuota,
-      biaya,
       prasyarat,
     } = body;
 
@@ -193,7 +192,6 @@ export async function POST(request: NextRequest) {
       jadwal,
       dosen,
       kuota: parseInt(kuota) || 30,
-      biaya: parseInt(biaya) || 0,
       terisi: 0,
       isPublished: true, // Auto publish on creation or according to requirements (set default)
     };

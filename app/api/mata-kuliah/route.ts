@@ -126,11 +126,19 @@ export async function POST(request: NextRequest) {
       data: {
         kode,
         nama,
-        sks: parseInt(sks),
+        sks: parseInt(sks.toString()),
         prodi,
         kategori: kategori.toUpperCase() as 'WAJIB' | 'PILIHAN',
         status: (status?.toUpperCase() || 'AKTIF') as 'AKTIF' | 'NONAKTIF',
         deskripsi: deskripsi || null,
+        biaya: parseInt(body.biaya?.toString() || '0'),
+      },
+      include: {
+        semester: {
+          include: {
+            semester: true,
+          },
+        },
       },
     });
 
