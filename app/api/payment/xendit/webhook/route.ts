@@ -33,24 +33,15 @@ export async function POST(request: NextRequest) {
         // Update payment to LUNAS and trigger status acceptance if needed
         await prisma.$transaction(async (tx) => {
           // 1. Update Payment status
+          // Payment is verified by Xendit, but our business logic requires Keuangan to manually verify it
           await tx.payment.update({
             where: { id: payment.id },
             data: {
-              status: "LUNAS",
+              status: "MENUNGGU_VERIFIKASI",
               tanggalBayar: new Date(payload.paid_at || new Date()),
               metodePembayaran: paymentMethod || "xendit",
             },
           });
-
-          // 2. We don't auto-accept DITERIMA immediately for verification workflows,
-          // but if the system requirement states automatic validation, we can do:
-          // For now, let's auto-verify since the student paid real money.
-          if (payment.pendaftaran.status === "MENUNGGU_VERIFIKASI") {
-            await tx.pendaftaran.update({
-              where: { id: payment.pendaftaranId },
-              data: { status: "DITERIMA" },
-            });
-          }
         });
 
         // Trigger email notification code could go here, or we let the frontend polling handle it.

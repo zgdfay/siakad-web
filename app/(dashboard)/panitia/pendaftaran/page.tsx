@@ -437,53 +437,64 @@ export default function AdminPendaftaranPage() {
                               </Button>
                             )}
                             {p.status === "MENUNGGU_VERIFIKASI" && (
-                              <Button
-                                size="sm"
-                                onClick={async () => {
-                                  setSelectedPendaftaran(p.id);
-                                  // Fetch full data including payment with buktiPembayaran
-                                  try {
-                                    const response = await fetch(
-                                      `/api/pendaftaran/${p.id}`,
-                                    );
-                                    if (response.ok) {
-                                      const data = await response.json();
-                                      // Map to PendaftaranItem format
-                                      const pendaftaranData: PendaftaranItem = {
-                                        ...data.pendaftaran,
-                                        payment: data.pendaftaran.payment
-                                          ? {
-                                              status:
-                                                data.pendaftaran.payment.status,
-                                              metodePembayaran:
-                                                data.pendaftaran.payment
-                                                  .metodePembayaran,
-                                              tanggalBayar:
-                                                data.pendaftaran.payment
-                                                  .tanggalBayar,
-                                              buktiPembayaran:
-                                                data.pendaftaran.payment
-                                                  .buktiPembayaran,
-                                            }
-                                          : null,
-                                      };
-                                      setSelectedPendaftaranForVerification(
-                                        pendaftaranData,
+                              <div className="relative group inline-block">
+                                <Button
+                                  size="sm"
+                                  disabled={p.payment?.status !== "LUNAS"}
+                                  onClick={async () => {
+                                    setSelectedPendaftaran(p.id);
+                                    // Fetch full data including payment with buktiPembayaran
+                                    try {
+                                      const response = await fetch(
+                                        `/api/pendaftaran/${p.id}`,
                                       );
+                                      if (response.ok) {
+                                        const data = await response.json();
+                                        // Map to PendaftaranItem format
+                                        const pendaftaranData: PendaftaranItem =
+                                          {
+                                            ...data.pendaftaran,
+                                            payment: data.pendaftaran.payment
+                                              ? {
+                                                  status:
+                                                    data.pendaftaran.payment
+                                                      .status,
+                                                  metodePembayaran:
+                                                    data.pendaftaran.payment
+                                                      .metodePembayaran,
+                                                  tanggalBayar:
+                                                    data.pendaftaran.payment
+                                                      .tanggalBayar,
+                                                  buktiPembayaran:
+                                                    data.pendaftaran.payment
+                                                      .buktiPembayaran,
+                                                }
+                                              : null,
+                                          };
+                                        setSelectedPendaftaranForVerification(
+                                          pendaftaranData,
+                                        );
+                                      }
+                                    } catch (error) {
+                                      console.error(
+                                        "Error fetching pendaftaran:",
+                                        error,
+                                      );
+                                      // Fallback to current data
+                                      setSelectedPendaftaranForVerification(p);
                                     }
-                                  } catch (error) {
-                                    console.error(
-                                      "Error fetching pendaftaran:",
-                                      error,
-                                    );
-                                    // Fallback to current data
-                                    setSelectedPendaftaranForVerification(p);
-                                  }
-                                  setVerificationDialog(true);
-                                }}
-                              >
-                                Verifikasi
-                              </Button>
+                                    setVerificationDialog(true);
+                                  }}
+                                >
+                                  Verifikasi
+                                </Button>
+                                {p.payment?.status !== "LUNAS" && (
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-black text-white text-xs text-center rounded shadow-lg z-10">
+                                    Pendaftaran ini sedang menunggu verifikasi
+                                    pembayaran oleh Bagian Keuangan.
+                                  </div>
+                                )}
+                              </div>
                             )}
                             <Button
                               variant="ghost"

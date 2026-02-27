@@ -26,10 +26,11 @@ export function shouldUseSecureCookie(): boolean {
  */
 export async function setSession(user: User): Promise<void> {
   const cookieStore = await cookies();
+  const isSecure = shouldUseSecureCookie();
   cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(user), {
     httpOnly: true,
-    secure: shouldUseSecureCookie(),
-    sameSite: 'lax',
+    secure: isSecure,
+    sameSite: isSecure ? 'none' : 'lax', // Must be 'none' cross-site payment gateways like Xendit
     maxAge: SESSION_MAX_AGE,
     path: '/',
   });

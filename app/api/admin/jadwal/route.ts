@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
 
     const jadwal = semesterMataKuliahs.map((smk: any) => ({
       id: smk.id,
+      mataKuliahId: smk.mataKuliahId,
       kode: smk.mataKuliah.kode,
       nama: smk.mataKuliah.nama,
       kelas: smk.kelas,
@@ -79,6 +80,7 @@ export async function GET(request: NextRequest) {
       dosen: smk.dosen,
       sks: smk.mataKuliah.sks,
       kuota: smk.kuota,
+      prasyarat: smk.prasyarat,
       terdaftar: smk._count.pendaftaranDetail,
       isPublished: smk.isPublished,
       semester: {
@@ -227,6 +229,110 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { error: 'Terjadi kesalahan saat membuat jadwal baru' },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT - Update existing jadwal (SemesterMataKuliah)
+export async function PUT(request: NextRequest) {
+  try {
+    const user = await getSession();
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'PANITIA')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const {
+      id,
+      semesterId,
+      mataKuliahId,
+      kelas,
+      jadwal,
+      tanggalJadwal,
+      dosen,
+      kuota,
+      prasyarat,
+    } = body;
+
+    if (!id || !semesterId || !mataKuliahId || !kelas || !jadwal || !dosen || !kuota) {
+      return NextResponse.json(
+        { error: 'ID, Semester, Mata Kuliah, Kelas, Jadwal, Dosen, dan Kuota wajib diisi' },
+        { status: 400 }
+      );
+    }
+
+    const dataUpdate: any = {
+      semesterId,
+      mataKuliahId,
+      kelas,
+      jadwal,
+      dosen,
+      kuota: parseInt(kuota) || 30,
+      tanggalJadwal: tanggalJadwal ? new Date(tanggalJadwal) : null,
+      prasyarat: prasyarat || null,
+    };
+
+    const updatedJadwal = await prisma.semesterMataKuliah.update({
+      where: { id },
+      data: dataUpdate,
+    });
+
+    return NextResponse.json({
+      message: 'Jadwal berhasil diperbarui',
+      jadwal: updatedJadwal,
+    });
+  } catch (error: any) {
+    console.error('Update jadwal error:', error);
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Kelas untuk Mata Kuliah ini di Semester tersebut sudah ada' },
+        { status: 409 }
+      );
+    }
+    return NextResponse.json(
+      { error: 'Terjadi kesalahan saat memperbarui jadwal' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Remove jadwal (SemesterMataKuliah)
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await getSession();
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'PANITIA')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID Jadwal wajib diisi' }, { status: 400 });
+    }
+
+    // Optional: Check if there are students already enrolled
+    const checkEnrollment = await prisma.pendaftaranDetail.count({
+      where: { semesterMataKuliahId: id }
+    });
+
+    if (checkEnrollment > 0) {
+      return NextResponse.json(
+        { error: 'Tidak dapat menghapus jadwal karena sudah ada mahasiswa terdaftar' },
+        { status: 400 }
+      );
+    }
+
+    await prisma.semesterMataKuliah.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ message: 'Jadwal berhasil dihapus' });
+  } catch (error: any) {
+    console.error('Delete jadwal error:', error);
+    return NextResponse.json(
+      { error: 'Terjadi kesalahan saat menghapus jadwal' },
       { status: 500 }
     );
   }

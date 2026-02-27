@@ -11,6 +11,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -35,6 +46,7 @@ import {
 
 interface JadwalItem {
   id: string;
+  mataKuliahId: string;
   kode: string;
   nama: string;
   kelas: string;
@@ -45,6 +57,7 @@ interface JadwalItem {
   kuota: number;
   terdaftar: number;
   isPublished: boolean;
+  prasyarat?: string | null;
   semester: {
     id: string;
     nama: string;
@@ -74,6 +87,7 @@ export default function ManajemenJadwalPage() {
     Array<{ id: string; nama: string }>
   >([]);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [selectedJadwal, setSelectedJadwal] = useState<JadwalItem | null>(null);
 
   useEffect(() => {
     fetchSemesters();
@@ -156,24 +170,58 @@ export default function ManajemenJadwalPage() {
     }
   };
 
-  const handleCreateJadwal = async (values: JadwalFormValues) => {
+  const handleSubmitJadwal = async (
+    values: JadwalFormValues & { id?: string },
+  ) => {
     try {
+      const isEditing = !!values.id;
       const response = await fetch("/api/admin/jadwal", {
-        method: "POST",
+        method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Gagal membuat jadwal kelas");
+        throw new Error(
+          data.error ||
+            `Gagal ${isEditing ? "memperbarui" : "membuat"} jadwal kelas`,
+        );
       }
 
-      toast.success("Jadwal kelas berhasil dibuat");
+      toast.success(
+        `Jadwal kelas berhasil ${isEditing ? "diperbarui" : "dibuat"}`,
+      );
       setFormDialogOpen(false);
+      setSelectedJadwal(null);
       fetchJadwal();
     } catch (error: any) {
       toast.error(error.message || "Terjadi kesalahan");
+    }
+  };
+
+  const openCreateDialog = () => {
+    setSelectedJadwal(null);
+    setFormDialogOpen(true);
+  };
+
+  const openEditDialog = (item: JadwalItem) => {
+    setSelectedJadwal(item);
+    setFormDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/jadwal?id=${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menghapus jadwal");
+
+      toast.success(data.message);
+      fetchJadwal();
+    } catch (error: any) {
+      toast.error(error.message);
     }
   };
 
@@ -226,7 +274,7 @@ export default function ManajemenJadwalPage() {
               Atur publikasi dan lihat master jadwal kuliah
             </p>
           </div>
-          <Button onClick={() => setFormDialogOpen(true)}>
+          <Button onClick={openCreateDialog}>
             <i className="fa-solid fa-plus mr-2"></i> Tambah Jadwal Kelas
           </Button>
         </div>
@@ -391,6 +439,9 @@ export default function ManajemenJadwalPage() {
                           <TableHead className="text-center whitespace-nowrap">
                             Terisi
                           </TableHead>
+                          <TableHead className="text-right whitespace-nowrap">
+                            Aksi
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -444,6 +495,52 @@ export default function ManajemenJadwalPage() {
                                 / {item.kuota}
                               </span>
                             </TableCell>
+                            <TableCell className="text-right whitespace-nowrap pr-4">
+                              <div className="flex justify-end items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openEditDialog(item)}
+                                  className="text-primary hover:text-primary/90 hover:bg-primary/10"
+                                >
+                                  <i className="fa-solid fa-pen-to-square"></i>
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                                    >
+                                      <i className="fa-solid fa-trash"></i>
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Hapus Jadwal Kelas?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Tindakan ini tidak dapat dibatalkan.
+                                        Kelas yang sudah ada mahasiswa terdaftar
+                                        tidak bisa dihapus secara permanen.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Batal
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete(item.id)}
+                                        className="bg-destructive hover:bg-destructive/90 text-white"
+                                      >
+                                        Ya, Hapus
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -458,8 +555,32 @@ export default function ManajemenJadwalPage() {
 
       <JadwalFormDialog
         open={formDialogOpen}
-        onOpenChange={setFormDialogOpen}
-        onSubmit={handleCreateJadwal}
+        onOpenChange={(op) => {
+          setFormDialogOpen(op);
+          if (!op) setSelectedJadwal(null);
+        }}
+        onSubmit={handleSubmitJadwal}
+        initialData={
+          selectedJadwal
+            ? {
+                id: selectedJadwal.id,
+                semesterId: selectedJadwal.semester.id,
+                mataKuliahId: selectedJadwal.mataKuliahId,
+                kelas: selectedJadwal.kelas,
+                jadwal: selectedJadwal.jadwal,
+                tanggalJadwal: selectedJadwal.tanggalJadwal
+                  ? typeof selectedJadwal.tanggalJadwal === "string"
+                    ? selectedJadwal.tanggalJadwal.split("T")[0]
+                    : new Date(selectedJadwal.tanggalJadwal)
+                        .toISOString()
+                        .split("T")[0]
+                  : "",
+                dosen: selectedJadwal.dosen,
+                kuota: selectedJadwal.kuota,
+                prasyarat: selectedJadwal.prasyarat || "",
+              }
+            : null
+        }
       />
     </div>
   );

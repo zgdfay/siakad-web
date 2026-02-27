@@ -33,13 +33,15 @@ interface OptionItem {
 interface JadwalFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (values: JadwalFormValues) => void;
+  onSubmit: (values: JadwalFormValues & { id?: string }) => void;
+  initialData?: (JadwalFormValues & { id: string }) | null;
 }
 
 export function JadwalFormDialog({
   open,
   onOpenChange,
   onSubmit,
+  initialData,
 }: JadwalFormDialogProps) {
   const [formValues, setFormValues] = useState<JadwalFormValues>({
     semesterId: "",
@@ -61,20 +63,31 @@ export function JadwalFormDialog({
   useEffect(() => {
     if (open) {
       fetchOptions();
-    } else {
-      // Reset form
-      setFormValues({
-        semesterId: "",
-        mataKuliahId: "",
-        kelas: "A",
-        jadwal: "",
-        tanggalJadwal: "",
-        dosen: "",
-        kuota: 30,
-        prasyarat: "",
-      });
+      if (initialData) {
+        setFormValues({
+          semesterId: initialData.semesterId,
+          mataKuliahId: initialData.mataKuliahId,
+          kelas: initialData.kelas,
+          jadwal: initialData.jadwal,
+          tanggalJadwal: initialData.tanggalJadwal || "",
+          dosen: initialData.dosen,
+          kuota: initialData.kuota,
+          prasyarat: initialData.prasyarat || "",
+        });
+      } else {
+        setFormValues({
+          semesterId: "",
+          mataKuliahId: "",
+          kelas: "A",
+          jadwal: "",
+          tanggalJadwal: "",
+          dosen: "",
+          kuota: 30,
+          prasyarat: "",
+        });
+      }
     }
-  }, [open]);
+  }, [open, initialData]);
 
   const fetchOptions = async () => {
     try {
@@ -147,7 +160,11 @@ export function JadwalFormDialog({
 
     setIsSubmitting(true);
     try {
-      await onSubmit(formValues);
+      if (initialData?.id) {
+        await onSubmit({ ...formValues, id: initialData.id });
+      } else {
+        await onSubmit(formValues);
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -183,9 +200,13 @@ export function JadwalFormDialog({
         </button>
 
         <div className="p-6 pb-4 border-b shrink-0 pr-12">
-          <h2 className="text-xl font-semibold">Buat Jadwal Kelas</h2>
+          <h2 className="text-xl font-semibold">
+            {initialData ? "Edit Jadwal Kelas" : "Buat Jadwal Kelas"}
+          </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Tambah jadwal kelas baru ke sebuah semester.
+            {initialData
+              ? "Ubah detail jadwal kelas yang sudah ada."
+              : "Tambah jadwal kelas baru ke sebuah semester."}
           </p>
         </div>
 
@@ -336,6 +357,8 @@ export function JadwalFormDialog({
                 <i className="fa-solid fa-spinner fa-spin mr-2"></i>
                 Menyimpan...
               </>
+            ) : initialData ? (
+              "Simpan Perubahan"
             ) : (
               "Simpan Jadwal"
             )}

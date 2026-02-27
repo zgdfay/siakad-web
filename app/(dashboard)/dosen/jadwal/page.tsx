@@ -20,7 +20,7 @@ interface Jadwal {
   id: string;
   kuotaPendaftar: number;
   jadwal: string;
-  ruangan: string;
+  kelas: string;
   mataKuliah: {
     kode: string;
     nama: string;
@@ -97,7 +97,7 @@ export default function DosenJadwalPage() {
               <TableHead>Mata Kuliah</TableHead>
               <TableHead>SKS / Smt</TableHead>
               <TableHead>Jadwal Kelas</TableHead>
-              <TableHead>Ruangan</TableHead>
+              <TableHead>Kelas</TableHead>
               <TableHead>Peserta</TableHead>
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
@@ -142,7 +142,9 @@ export default function DosenJadwalPage() {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell>{s.ruangan || "-"}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{s.kelas || "-"}</Badge>
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-muted-foreground" />

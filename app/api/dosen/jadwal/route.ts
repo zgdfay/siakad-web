@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
     // Assuming dosen name matches UserMaster.name for this simple implementation:
 
     const dosenName = user.name || '';
+    console.log("[JADWAL DOSEN] Fetching for user:", { id: user.id, name: dosenName });
 
     // Fetch schedules
     const schedules = await prisma.semesterMataKuliah.findMany({
@@ -44,6 +45,8 @@ export async function GET(request: NextRequest) {
         // jadwal can't be purely ordered if it's string array
       }
     });
+
+    console.log("[JADWAL DOSEN] Found schedules count:", schedules.length);
 
     return NextResponse.json({ schedules });
   } catch (error) {

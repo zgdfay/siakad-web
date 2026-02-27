@@ -21,6 +21,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Loader2, Save, Send } from "lucide-react";
 
 interface Jadwal {
@@ -371,28 +382,43 @@ function DosenNilaiContent() {
                               <Save className="w-4 h-4" />
                             )}
                           </Button>
-                          <Button
-                            variant={isSubmitted ? "secondary" : "default"}
-                            size="sm"
-                            title="Submit Final"
-                            disabled={isReadOnly || submittingId === s.id}
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  "Kirim nilai permanen? Anda tidak bisa mengedit setelah submit (kecuali meminta panitia).",
-                                )
-                              ) {
-                                saveGrade(s.id, "SUBMITTED");
-                              }
-                            }}
-                          >
-                            {submittingId === s.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                            ) : (
-                              <Send className="w-4 h-4 mr-1" />
-                            )}
-                            Submit
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant={isSubmitted ? "secondary" : "default"}
+                                size="sm"
+                                title="Submit Final"
+                                disabled={isReadOnly || submittingId === s.id}
+                              >
+                                {submittingId === s.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                                ) : (
+                                  <Send className="w-4 h-4 mr-1" />
+                                )}
+                                Submit
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Kirim Nilai Permanen?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Apakah Anda yakin ingin mengirim nilai ini
+                                  secara permanen? Anda tidak bisa mengedit
+                                  setelah disubmit (kecuali meminta panitia).
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => saveGrade(s.id, "SUBMITTED")}
+                                >
+                                  Ya, Submit
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       )}
                     </TableCell>

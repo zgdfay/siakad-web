@@ -79,23 +79,13 @@ export async function PUT(request: NextRequest) {
         }
       });
 
-      // 2. Automatically update Pendaftaran to DITERIMA if payment is LUNAS
-      if (status === 'LUNAS') {
-        await tx.pendaftaran.update({
-          where: { id: pendaftaranId },
-          data: { status: 'DITERIMA' }
-        });
-        
-        // Note: The previous logic might have sent emails here. Consider integrating email sending.
-      } else if (status === 'DITOLAK') {
-        // If payment rejected, maybe we just leave pendaftaran as MENUNGGU_VERIFIKASI or custom status
-        // so user can re-upload.
-      }
-
+      // 2. We deliberately DO NOT automatically update Pendaftaran to DITERIMA anymore
+      // Keuangan's job is solely to verify the money. Panitia will verify the Pendaftaran separately.
+      
       return updatedPayment;
     });
 
-    return NextResponse.json({ message: `Status pembayaran berhasil diupdate menjadi ${status}`, payment: result });
+    return NextResponse.json({ message: `Status pembayaran berhasil diupdate`, payment: result });
   } catch (error) {
     console.error('Error updating payment:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
