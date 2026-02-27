@@ -18,7 +18,7 @@ import { Search, Loader2 } from "lucide-react";
 
 interface Payment {
   id: string;
-  amount: number;
+  jumlah: number;
   status: "MENUNGGU_VERIFIKASI" | "LUNAS" | "DITOLAK"; // Wait, in Xendit context this might just be PENDING/PAID, but we adapt to existing schema
   updatedAt: string;
   tanggalBayar: string | null;
@@ -174,7 +174,7 @@ export default function KeuanganPembayaranPage() {
                     })}
                   </TableCell>
                   <TableCell className="font-medium">
-                    {formatCurrency(p.amount)}
+                    {formatCurrency(p.jumlah)}
                   </TableCell>
                   <TableCell>{getStatusBadge(p.status)}</TableCell>
                 </TableRow>
