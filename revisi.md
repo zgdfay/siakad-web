@@ -4,5 +4,3 @@
    - Perbaiki alur redirect agar:
      payment success → success page
      bukan → login page.
-
-3. Validasi Mhs Jika Mhs Sudah daftar matkul, maka tidak bisa lagi mendaftar dengan matkul yg sama. atau disable, kalo sudah di set selesai di jadwal maka bisa daftar kembali.
