@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { kode, nama, sks, prodi, kategori, status, deskripsi } = body;
+    const { kode, nama, sks, prodi, kategori, status, deskripsi, semesterId } = body;
 
     // Validation
     if (!kode || !nama || !sks || !prodi || !kategori) {
@@ -121,31 +121,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create mata kuliah
-    const newMataKuliah = await prisma.mataKuliah.create({
-      data: {
-        kode,
-        nama,
-        sks: parseInt(sks.toString()),
-        prodi,
-        kategori: kategori.toUpperCase() as 'WAJIB' | 'PILIHAN',
-        status: (status?.toUpperCase() || 'AKTIF') as 'AKTIF' | 'NONAKTIF',
-        deskripsi: deskripsi || null,
-        biaya: parseInt(body.biaya?.toString() || '0'),
-      },
-      include: {
-        semester: {
-          include: {
-            semester: true,
+    // If semesterId is provided, verify semester exists
+    if (semesterId) {
+      const semester = await prisma.semester.findUnique({
+        where: { id: semesterId },
+      });
+      if (!semester) {
+        return NextResponse.json(
+          { error: 'Semester tidak ditemukan' },
+          { status: 404 }
+        );
+      }
+    }
+
+    // Create mata kuliah and optionally assign to semester in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const newMataKuliah = await tx.mataKuliah.create({
+        data: {
+          kode,
+          nama,
+          sks: parseInt(sks.toString()),
+          prodi,
+          kategori: kategori.toUpperCase() as 'WAJIB' | 'PILIHAN',
+          status: (status?.toUpperCase() || 'AKTIF') as 'AKTIF' | 'NONAKTIF',
+          deskripsi: deskripsi || null,
+          biaya: parseInt(body.biaya?.toString() || '0'),
+        },
+      });
+
+      // If semesterId provided, create SemesterMataKuliah to link them
+      if (semesterId) {
+        await tx.semesterMataKuliah.create({
+          data: {
+            semesterId,
+            mataKuliahId: newMataKuliah.id,
+            kelas: 'A',
+            jadwal: '-',
+            dosen: '-',
+            kuota: 30,
+            terisi: 0,
+          },
+        });
+      }
+
+      // Re-fetch with relations
+      return tx.mataKuliah.findUnique({
+        where: { id: newMataKuliah.id },
+        include: {
+          semester: {
+            include: {
+              semester: true,
+            },
           },
         },
-      },
+      });
     });
 
     return NextResponse.json(
       {
         message: 'Mata kuliah berhasil dibuat',
-        mataKuliah: newMataKuliah,
+        mataKuliah: result,
       },
       { status: 201 }
     );

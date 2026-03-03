@@ -22,6 +22,7 @@ export interface MataKuliahFormValues {
   status?: "AKTIF" | "NONAKTIF";
   deskripsi?: string;
   biaya?: number;
+  semesterId?: string;
 }
 
 interface SemesterOption {
@@ -61,12 +62,39 @@ export function MataKuliahFormDialog({
     status: "AKTIF",
     deskripsi: "",
     biaya: 0,
+    semesterId: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [semesters, setSemesters] = useState<SemesterOption[]>([]);
+  const [loadingSemesters, setLoadingSemesters] = useState(false);
 
   // Reset form values when mode changes
+  // Fetch semesters when dialog opens
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      const fetchSemesters = async () => {
+        try {
+          setLoadingSemesters(true);
+          const res = await fetch("/api/semesters");
+          if (res.ok) {
+            const data = await res.json();
+            setSemesters(
+              (data.semesters || []).map((s: any) => ({
+                id: s.id,
+                nama: s.nama,
+                tahun: s.tahun,
+                periode: s.periode,
+              })),
+            );
+          }
+        } catch (error) {
+          console.error("Failed to fetch semesters:", error);
+        } finally {
+          setLoadingSemesters(false);
+        }
+      };
+      fetchSemesters();
+    } else {
       setFormValues({
         id: undefined,
         kode: "",
@@ -77,6 +105,7 @@ export function MataKuliahFormDialog({
         status: "AKTIF",
         deskripsi: "",
         biaya: 0,
+        semesterId: "",
       });
       setIsSubmitting(false);
     }
@@ -98,6 +127,7 @@ export function MataKuliahFormDialog({
         status: "AKTIF",
         deskripsi: "",
         biaya: 0,
+        semesterId: "",
       });
     }
   }, [mode, initialData, open]);
@@ -113,7 +143,12 @@ export function MataKuliahFormDialog({
   };
 
   const handleSubmit = async () => {
-    if (!formValues.kode || !formValues.nama || !formValues.prodi) {
+    if (
+      !formValues.kode ||
+      !formValues.nama ||
+      !formValues.prodi ||
+      !formValues.semesterId
+    ) {
       console.warn("Form validation failed: missing required fields");
       return;
     }
@@ -233,6 +268,33 @@ export function MataKuliahFormDialog({
                 placeholder="Masukkan nama mata kuliah"
                 className="w-full"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="semesterId">
+                Semester <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={formValues.semesterId}
+                onValueChange={(value) => handleChange("semesterId", value)}
+                disabled={loadingSemesters}
+              >
+                <SelectTrigger id="semesterId" className="w-full">
+                  <SelectValue
+                    placeholder={
+                      loadingSemesters ? "Memuat semester..." : "Pilih Semester"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {semesters.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.nama} ({s.tahun} -{" "}
+                      {s.periode === "GANJIL" ? "Ganjil" : "Genap"})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

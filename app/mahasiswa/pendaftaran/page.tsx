@@ -30,6 +30,7 @@ interface SemesterMataKuliah {
     kode: string;
     nama: string;
     sks: number;
+    biaya: number;
   };
 }
 
@@ -89,7 +90,7 @@ export default function PilihSemesterAntaraPage() {
               dosen: smk.dosen,
               kuota: smk.kuota,
               terisi: smk.terisi,
-              biaya: smk.biaya,
+              biaya: smk.mataKuliah.biaya,
               prasyarat: smk.prasyarat,
               mataKuliah: {
                 id: smk.mataKuliah.id,

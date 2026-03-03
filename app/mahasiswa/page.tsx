@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { DetailPendaftaranModal } from '@/components/pendaftaran/detail-pendaftaran-modal';
-import { RingkasanPendaftaranModal } from '@/components/pendaftaran/ringkasan-pendaftaran-modal';
-import { toast } from 'sonner';
-import { ROUTES } from '@/lib/routes';
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { DetailPendaftaranModal } from "@/components/pendaftaran/detail-pendaftaran-modal";
+import { RingkasanPendaftaranModal } from "@/components/pendaftaran/ringkasan-pendaftaran-modal";
+import { toast } from "sonner";
+import { ROUTES } from "@/lib/routes";
 
 interface PendaftaranItem {
   id: string;
@@ -26,7 +26,7 @@ interface PendaftaranItem {
   };
   createdAt: string;
   updatedAt?: string;
-  status: 'MENUNGGU_VERIFIKASI' | 'DITERIMA' | 'DITOLAK' | 'DIBATALKAN';
+  status: "MENUNGGU_VERIFIKASI" | "DITERIMA" | "DITOLAK" | "DIBATALKAN";
   totalSKS: number;
   totalBiaya: number;
   detail: Array<{
@@ -35,8 +35,8 @@ interface PendaftaranItem {
         kode: string;
         nama: string;
         sks: number;
+        biaya: number;
       };
-      biaya: number;
     };
   }>;
   payment?: {
@@ -62,13 +62,13 @@ export default function MahasiswaDashboard() {
     const fetchPendaftaran = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/pendaftaran/user/me');
-        if (!response.ok) throw new Error('Gagal mengambil data pendaftaran');
+        const response = await fetch("/api/pendaftaran/user/me");
+        if (!response.ok) throw new Error("Gagal mengambil data pendaftaran");
         const data = await response.json();
         setPendaftaran(data.pendaftaran || []);
       } catch (error) {
-        console.error('Error fetching pendaftaran:', error);
-        toast.error('Gagal mengambil data pendaftaran');
+        console.error("Error fetching pendaftaran:", error);
+        toast.error("Gagal mengambil data pendaftaran");
       } finally {
         setLoading(false);
       }
@@ -80,28 +80,28 @@ export default function MahasiswaDashboard() {
   // Calculate statistics
   const statistik = {
     totalPendaftaran: pendaftaran.length,
-    diterima: pendaftaran.filter((p) => p.status === 'DITERIMA').length,
-    ditolak: pendaftaran.filter((p) => p.status === 'DITOLAK').length,
-    menunggu: pendaftaran.filter((p) => p.status === 'MENUNGGU_VERIFIKASI')
+    diterima: pendaftaran.filter((p) => p.status === "DITERIMA").length,
+    ditolak: pendaftaran.filter((p) => p.status === "DITOLAK").length,
+    menunggu: pendaftaran.filter((p) => p.status === "MENUNGGU_VERIFIKASI")
       .length,
   };
 
   // Get active pendaftaran (most recent with status MENUNGGU_VERIFIKASI or DITERIMA)
   const pendaftaranAktif = pendaftaran
     .filter(
-      (p) => p.status === 'MENUNGGU_VERIFIKASI' || p.status === 'DITERIMA'
+      (p) => p.status === "MENUNGGU_VERIFIKASI" || p.status === "DITERIMA",
     )
     .sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )[0];
 
   // Get all accepted pendaftaran, sorted by date (newest first), limit to 2
   const pendaftaranDiterima = pendaftaran
-    .filter((p) => p.status === 'DITERIMA')
+    .filter((p) => p.status === "DITERIMA")
     .sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )
     .slice(0, 2);
 
@@ -214,7 +214,8 @@ export default function MahasiswaDashboard() {
                     {pendaftaranDiterima.map((p) => (
                       <div
                         key={p.id}
-                        className="p-3 bg-white dark:bg-card border border-border rounded-lg hover:shadow-sm transition-shadow">
+                        className="p-3 bg-white dark:bg-card border border-border rounded-lg hover:shadow-sm transition-shadow"
+                      >
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-sm">
@@ -230,7 +231,8 @@ export default function MahasiswaDashboard() {
                               setSelectedRingkasan(p);
                               setIsRingkasanModalOpen(true);
                             }}
-                            className="bg-green-600 hover:bg-green-700">
+                            className="bg-green-600 hover:bg-green-700"
+                          >
                             <i className="fa-solid fa-check-circle mr-2"></i>
                             Ringkasan
                           </Button>
@@ -243,7 +245,8 @@ export default function MahasiswaDashboard() {
                             {p.detail.map((detail, idx) => (
                               <div
                                 key={idx}
-                                className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
+                                className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0"
+                              >
                                 <div className="flex items-center gap-2 flex-1">
                                   <span className="font-medium text-foreground">
                                     {detail.semesterMataKuliah.mataKuliah.kode}
@@ -325,7 +328,8 @@ export default function MahasiswaDashboard() {
               <Link href={ROUTES.MAHASISWA.JADWAL}>
                 <Button
                   variant="outline"
-                  className="w-full border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20">
+                  className="w-full border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20"
+                >
                   <i className="fa-solid fa-arrow-right mr-2"></i>
                   Lihat Jadwal
                 </Button>
@@ -346,7 +350,8 @@ export default function MahasiswaDashboard() {
               <Link href={ROUTES.MAHASISWA.UNDUHAN}>
                 <Button
                   variant="outline"
-                  className="w-full border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-950/20">
+                  className="w-full border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-950/20"
+                >
                   <i className="fa-solid fa-arrow-right mr-2"></i>
                   Lihat Unduhan
                 </Button>
@@ -367,7 +372,8 @@ export default function MahasiswaDashboard() {
               <Link href={ROUTES.MAHASISWA.RIWAYAT}>
                 <Button
                   variant="outline"
-                  className="w-full border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/20">
+                  className="w-full border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+                >
                   <i className="fa-solid fa-arrow-right mr-2"></i>
                   Lihat Riwayat
                 </Button>
@@ -392,9 +398,9 @@ export default function MahasiswaDashboard() {
             totalBiaya: selectedPendaftaran.totalBiaya,
             paymentStatus:
               selectedPendaftaran.payment?.status.toLowerCase() ||
-              'belum_bayar',
-            paymentMethod: selectedPendaftaran.payment?.metodePembayaran || '',
-            tanggalBayar: selectedPendaftaran.payment?.tanggalBayar || '',
+              "belum_bayar",
+            paymentMethod: selectedPendaftaran.payment?.metodePembayaran || "",
+            tanggalBayar: selectedPendaftaran.payment?.tanggalBayar || "",
             payment: selectedPendaftaran.payment
               ? {
                   status: selectedPendaftaran.payment.status,
@@ -404,14 +410,14 @@ export default function MahasiswaDashboard() {
               : undefined,
             buktiPembayaran:
               selectedPendaftaran.payment &&
-              'buktiPembayaran' in selectedPendaftaran.payment
+              "buktiPembayaran" in selectedPendaftaran.payment
                 ? (selectedPendaftaran.payment as any).buktiPembayaran || null
                 : null,
             mataKuliah: selectedPendaftaran.detail.map((d) => ({
               kode: d.semesterMataKuliah.mataKuliah.kode,
               nama: d.semesterMataKuliah.mataKuliah.nama,
               sks: d.semesterMataKuliah.mataKuliah.sks,
-              biaya: d.semesterMataKuliah.biaya,
+              biaya: d.semesterMataKuliah.mataKuliah.biaya,
             })),
             catatan: selectedPendaftaran.catatanAdmin,
           }}
@@ -436,7 +442,7 @@ export default function MahasiswaDashboard() {
             totalSKS: selectedRingkasan.totalSKS,
             totalBiaya: selectedRingkasan.totalBiaya,
             paymentStatus:
-              selectedRingkasan.payment?.status.toLowerCase() || 'belum_bayar',
+              selectedRingkasan.payment?.status.toLowerCase() || "belum_bayar",
             tanggalBayar: selectedRingkasan.payment?.tanggalBayar || null,
             mataKuliah: selectedRingkasan.detail.map((d) => ({
               kode: d.semesterMataKuliah.mataKuliah.kode,
