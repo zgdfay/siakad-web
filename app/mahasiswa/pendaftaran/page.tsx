@@ -63,7 +63,7 @@ export default function PilihSemesterAntaraPage() {
       try {
         setLoading(true);
         const [semestersResponse, pendaftaranResponse] = await Promise.all([
-          fetch("/api/semesters?status=AKTIF"),
+          fetch("/api/semesters"),
           fetch("/api/pendaftaran/user/me"),
         ]);
 
@@ -319,6 +319,17 @@ export default function PilihSemesterAntaraPage() {
               Pilih mata kuliah yang ingin Anda daftar. Hanya semester aktif
               yang dapat dipilih.
             </p>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-300 px-4 py-3 rounded-lg flex items-start gap-3">
+            <i className="fa-solid fa-circle-info mt-0.5"></i>
+            <div>
+              <p className="font-semibold text-sm">Informasi Biaya</p>
+              <p className="text-sm">
+                Biaya pelaksanaan Semester Antara ditetapkan flat:{" "}
+                <strong className="font-bold">Rp 250.000 / Mata Kuliah</strong>
+              </p>
+            </div>
           </div>
 
           {/* Search */}

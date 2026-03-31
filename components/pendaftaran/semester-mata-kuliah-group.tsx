@@ -259,32 +259,44 @@ export function SemesterMataKuliahGroup({
                     </CardHeader>
                     <CardContent className="pt-0 space-y-2">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Jadwal:</span>
-                          <p className="font-medium break-words">{mk.jadwal}</p>
-                        </div>
-                        {mk.tanggalJadwal && (
-                          <div>
-                            <span className="text-muted-foreground">
-                              Tanggal Jadwal:
-                            </span>
-                            <p className="font-medium break-words">
-                              {new Date(mk.tanggalJadwal).toLocaleDateString(
-                                "id-ID",
-                                {
-                                  weekday: "short",
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                },
-                              )}
+                        {mk.jadwal && mk.jadwal !== '-' && mk.dosen && mk.dosen !== '-' ? (
+                          <>
+                            <div>
+                              <span className="text-muted-foreground">Jadwal:</span>
+                              <p className="font-medium break-words">{mk.jadwal}</p>
+                            </div>
+                            {mk.tanggalJadwal && (
+                              <div>
+                                <span className="text-muted-foreground">
+                                  Tanggal Jadwal:
+                                </span>
+                                <p className="font-medium break-words">
+                                  {new Date(mk.tanggalJadwal).toLocaleDateString(
+                                    "id-ID",
+                                    {
+                                      weekday: "short",
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
+                                    },
+                                  )}
+                                </p>
+                              </div>
+                            )}
+                            <div>
+                              <span className="text-muted-foreground">Dosen:</span>
+                              <p className="font-medium break-words">{mk.dosen}</p>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="sm:col-span-2">
+                            <span className="text-muted-foreground">Jadwal & Dosen:</span>
+                            <p className="font-medium text-amber-600 dark:text-amber-400 italic text-xs mt-0.5">
+                              <i className="fa-solid fa-clock mr-1"></i>
+                              Menunggu Konfirmasi Panitia
                             </p>
                           </div>
                         )}
-                        <div>
-                          <span className="text-muted-foreground">Dosen:</span>
-                          <p className="font-medium break-words">{mk.dosen}</p>
-                        </div>
                         <div>
                           <span className="text-muted-foreground">Kuota:</span>
                           <p className="font-medium">
@@ -299,7 +311,7 @@ export function SemesterMataKuliahGroup({
                             )}
                           </p>
                         </div>
-                        <div>
+                        {/* <div>
                           <span className="text-muted-foreground">Biaya:</span>
                           <p className="font-medium break-words">
                             {new Intl.NumberFormat("id-ID", {
@@ -307,7 +319,7 @@ export function SemesterMataKuliahGroup({
                               currency: "IDR",
                             }).format(mk.biaya)}
                           </p>
-                        </div>
+                        </div> */}
                       </div>
                       {mk.prasyarat && mk.prasyarat.length > 0 && (
                         <div className="pt-2 border-t">

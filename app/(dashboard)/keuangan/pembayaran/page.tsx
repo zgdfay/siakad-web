@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface Payment {
   id: string;
@@ -60,28 +59,7 @@ export default function KeuanganPembayaranPage() {
     }
   };
 
-  const handleVerifikasi = async (paymentId: string, pendaftaranId: string) => {
-    if (!confirm("Konfirmasi verifikasi pembayaran ini menjadi LUNAS?")) return;
 
-    try {
-      const res = await fetch("/api/keuangan/payments", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paymentId,
-          pendaftaranId,
-          status: "LUNAS",
-        }),
-      });
-
-      if (!res.ok) throw new Error("Gagal konfirmasi");
-      toast.success("Pembayaran berhasil diverifikasi");
-      fetchPayments(); // refresh data
-    } catch (error) {
-      toast.error("Terjadi kesalahan saat memverifikasi");
-      console.error(error);
-    }
-  };
 
   const filteredList = payments.filter((p) => {
     const searchLower = searchQuery.toLowerCase();
@@ -155,13 +133,12 @@ export default function KeuanganPembayaranPage() {
               <TableHead>Terakhir Diupdate</TableHead>
               <TableHead>Nominal</TableHead>
               <TableHead>Status Pembayaran</TableHead>
-              <TableHead className="text-center">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
+                <TableCell colSpan={5} className="h-32 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
                     <Loader2 className="h-6 w-6 animate-spin mb-2" />
                     Sedang memuat riwayat pembayaran...
@@ -171,7 +148,7 @@ export default function KeuanganPembayaranPage() {
             ) : filteredList.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={5}
                   className="h-32 text-center text-muted-foreground"
                 >
                   Belum ada data pembayaran ter-generate.
@@ -202,24 +179,6 @@ export default function KeuanganPembayaranPage() {
                     {formatCurrency(p.jumlah)}
                   </TableCell>
                   <TableCell>{getStatusBadge(p.status)}</TableCell>
-                  <TableCell className="text-center">
-                    {p.status === "MENUNGGU_VERIFIKASI" ? (
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          handleVerifikasi(p.id, (p.pendaftaran as any).id)
-                        }
-                      >
-                        Verifikasi
-                      </Button>
-                    ) : p.status === "LUNAS" ? (
-                      <span className="text-sm font-medium text-emerald-600 flex items-center justify-center gap-1">
-                        <i className="fa-solid fa-check-circle"></i> Verified
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
                 </TableRow>
               ))
             )}
