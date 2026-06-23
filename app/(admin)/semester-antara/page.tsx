@@ -110,20 +110,20 @@ export default function SemesterAntaraPage() {
   useEffect(() => {
     if (semesterList.length > 0 && !loading && !hasSynced) {
       setHasSynced(true);
-      
+
       // Check which periode is currently active based on semester status
       const aktifSemesters = semesterList.filter(s => s.status === 'AKTIF');
       if (aktifSemesters.length === 0) {
         // No active semester, keep current selection
         return;
       }
-      
+
       // Check if all active semesters are from same periode
       const ganjilCount = aktifSemesters.filter(s => s.periode === 'GANJIL').length;
       const genapCount = aktifSemesters.filter(s => s.periode === 'GENAP').length;
-      
+
       let expectedPeriode: PeriodeFilter = periodeAktif;
-      
+
       if (ganjilCount > 0 && genapCount > 0) {
         // Both periode have active semesters
         expectedPeriode = 'Semua';
@@ -134,7 +134,7 @@ export default function SemesterAntaraPage() {
         // Only GENAP is active
         expectedPeriode = 'Genap';
       }
-      
+
       // Only update if different from current and no saved preference
       const saved = localStorage.getItem('semester-periode-aktif');
       if (!saved && expectedPeriode !== periodeAktif) {
@@ -290,8 +290,8 @@ export default function SemesterAntaraPage() {
     return periode === 'GANJIL'
       ? 'Ganjil'
       : periode === 'GENAP'
-      ? 'Genap'
-      : periode;
+        ? 'Genap'
+        : periode;
   };
 
   return (
@@ -317,8 +317,8 @@ export default function SemesterAntaraPage() {
                 size="sm"
                 className={cn(
                   "px-4 transition-all",
-                  periodeAktif === 'Ganjil' 
-                    ? '' 
+                  periodeAktif === 'Ganjil'
+                    ? ''
                     : 'hover:bg-primary/10 hover:text-primary'
                 )}
                 onClick={() => handleSetPeriodeAktif('Ganjil')}>
@@ -330,8 +330,8 @@ export default function SemesterAntaraPage() {
                 size="sm"
                 className={cn(
                   "px-4 transition-all",
-                  periodeAktif === 'Genap' 
-                    ? '' 
+                  periodeAktif === 'Genap'
+                    ? ''
                     : 'hover:bg-primary/10 hover:text-primary'
                 )}
                 onClick={() => handleSetPeriodeAktif('Genap')}>
@@ -343,14 +343,14 @@ export default function SemesterAntaraPage() {
                 size="sm"
                 className={cn(
                   "px-3 sm:px-4 transition-all",
-                  periodeAktif === 'Semua' 
-                    ? '' 
+                  periodeAktif === 'Semua'
+                    ? ''
                     : 'hover:bg-primary/10 hover:text-primary'
                 )}
                 onClick={() => handleSetPeriodeAktif('Semua')}
                 title="Semua">
                 <span className="hidden sm:inline">Semua</span>
-                <i className="fa-solid fa-list sm:hidden"></i>
+                {/* <i className="fa-solid fa-list sm:hidden"></i> */}
               </Button>
             </div>
           </div>
@@ -413,122 +413,122 @@ export default function SemesterAntaraPage() {
                       </th>
                     </tr>
                   </thead>
-              <tbody className="divide-y">
-                {loading ? (
-                  <tr>
-                    <td
-                      colSpan={8}
-                      className="px-4 py-8 text-center text-muted-foreground text-sm">
-                      <div className="flex items-center justify-center gap-2">
-                        <i className="fa-solid fa-spinner fa-spin"></i>
-                        Memuat data...
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredSemester.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={8}
-                      className="px-4 py-8 text-center text-muted-foreground text-sm">
-                      <p className="mb-2">Belum ada data semester antara</p>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredSemester.map((semester) => {
-                    const isAktif = semester.status === 'AKTIF';
-                    const isPeriodeAktif =
-                      periodeAktif === 'Semua' ||
-                      semester.periode === periodeAktif.toUpperCase();
-
-                    return (
-                      <tr key={semester.id}>
-                        <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
-                          {semester.nama}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                          {semester.tahun}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                          {formatPeriode(semester.periode)}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                          {new Date(semester.tanggalMulai).toLocaleDateString(
-                            'id-ID',
-                            {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            }
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                          {new Date(semester.tanggalSelesai).toLocaleDateString(
-                            'id-ID',
-                            {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            }
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                          {new Date(
-                            semester.deadlinePendaftaran
-                          ).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <Badge
-                            className={
-                              isAktif && isPeriodeAktif
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800'
-                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800'
-                            }>
-                            {isAktif && isPeriodeAktif ? 'Aktif' : 'Nonaktif'}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="flex flex-wrap gap-2 text-xs justify-center">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleOpenEdit(semester)}>
-                              <i className="fa-solid fa-pen mr-1"></i>
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleOpenMataKuliah(semester)}>
-                              <i className="fa-solid fa-book mr-1"></i>
-                              Mata Kuliah
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() =>
-                                setDeleteDialog({ open: true, id: semester.id })
-                              }
-                              disabled={
-                                !!(
-                                  semester._count?.pendaftaran &&
-                                  semester._count.pendaftaran > 0
-                                )
-                              }>
-                              <i className="fa-solid fa-trash mr-1"></i>
-                              Hapus
-                            </Button>
+                  <tbody className="divide-y">
+                    {loading ? (
+                      <tr>
+                        <td
+                          colSpan={8}
+                          className="px-4 py-8 text-center text-muted-foreground text-sm">
+                          <div className="flex items-center justify-center gap-2">
+                            <i className="fa-solid fa-spinner fa-spin"></i>
+                            Memuat data...
                           </div>
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
+                    ) : filteredSemester.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={8}
+                          className="px-4 py-8 text-center text-muted-foreground text-sm">
+                          <p className="mb-2">Belum ada data semester antara</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredSemester.map((semester) => {
+                        const isAktif = semester.status === 'AKTIF';
+                        const isPeriodeAktif =
+                          periodeAktif === 'Semua' ||
+                          semester.periode === periodeAktif.toUpperCase();
+
+                        return (
+                          <tr key={semester.id}>
+                            <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
+                              {semester.nama}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                              {semester.tahun}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                              {formatPeriode(semester.periode)}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                              {new Date(semester.tanggalMulai).toLocaleDateString(
+                                'id-ID',
+                                {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                }
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                              {new Date(semester.tanggalSelesai).toLocaleDateString(
+                                'id-ID',
+                                {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                }
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                              {new Date(
+                                semester.deadlinePendaftaran
+                              ).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <Badge
+                                className={
+                                  isAktif && isPeriodeAktif
+                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800'
+                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800'
+                                }>
+                                {isAktif && isPeriodeAktif ? 'Aktif' : 'Nonaktif'}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="flex flex-wrap gap-2 text-xs justify-center">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleOpenEdit(semester)}>
+                                  <i className="fa-solid fa-pen mr-1"></i>
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleOpenMataKuliah(semester)}>
+                                  <i className="fa-solid fa-book mr-1"></i>
+                                  Mata Kuliah
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() =>
+                                    setDeleteDialog({ open: true, id: semester.id })
+                                  }
+                                  disabled={
+                                    !!(
+                                      semester._count?.pendaftaran &&
+                                      semester._count.pendaftaran > 0
+                                    )
+                                  }>
+                                  <i className="fa-solid fa-trash mr-1"></i>
+                                  Hapus
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
                 </table>
               </div>
             </div>
@@ -543,15 +543,15 @@ export default function SemesterAntaraPage() {
         initialData={
           formDialog.data
             ? {
-                id: formDialog.data.id,
-                nama: formDialog.data.nama,
-                tahun: formDialog.data.tahun,
-                periode: formDialog.data.periode,
-                tanggalMulai: formDialog.data.tanggalMulai,
-                tanggalSelesai: formDialog.data.tanggalSelesai,
-                deadlinePendaftaran: formDialog.data.deadlinePendaftaran,
-                status: formDialog.data.status,
-              }
+              id: formDialog.data.id,
+              nama: formDialog.data.nama,
+              tahun: formDialog.data.tahun,
+              periode: formDialog.data.periode,
+              tanggalMulai: formDialog.data.tanggalMulai,
+              tanggalSelesai: formDialog.data.tanggalSelesai,
+              deadlinePendaftaran: formDialog.data.deadlinePendaftaran,
+              status: formDialog.data.status,
+            }
             : null
         }
         onOpenChange={(open) => setFormDialog({ ...formDialog, open })}

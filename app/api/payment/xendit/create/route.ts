@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       console.warn("XENDIT_SECRET_KEY IS NOT SET. USING MOCK PAYMENT URL.");
       // In a real environment, throw an error. For development, we return a mock URL.
       const mockInvoiceId = `mock_invoice_${Date.now()}`;
-      const mockPaymentUrl = `${baseUrl}/mahasiswa/pendaftaran/${pendaftaran.semesterId}/pembayaran/success?pendaftaranId=${pendaftaranId}&mock=true`;
+      const mockPaymentUrl = `${baseUrl}/mahasiswa?payment=success&mock=true`;
 
       await prisma.payment.update({
         where: { id: pendaftaran.payment.id },
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       amount: pendaftaran.totalBiaya,
       payerEmail: pendaftaran.userMaster.account?.email || "student@example.com",
       description: `Pembayaran Semester Antara - ${pendaftaran.userMaster.name}`,
-      successRedirectUrl: `${baseUrl}/mahasiswa/pendaftaran/${pendaftaran.semesterId}/pembayaran/success?pendaftaranId=${pendaftaranId}`,
+      successRedirectUrl: `${baseUrl}/mahasiswa`,
       failureRedirectUrl: `${baseUrl}/mahasiswa/pendaftaran/${pendaftaran.semesterId}/pembayaran`,
     };
 

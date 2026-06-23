@@ -13,7 +13,6 @@ interface SemesterMataKuliah {
   dosen: string;
   kuota: number;
   terisi: number;
-  biaya: number;
   prasyarat: string | null;
   mataKuliah: {
     id: string;
@@ -23,6 +22,7 @@ interface SemesterMataKuliah {
     prodi: string;
     kategori: 'WAJIB' | 'PILIHAN';
     status: 'AKTIF' | 'NONAKTIF';
+    biaya: number;
   };
   _count: {
     pendaftaranDetail: number;
@@ -246,7 +246,7 @@ export function SemesterMataKuliahModal({
                             style: 'currency',
                             currency: 'IDR',
                             minimumFractionDigits: 0,
-                          }).format(item.biaya)}
+                          }).format(item.mataKuliah.biaya)}
                         </p>
                       </div>
                       {item.prasyarat && (

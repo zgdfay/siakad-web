@@ -24,7 +24,6 @@ interface SemesterMataKuliahDetail {
   dosen: string;
   kuota: number;
   terisi: number;
-  biaya: number;
   prasyarat: string | null;
   semester: {
     id: string;
@@ -43,6 +42,7 @@ interface MataKuliahDetail {
   kategori: 'WAJIB' | 'PILIHAN';
   status: 'AKTIF' | 'NONAKTIF';
   deskripsi: string | null;
+  biaya: number;
   semesterMataKuliah?: SemesterMataKuliahDetail[];
 }
 
@@ -89,7 +89,6 @@ export function MataKuliahDetailModal({
             dosen: sm.dosen,
             kuota: sm.kuota,
             terisi: sm.terisi,
-            biaya: sm.biaya,
             prasyarat: sm.prasyarat,
             semester: {
               id: sm.semester.id,
@@ -328,7 +327,7 @@ export function MataKuliahDetailModal({
                                         style: 'currency',
                                         currency: 'IDR',
                                         minimumFractionDigits: 0,
-                                      }).format(smk.biaya)}
+                                      }).format(data.biaya)}
                                     </p>
                                   </div>
                                 </div>

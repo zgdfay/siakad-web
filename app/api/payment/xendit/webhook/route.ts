@@ -33,11 +33,11 @@ export async function POST(request: NextRequest) {
         // Update payment to LUNAS and trigger status acceptance if needed
         await prisma.$transaction(async (tx) => {
           // 1. Update Payment status
-          // Payment is verified by Xendit, but our business logic requires Keuangan to manually verify it
+          // Payment is verified by Xendit, setting to LUNAS automatically
           await tx.payment.update({
             where: { id: payment.id },
             data: {
-              status: "MENUNGGU_VERIFIKASI",
+              status: "LUNAS",
               tanggalBayar: new Date(payload.paid_at || new Date()),
               metodePembayaran: paymentMethod || "xendit",
             },

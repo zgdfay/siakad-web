@@ -40,26 +40,49 @@ export default function KeuanganPembayaranPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
   useEffect(() => {
-    fetchPayments();
+    // Jalankan sync satu kali saat pertama kali load (membantu localhost tanpa webhook)
+    syncXendit();
+    
+    fetchPayments(true);
+    
+    // Polling setiap 5 detik untuk update status realtime
+    const interval = setInterval(() => {
+      fetchPayments(false);
+    }, 5000);
+    
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchPayments = async () => {
+  const fetchPayments = async (showLoading = true) => {
     try {
-      setIsLoading(true);
+      if (showLoading) setIsLoading(true);
       const res = await fetch("/api/keuangan/payments");
       if (!res.ok) throw new Error("Gagal mengambil data pembayaran");
       const data = await res.json();
       setPayments(data.payments);
     } catch (error) {
-      toast.error("Gagal memuat data pembayaran");
+      if (showLoading) toast.error("Gagal memuat data pembayaran");
       console.error(error);
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   };
 
-
+  const syncXendit = async () => {
+    try {
+      setIsSyncing(true);
+      await fetch("/api/keuangan/payments/sync", { method: "POST" });
+      // Setelah sync selesai, refresh data tabel (tanpa loading state penuh)
+      fetchPayments(false);
+    } catch (error) {
+      console.error("Gagal sync Xendit:", error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const filteredList = payments.filter((p) => {
     const searchLower = searchQuery.toLowerCase();
@@ -112,7 +135,7 @@ export default function KeuanganPembayaranPage() {
         </p>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -121,6 +144,20 @@ export default function KeuanganPembayaranPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+        </div>
+        <div className="flex-shrink-0">
+          <button
+            onClick={syncXendit}
+            disabled={isSyncing}
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4"
+          >
+            {isSyncing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <i className="fa-solid fa-arrows-rotate mr-2" />
+            )}
+            Sinkronisasi Status
+          </button>
         </div>
       </div>
 
