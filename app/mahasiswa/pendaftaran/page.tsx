@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SemesterMataKuliahGroup } from "@/components/pendaftaran/semester-mata-kuliah-group";
+import { TambahMataKuliahModal } from "@/components/pendaftaran/tambah-mata-kuliah-modal";
 import { toast } from "sonner";
 
 interface SemesterMataKuliah {
@@ -54,14 +55,18 @@ export default function PilihSemesterAntaraPage() {
   const [activeMatkulKodes, setActiveMatkulKodes] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isNavigating, setIsNavigating] = useState(false);
+  const [tambahMkModal, setTambahMkModal] = useState({
+    open: false,
+    semesterId: "",
+    semesterName: "",
+  });
 
   const maxSKS = 24;
 
   // Fetch semesters and active pendaftaran from API
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
         const [semestersResponse, pendaftaranResponse] = await Promise.all([
           fetch("/api/semesters"),
           fetch("/api/pendaftaran/user/me"),
@@ -128,8 +133,9 @@ export default function PilihSemesterAntaraPage() {
       } finally {
         setLoading(false);
       }
-    };
+  };
 
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -163,7 +169,7 @@ export default function PilihSemesterAntaraPage() {
           smk.mataKuliah.kode.toLowerCase().includes(searchTerm.toLowerCase()),
       ),
     }))
-    .filter((sem) => sem.mataKuliah.length > 0);
+    .filter((sem) => searchTerm === "" ? true : sem.mataKuliah.length > 0);
 
   // Hitung total SKS dan biaya
   const selectedMK = allMataKuliah.filter((mk) =>
@@ -409,6 +415,13 @@ export default function PilihSemesterAntaraPage() {
                         onSelectionChange={handleSelectionChange}
                         maxSKS={maxSKS}
                         totalSKSSelected={totalSKS}
+                        onAddMataKuliah={(semesterId, semesterName) => {
+                          setTambahMkModal({
+                            open: true,
+                            semesterId,
+                            semesterName,
+                          });
+                        }}
                       />
                     ))}
                 </div>
@@ -422,7 +435,7 @@ export default function PilihSemesterAntaraPage() {
                   </h2>
                   {inactiveSemester
                     .filter((sem) =>
-                      filteredSemester.some((fs) => fs.id === sem.id),
+                      filteredSemester.some((fs) => fs.id === sem.id) && sem.mataKuliah.length > 0,
                     )
                     .map((semester) => (
                       <SemesterMataKuliahGroup
@@ -580,6 +593,16 @@ export default function PilihSemesterAntaraPage() {
           </Card>
         </div>
       </div>
+
+      <TambahMataKuliahModal
+        open={tambahMkModal.open}
+        onOpenChange={(open) => setTambahMkModal({ ...tambahMkModal, open })}
+        semesterId={tambahMkModal.semesterId}
+        semesterName={tambahMkModal.semesterName}
+        onSuccess={() => {
+          fetchData(); // Refresh data setelah berhasil nambah MK
+        }}
+      />
     </div>
   );
 }

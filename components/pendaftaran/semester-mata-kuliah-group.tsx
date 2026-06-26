@@ -51,6 +51,7 @@ interface SemesterMataKuliahGroupProps {
   onSelectionChange: (mkId: string, semesterId: string) => void;
   maxSKS: number;
   totalSKSSelected: number;
+  onAddMataKuliah?: (semesterId: string, semesterName: string) => void;
 }
 
 export function SemesterMataKuliahGroup({
@@ -60,6 +61,7 @@ export function SemesterMataKuliahGroup({
   onSelectionChange,
   maxSKS,
   totalSKSSelected,
+  onAddMataKuliah,
 }: SemesterMataKuliahGroupProps) {
   const [isOpen, setIsOpen] = useState(semester.status === "aktif");
   const isDeadlinePassed = new Date(semester.deadlinePendaftaran) < new Date();
@@ -124,6 +126,20 @@ export function SemesterMataKuliahGroup({
                     Aktif
                   </Badge>
                 )}
+                {semester.status === "aktif" && !isDeadlinePassed && onAddMataKuliah && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="ml-auto h-7 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAddMataKuliah(semester.id, semester.nama);
+                    }}
+                  >
+                    <i className="fa-solid fa-plus mr-1"></i>
+                    Tambah MK
+                  </Button>
+                )}
               </div>
               <CardDescription className="ml-8 sm:ml-9 text-xs sm:text-sm">
                 {semester.tahun} - {semester.periode} •{" "}
@@ -184,6 +200,28 @@ export function SemesterMataKuliahGroup({
                   {semester.status === "nonaktif"
                     ? "Semester ini tidak aktif. Pendaftaran ditutup."
                     : "Deadline pendaftaran sudah lewat. Pendaftaran ditutup."}
+                </div>
+              )}
+              {!isDisabled && semester.mataKuliah.length === 0 && (
+                <div className="p-8 border border-dashed rounded-lg text-center bg-muted/30">
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                    <i className="fa-solid fa-book-open-reader text-muted-foreground text-lg"></i>
+                  </div>
+                  <h3 className="font-medium text-foreground mb-1">
+                    Belum ada mata kuliah
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Tidak ada mata kuliah yang tersedia di semester ini.
+                  </p>
+                  {semester.status === "aktif" && !isDeadlinePassed && onAddMataKuliah && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => onAddMataKuliah(semester.id, semester.nama)}
+                    >
+                      <i className="fa-solid fa-plus mr-2"></i>
+                      Buat Mata Kuliah Baru
+                    </Button>
+                  )}
                 </div>
               )}
               {semester.mataKuliah.map((mk) => {
