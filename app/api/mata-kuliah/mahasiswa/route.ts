@@ -26,21 +26,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { kode, nama, sks, prodi, semesterId } = body;
+    const { kode, nama, sks, prodi, semesterId, mataKuliahId } = body;
 
     // Validation
-    if (!kode || !nama || !sks || !prodi || !semesterId) {
+    if (!semesterId) {
       return NextResponse.json(
-        { error: 'Kode, nama, SKS, program studi, dan semester wajib diisi' },
+        { error: 'Semester ID wajib diisi' },
         { status: 400 }
       );
     }
 
-    // Validate SKS
-    const parsedSks = parseInt(sks.toString());
-    if (parsedSks < 1 || parsedSks > 6) {
+    if (!mataKuliahId && (!kode || !nama || !sks || !prodi)) {
       return NextResponse.json(
-        { error: 'SKS harus antara 1-6' },
+        { error: 'Pilih mata kuliah yang tersedia atau isi lengkap data mata kuliah baru' },
         { status: 400 }
       );
     }
@@ -72,10 +70,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if kode already exists
-    const existingMataKuliah = await prisma.mataKuliah.findUnique({
-      where: { kode },
-    });
+    // Check if mata kuliah already exists by ID or kode
+    let existingMataKuliah = null;
+    if (mataKuliahId) {
+      existingMataKuliah = await prisma.mataKuliah.findUnique({
+        where: { id: mataKuliahId },
+      });
+    }
+    if (!existingMataKuliah && kode) {
+      existingMataKuliah = await prisma.mataKuliah.findUnique({
+        where: { kode },
+      });
+    }
 
     if (existingMataKuliah) {
       // If the mata kuliah already exists, check if it's already assigned to this semester
@@ -88,7 +94,7 @@ export async function POST(request: NextRequest) {
 
       if (existingAssignment) {
         return NextResponse.json(
-          { error: 'Mata kuliah dengan kode ini sudah ada di semester ini' },
+          { error: 'Mata kuliah ini sudah tersedia di semester antara ini' },
           { status: 409 }
         );
       }
@@ -119,6 +125,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new mata kuliah and assign to semester in a transaction
+    const parsedSks = parseInt(sks?.toString() || '0');
+    if (parsedSks < 1 || parsedSks > 6) {
+      return NextResponse.json(
+        { error: 'SKS untuk mata kuliah baru harus antara 1-6' },
+        { status: 400 }
+      );
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       const newMataKuliah = await tx.mataKuliah.create({
         data: {

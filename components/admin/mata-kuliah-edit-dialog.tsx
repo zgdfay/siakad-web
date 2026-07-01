@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { PRODI_OPTIONS } from "@/lib/constants";
 
 export interface MataKuliahEditValues {
   id: string;
@@ -270,13 +271,21 @@ export function MataKuliahEditDialog({
                 <Label htmlFor="prodi">
                   Program Studi <span className="text-destructive">*</span>
                 </Label>
-                <Input
-                  id="prodi"
+                <Select
                   value={formValues.prodi}
-                  onChange={(e) => handleChange("prodi", e.target.value)}
-                  placeholder="S1 Informatika"
-                  className="w-full"
-                />
+                  onValueChange={(value) => handleChange("prodi", value)}
+                >
+                  <SelectTrigger id="prodi" className="w-full">
+                    <SelectValue placeholder="Pilih Program Studi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRODI_OPTIONS.map((prodi) => (
+                      <SelectItem key={prodi} value={prodi}>
+                        {prodi}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="kategori">

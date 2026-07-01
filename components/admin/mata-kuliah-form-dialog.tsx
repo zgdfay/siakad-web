@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PRODI_OPTIONS } from "@/lib/constants";
 
 export interface MataKuliahFormValues {
   id?: string;
@@ -146,8 +147,7 @@ export function MataKuliahFormDialog({
     if (
       !formValues.kode ||
       !formValues.nama ||
-      !formValues.prodi ||
-      !formValues.semesterId
+      !formValues.prodi
     ) {
       console.warn("Form validation failed: missing required fields");
       return;
@@ -272,21 +272,24 @@ export function MataKuliahFormDialog({
 
             <div className="space-y-2">
               <Label htmlFor="semesterId">
-                Semester <span className="text-destructive">*</span>
+                Semester <span className="text-muted-foreground font-normal">(Opsional)</span>
               </Label>
               <Select
-                value={formValues.semesterId}
-                onValueChange={(value) => handleChange("semesterId", value)}
+                value={formValues.semesterId || "NONE"}
+                onValueChange={(value) => handleChange("semesterId", value === "NONE" ? "" : value)}
                 disabled={loadingSemesters}
               >
                 <SelectTrigger id="semesterId" className="w-full">
                   <SelectValue
                     placeholder={
-                      loadingSemesters ? "Memuat semester..." : "Pilih Semester"
+                      loadingSemesters ? "Memuat semester..." : "Pilih Semester (Atau Simpan ke Katalog Saja)"
                     }
                   />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="NONE">
+                    <span className="font-medium "> Simpan ke Katalog Master Saja (Tanpa Semester)</span>
+                  </SelectItem>
                   {semesters.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
                       {s.nama} ({s.tahun} -{" "}
@@ -302,13 +305,21 @@ export function MataKuliahFormDialog({
                 <Label htmlFor="prodi">
                   Program Studi <span className="text-destructive">*</span>
                 </Label>
-                <Input
-                  id="prodi"
+                <Select
                   value={formValues.prodi}
-                  onChange={(e) => handleChange("prodi", e.target.value)}
-                  placeholder="S1 Informatika"
-                  className="w-full"
-                />
+                  onValueChange={(value) => handleChange("prodi", value)}
+                >
+                  <SelectTrigger id="prodi" className="w-full">
+                    <SelectValue placeholder="Pilih Program Studi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRODI_OPTIONS.map((prodi) => (
+                      <SelectItem key={prodi} value={prodi}>
+                        {prodi}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="kategori">
